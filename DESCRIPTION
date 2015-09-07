@@ -1,0 +1,10 @@
+Package: poumm
+Type: Package
+Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
+Version: 0.1
+Date: 2014-06-19
+Author: Venelin Mitov
+Maintainer: <venelin.mitov@bsse.ethz.ch>
+Description: Maximum likelihood and bayesian inference of the phylogenetic Ornstein-Uhlenbeck mixec model.
+License: GPL (>=2.0)
+Depends: ape, data.table, adaptMCMC, coda
