@@ -1,3 +1,5 @@
+# Some OU-functions
+
 #' Random generation of values given an initial value following an OU process.
 #' 
 #' @description
@@ -107,3 +109,31 @@ varStOU <- function(alpha, sigma) {
 sdStOU <- function(alpha, sigma) {
   sigma/sqrt(2*alpha)
 }
+
+#' Random generation of a trait along a tree following an OU process 
+#' @param tree an object of class phylo
+#' @param g0 initial trait value (at the root of tree)
+#' @param alpha, theta, sigma parameters of the OU process.
+#' @return a vector containing the trait values at all nodes of the tree
+#' 
+#' @export
+generateTraitOU <- function(tree, g0, alpha, theta, sigma) {
+  rTraitCont(tree, 
+             function(x, l, .a, .t, .s) {
+               OU(x, l, .a, .t, .s)
+             }, root.value=g0, ancestor=T, .a=alpha, .t=theta, .s=sigma)
+}
+
+
+
+#' Random generation of a trait along a tree following a BM process 
+#' @param tree an object of class phylo
+#' @param g0 initial trait value (at the root of tree)
+#' @param sigma parameter of the BM process.
+#' @return a vector containing the trait values at all nodes of the tree
+#' 
+#' @export
+generateTraitBM <- function(tree, g0, sigma) {
+  rTraitCont(tree, 'BM', root.value=g0, ancestor=T, sigma=sigma)
+}
+

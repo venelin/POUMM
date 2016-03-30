@@ -1,0 +1,13 @@
+base
+ape
+data.table
+lattice
+coda
+Matrix
+adaptMCMC
+poumm
+knitr
+rmarkdown
+pso
+gmp
+Rmpfr
