@@ -11,6 +11,7 @@ keep_tex: true
   
 ```{r setup, include=F}
 library(knitr)
+library(rmarkdown)
 opts_chunk$set(size='tiny', out.extra='style="display:block; margin: auto;"', fig.align="center")
 
 #library(rmarkdown)
@@ -20,7 +21,7 @@ opts_chunk$set(size='tiny', out.extra='style="display:block; margin: auto;"', fi
 
 # Introduction
 The **poumm** package provides an implementation of the Pylogenetic Mixed Model assuming an Ornstein-Uhlenbeck (OU)  or a Brownian Motion (BM) process of trait evolution along the branches. The package comes with an efficient likelihood calculation that scales to large phylogenies (currently tested with up to 10000 tips) and, if needed, can perform the likelihood calculation using the package **Rmpfr** for high precision floating point operations. 
-Currently, the package depends on the package **ape** and the package **data.table**. The most important function of the package is "likVTReeOU" (see ?likVTreeOU), which performs likelihood calculation. Although the algorithm for likelihood calculation has been extensively tested and applied on various real as well as synthetic data, the package is still in a beta-version for the following reasons:
+Currently, the package depends on the package **ape** and the package **data.table**. The most important functions of the package are "likVTReeOU" (see ?likVTreeOU), which performs likelihood calculation, "mlOUTree" (type ?mlOUTree), which fits POUMM to a tree and data at the tips using maximum likelihood and mcmcOUTree, which runs an MCMC fit to a tree and data. Although the algorithm for likelihood calculation has been extensively tested and applied on various real as well as synthetic data, the package is still in a beta-version for the following reasons:
 
 * The signature of the functions in the package may change;
 * Some of the functions are not yet documented. 
@@ -37,35 +38,6 @@ install.packages('poumm_0.1.tgz', type='binary', repos=NULL)
 
 ```{r example, cache=TRUE}
 library(poumm)
-library(pso)
-
-# likelihood optimization using the particle swarm algorithm
-# v : values at tips of the tree
-# tree: the phylogen
-# pso: control parameters for the call to psoptim
-# ... : additional parameters for the call to likVTreeOU
-psoLikVTreeOU <- function(v, tree, pso, ...) {
-  minusll <- function(par, ...) {
-    value <- -do.call(likVTreeOU, 
-                      c(list(v, tree, 
-                             alpha=par[1], theta=par[2], sigma=par[3], sigmae=par[4], 
-                             log=T),
-                                    list(...)))
-    if(is.na(value) | is.nan(value) | is.infinite(value)) {
-      1e20
-    } else {
-      value
-    }
-  }
-  
-  res <- do.call(psoptim, 
-                 c(list(par=c(alpha=NA, theta=NA, sigma=NA, sigmae=NA), 
-                        fn=minusll), pso))
-  
-  names(res$par) <- c('alpha', 'theta', 'sigma', 'sigmae')
-  
-  res
-}
 
 set.seed(1)
 # Number of tips
@@ -88,11 +60,7 @@ lik <- likVTreeOU(v, tree, alpha, theta, sigma, sigmae, log=T, distgr='maxlik')
 # setting the maxit parameter to a very small value (i.e. 2) while the 
 # option 'hybrid' is on, would transform the pso algorithm into a gradient
 # descent with a number of different original locations. 
-fit <- psoLikVTreeOU(tree=tree, v=v, 
-                     lik=list(distgr='maxlik', usempfr=1), 
-                     pso=list(lower=c(0, 0, 0, 0), upper=c(10, 9, 10, 10), 
-                              control=list(s=14, trace=1, trace.stats=T, REPORT=1, 
-                                           hybrid='on', reltol=1e-3, maxit=2)))
+fit <- mlOUTree(v=v, tree=tree, distgr='maxlik')
 
 # maximum likelihood fit:
 print(fit$par)
@@ -100,17 +68,11 @@ print(fit$par)
 # ml likelihood value versus value at the original true params
 print(c(-fit$value, lik))
 
-# spreadability at between infection interval 0:
-h2 <- calcH2AtTime(fit$par[1], fit$par[3], fit$par[4], t=Inf, tm=0)
-
-# plot the spreadability over delta t
-t <- seq(0, 10, 0.1)
-s2 <- calcH2AtTime(fit$par[1], fit$par[3], fit$par[4], t=Inf, tm=t)
-
-# currently not executed
-#matplot(x=t, y=s2, ylab=expression(s^2), xlab=expression(Delta*t), ylim=c(0,1), 
-#        xlim=c(0,4), type='l')
+# estimating broad-sense heritability
+print(c(calcH2AtTime(fit$par[1], fit$par[3], fit$par[4], t=Inf, tm=0), 
+        calcH2AtTime(alpha, sigma, sigmae, t=Inf, tm=0)))
 ```
+
 
 # Further information and help
 For further information, look in the package help-pages. If you cannot find the answer, please write me to venelin.mitov@bsse.ethz.ch. 
