@@ -1,16 +1,29 @@
 Package: poumm
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 0.1
-Date: 2014-06-19
-Author: Venelin Mitov
-Maintainer: <venelin.mitov@bsse.ethz.ch>
-Description: Maximum likelihood and bayesian inference of the phylogenetic
-    Ornstein-Uhlenbeck mixed model.
-License: GPL (>=2.0)
-Depends:
-    ape,
-    data.table,
-    adaptMCMC,
-    coda
+Version: 1.0.0
+Date: 2016-12-20
+Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
+                 role = c("aut", "cre"))
+Description: Functions for fast likelihood calculation, maximum likelihood and 
+    Bayesian inference of the univariate Phylogenetic Ornstein-Uhlenbeck Mixed 
+    Model; Functions for summarizing and plotting the inference results; 
+    Functions for simulation of univariate continuous trait evolution along a 
+    phylogenetic tree.
+License: GPL (>= 2.0)
+LazyData: true
+Depends: 
+    R (>= 3.1.0),
+    stats (>= 3.3.1)
+Imports:
+    ape (>= 3.5),
+    data.table (>= 1.9.6),
+    adaptMCMC (>= 1.1),
+    coda (>= 0.18-1),
+    foreach (>= 1.4.3),
+    gsl (>= 1.9-10.2)
+Suggests: 
+    testthat,
+    TreeSim (>= 2.2),
+    Rmpfr (>= 0.6.0)
 RoxygenNote: 5.0.1
