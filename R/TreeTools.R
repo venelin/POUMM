@@ -2,12 +2,14 @@
 
 NULL
 
-#' Extract information for pruning a tree used as cache in poumm likelihood calculation
+#' Extract information for pruning a tree used as cache in poumm likelihood
+#' calculation
 #' 
 #' @param tree a phylo object
-#' @return a list to be passed to likVTreeOU with impl='R5'
-#' 
-#' @export
+#'   
+#' @details This method should only be called if calculating poumm likelihood
+#'   with impl='R5'.
+#' @return a list of objects
 pruneTree <- function(tree) {
   N <- length(tree$tip.label)                # number of tips
   M <- length(unique(as.vector(tree$edge)))  # number of all nodes 
@@ -62,10 +64,7 @@ pruneTree <- function(tree) {
 #' 
 #' @param tree an object of class phylo
 #' @param n an index of a node (root, internal or tip) in tree
-#' @return
-#'   An integer vector.
-#'   
-#' @export
+#' @return An integer vector.
 chld <- function(tree, n) {
   as.integer(tree$edge[tree$edge[, 1]==n, 2])
 }
@@ -73,21 +72,23 @@ chld <- function(tree, n) {
 #' Edge indices of the edges in tree starting from n
 #' @param tree an object of class phylo
 #' @param n an index of a node (root, internal or tip) in tree
-#' @return
-#'   An integer vector.
-#' @export
+#' @return An integer vector.
 edgesFrom <- function(tree, n) {
   which(tree$edge[, 1]==n)
 }
 
 #' Calculate the time from the root to each node of the tree
 #' 
-#' @param tree an object of class phylo
-#' @return
-#'   a vector of size the number of nodes in the tree (tips, root, internal)
-#'   containing the time from the root to the corresponding node in the tree
+#' @param tree An object of class phylo.
+#' @param tipsOnly Logical indicating whether the returned results should be
+#'   truncated only to the tips of the tree.
+#' @return A vector of size the number of nodes in the tree (tips, root, 
+#'   internal) containing the time from the root to the corresponding node in 
+#'   the tree.
+#' @importFrom stats reorder
+#' @import ape
 #' @export
-nodeTimes <- function(tree) {
+nodeTimes <- function(tree, tipsOnly=FALSE) {
   rtree <- reorder(tree, 'postorder')
   es <- rtree$edge[dim(rtree$edge)[1]:1, ]
   nEdges <- dim(es)[1]
@@ -95,14 +96,17 @@ nodeTimes <- function(tree) {
   nodeTimes <- rep(0, length(rtree$tip.label)+rtree$Nnode)
   for(e in 1:nEdges) 
     nodeTimes[es[e, 2]] <- nodeTimes[es[e, 1]]+ts[e]
-  nodeTimes
+  if(tipsOnly) {
+    nodeTimes[1:length(tree$tip.label)]
+  } else {
+    nodeTimes
+  }
 }
 
 #' Make the ending edges of a tree longer/shorter by addLength
 #' @param tree a phylo object
 #' @param addLength numeric vector of length 1 or length(tree$tip.label)
 #' @return the tree with modified edge lengths for the edges leading to tips
-#' @export
 extendTipEdges <- function(tree, addLength) {
   tipEdgeIdx <- match(1:length(tree$tip.label), tree$edge[, 2])
   tree$edge.length[tipEdgeIdx] <- tree$edge.length[tipEdgeIdx]+addLength
@@ -117,7 +121,6 @@ extendTipEdges <- function(tree, addLength) {
 #' @description The tree gets cut at the closest tip from the root or as soon as
 #' maxNTips lineages are counted in a breadth first traversal of the tree. 
 #' @note no tips are dropped from the tree
-#' @export
 cutUltrametric <- function(tree, maxNTips) {
   nTips <- length(tree$tip.label)
   if(maxNTips < 1 | maxNTips>nTips) {
@@ -135,7 +138,7 @@ cutUltrametric <- function(tree, maxNTips) {
   # outgoing edges from the root
   es <- edgesFrom(tree, nTips+1)
   
-  while(T) {
+  while(TRUE) {
     countLineages <- length(es)
     
     spikingEdge <- which.min(ndTimes[tree$edge[es, 2]])
@@ -172,24 +175,24 @@ cutUltrametric <- function(tree, maxNTips) {
 
 #' get a sample list of possible transmission pair assignments
 #' @param tree a phylo object with N tips.
-#' @param g numerical vector of length the number of nodes in the tree: the known viral genetic 
-#'    contributions at the tips and internal nodes.
-#' @param e numerical vector of length N: the known environmental deviations at
-#'    the tips. 
+#' @param g numerical vector of length the number of nodes in the tree: the
+#'   known viral genetic contributions at the tips and internal nodes.
+#' @param e numerical vector of length N: the known environmental deviations at 
+#'   the tips.
 #' @param nSamples : number of samples. Each sample corresponds to an assignment
-#'    of the internal nodes of the tree with tip-labels and the correalation of
-#'    the formed set of source-recipient phenotypes.
+#'   of the internal nodes of the tree with tip-labels and the correalation of 
+#'   the formed set of source-recipient phenotypes.
 #' @param sampTime : a character indicating how the phenotypes for the pairs 
-#'    shall be formed. Currently two possible values are supported : 
-#'      eachAfterGettingInfected - the source phenotype is measured at the moment of infection from its own source,
-#'        the recipient phenotype is measured at the moment it got infected from the source;
-#'      bothAtInfection - the source and the recipient phenotypes are taken at 
-#'        the moment of infection from source to recipient.
-#'      atTips - the source and the recipient phenotypes are measured at their corresponding tips in the tree.
-#' @return a list of nSamples matrices, each matrix having tree columns representing 
-#' source phenotype, recipient phenotype and time of the infection from the root
-#'   
-#' @export
+#'   shall be formed. Currently two possible values are supported : 
+#'   eachAfterGettingInfected - the source phenotype is measured at the moment
+#'   of infection from its own source, the recipient phenotype is measured at
+#'   the moment it got infected from the source; bothAtInfection - the source
+#'   and the recipient phenotypes are taken at the moment of infection from
+#'   source to recipient. atTips - the source and the recipient phenotypes are
+#'   measured at their corresponding tips in the tree.
+#' @return a list of nSamples matrices, each matrix having tree columns
+#'   representing source phenotype, recipient phenotype and time of the
+#'   infection from the root
 sampleTransmissionPairs <- function(tree, g, e, nSamples, 
                                     sampTime=c('eachAfterGettingInfected', 'bothAtInfection', 'atTips')) {
   N <- length(tree$tip.label)
@@ -234,10 +237,8 @@ sampleTransmissionPairs <- function(tree, g, e, nSamples,
 #'        the moment of infection.
 #' @param reg logical indicating if regression slopes instead of Pearson correlation indices 
 #' should be returned, FALSE by default.
-#' 
+#' @importFrom stats cor
 #' @return a numerical vector of length nSamples
-#'    
-#' @export
 sampleCorrsPairs <- function(tree, g, e, nSamples=1000, 
                              sampTime=c('justAfterInfected', 'bothAtInfection'), 
                              reg=F) {
@@ -267,9 +268,6 @@ sampleCorrsPairs <- function(tree, g, e, nSamples=1000,
 #' @param tree a phylo object
 #' @param id a vector containing identifiers of all tips and nodes
 #' @return a matrix of the class of id of two columns and N-1 rows
-#'
-#'
-#' @export
 infectionCouples <- function(tree, id) {
   edge <- tree$edge
   edge <- matrix(id[edge], ncol=2)
@@ -289,8 +287,6 @@ infectionCouples <- function(tree, id) {
 #'   (out of many possible) such identification, assuming that each 
 #'   of the direct descendants of the node is equally likely to be 
 #'   the node itself.
-#'   
-#' @export
 sampleNodeIds <- function(tree) {
   N <- length(tree$tip.label)
   edge.table <- as.data.table(tree$edge)
@@ -307,4 +303,25 @@ sampleNodeIds <- function(tree) {
   id
 }
 
-
+#'Group tips according to distance from the root
+#'@param tree a phylo object
+#'@param nGroups integer, the desired number of groups (default 15)
+#'@param rootTipDists numeric vector of root to tip distances in the order of 
+#'  tree$tip.label. If not passed, this vector is calculated by the function
+#'  nodeTimes().
+groupByRootDist <- function(tree, nGroups=15, rootTipDists=NULL) {
+  N <- length(tree$tip.label)
+  if(is.null(rootTipDists))
+    rootTipDists <- nodeTimes(tree)[1:N]
+  
+  rootTipDistGroups <- cut(rootTipDists, 
+                           breaks=seq(min(rootTipDists), max(rootTipDists), length.out=nGroups))
+  names(rootTipDistGroups) <- tree$tip.label
+  
+  groupMeans <- sapply(levels(rootTipDistGroups), function(str) {
+    mean(eval(parse(text=paste0('c(',substr(str, 2, nchar(str)-1), ')'))))
+  })
+  
+  list(rootTipDists=rootTipDists, rootTipDistGroups=rootTipDistGroups, groupMeans=groupMeans)  
+  
+}
