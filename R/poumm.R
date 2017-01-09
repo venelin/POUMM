@@ -97,7 +97,7 @@ sigma <- sigmaOU.poumm <- function(H2, alpha, sigmae, t=Inf) {
   if(H2>1 | H2<0 | alpha < 0 | sigmae < 0 | t < 0) {
     stop("H2(t) should be in [0, 1], alpha, sigmae and t should be non-negative.")
   }
-  if(is.infinite(t)) {
+  res <- if(is.infinite(t)) {
     if(alpha == 0) {
       # BM
       sqrt(sigmae^2 * H2 / (t * (1 - H2)))
@@ -115,6 +115,8 @@ sigma <- sigmaOU.poumm <- function(H2, alpha, sigmae, t=Inf) {
       sqrt(2 * alpha * H2 * sigmae^2 / ((1 - exp(-2 * alpha * t)) * (1 - H2)))
     } 
   }
+  names(res) <- NULL
+  res
 }
 
 #' @describeIn PhylogeneticH2 Calculate sigmae given alpha, sigma, and H2 at
@@ -187,28 +189,36 @@ H2 <- H2.poumm <- function(alpha, sigma, sigmae, t = Inf, tm = 0) {
 #'   
 #' @param z Either a numeric vector containing the phenotypic values at the tips
 #'   of tree or a named list containing named elements z - a numeric vector and 
-#'   tree - a phylo object.
-#' @param tree a phylo object
-#' @param zName,treeName characters used when the parameter z is a list; 
+#'   tree - a phylo object (it is possible to specify different element names 
+#'   using the arguments zName and treeName).
+#' @param tree A phylo object or NULL in case z is a list.
+#' @param zName,treeName Character strings used when the parameter z is a list; 
 #'   indicate the names in the list of the values-vector and the tree. Default: 
-#'   'z' and 'tree'
-#' @param removeTips A character vector denoting names (tip.labels) of tips to 
-#'   be removed from the tree before the model fit.
+#'   'z' and 'tree'.
+#' @param removeTips A character vector denoting names (tip.labels) of (outlier)
+#'   tips to be removed from the tree before the model fit.
+#' @param divideEdgesBy Numeric, by which all branch lengths in the tree are to 
+#'   be divided prior to model fit (default: 1, meaining that the branch lengths
+#'   are left unchanged). This can be used to change the time unit on the branch
+#'   lengths, i.e. divide by 24 to switch from hours to days. Note that this
+#'   parameter only affects the branch lengths in the tree and appropriate
+#'   rescaling of the OU parameters alpha and sigma is not made. Thus,
+#'   interpreting the fit parameters on the original time-scale would require
+#'   appropriate rescaling. For example, if divideEdgesBy is set to 100, after
+#'   the model fit, the resulting parameter alpha should be divided by 100 and
+#'   the parameter sigma should be divided by 10. Note alose, that in some 
+#'   cases, rescaling the branch lengths can improve the precision of floating 
+#'   point operations during the model fit.
+#' @param ... additional arguments passed to the dVGivenTreeOU function 
+#'   (?dVGivenTreeOU for details).
+#' @param verbose A logical indicating whether to print informative messages on 
+#'   the standard output.
+#'   
 #' @param distgr a character or a numeric describing the distribution or fixed 
 #'   value to be assumed for the genetic contribution at the root of tree. If a 
 #'   character the acceptable values are : 'normal'- normal distribution with 
 #'   mean mugr and standard deviation sigmagr; 'maxlik' - fixed value that would
-#'   maximise the conditional likelihood on gr.
-#' @param divideEdgesBy numeric, by which all branch lengths in the tree are to 
-#'   be divided prior to likelihood calculation. Only the branch lengths in the 
-#'   tree are changed and appropriate rescaling of the OU parameters alpha and 
-#'   sigma is not made. For example, if this parameter is set to 100, the 
-#'   resulting parameter alpha should be divided by 100 and the parameter sigma 
-#'   should be divided by 10.
-#' @param ... additional arguments passed to the dVGivenTreeOU function 
-#'   (?dVGivenTreeOU for details).
-#' @param verbose A logical indicating whether to print informative messages on
-#'   the standard output.
+#'   maximise the conditional likelihood on g0.
 #'   
 #' @param doML logical: should a maximum likelihood fit be performed. This is 
 #'   TRUE by default. The following arguments until doMCMC specify how the 
@@ -217,12 +227,12 @@ H2 <- H2.poumm <- function(alpha, sigma, sigmae, t = Inf, tm = 0) {
 #'   TRUE.
 #' @param parFixed (ML) a named numeric vector, indicating fixed values for some
 #'   of the parameters alpha, theta, sigma and sigmae, by default, c().
-#' @param parLower,parUpper (ML) two named numeric vectors indicating the boundaries
-#'   of the search region for the ML-fit. Default values are parLower=c(alpha=0, 
-#'   theta=0, sigma=0, sigmae=0) and parUpper=c(alpha=100, theta=10, sigma=20, 
-#'   sigmae=10).
+#' @param parLower,parUpper (ML) two named numeric vectors indicating the 
+#'   boundaries of the search region for the ML-fit. Default values are 
+#'   parLower=c(alpha=0, theta=0, sigma=0, sigmae=0) and parUpper=c(alpha=100, 
+#'   theta=10, sigma=20, sigmae=10).
 #' @param optimizeInSteps (ML) logical indicating whether to split the interval 
-#'   (parLower['alpha'], parUpper['alpha']) into sub-intervals and call optimize 
+#'   (parLower['alpha'], parUpper['alpha']) into sub-intervals and call optimize
 #'   separately in each of these intervals. Using this may be of help in case of
 #'   multiple local optimums, but results in slower search. Default: FALSE. This
 #'   parameter does not have any effect if alpha is a fixed parameter (see 
@@ -243,26 +253,35 @@ H2 <- H2.poumm <- function(alpha, sigma, sigmae, t = Inf, tm = 0) {
 #' @param parPrior (MCMC) a function(numeric-matrix). Each row in the matrix is 
 #'   treated as a vector of parameters. The function should return a numeric 
 #'   vector with the log-priors for each row matrix.
-#' @param parToATSSe (MCMC) a function(numeric-matrix) Each row in the matrix is
+#' @param parMapping (MCMC) a function(numeric-matrix) Each row in the matrix is
 #'   treated as a vector of parameters. The function should transform each such 
 #'   row-vector into a row-vector of the parameters alpha, theta, sigma, sigmae.
-#'   The function should return the corresponding matrix.
-#' @param scale (MCMC) numeric matrix indicating the initial jump-distribution 
+#'   The function should return the corresponding matrix. 
+#'   \preformatted{ 
+#'   function(par) { 
+#'    cbind(par[, 1:2, drop = FALSE], 
+#'             sqrt(par[, 3:4, drop = FALSE]), 
+#'             NA) 
+#'   } 
+#'   alpha = 3 
+#'   theta = 4 
+#'   }
+#' @param parScale (MCMC) numeric matrix indicating the initial jump-distribution 
 #'   matrix
-#' @param n.mcmc (MCMC) integer indicating how many iterations should the 
+#' @param nSamples (MCMC) integer indicating how many iterations should the 
 #'   mcmc-chain contain
-#' @param n.adapt (MCMC) integer indicating how many initial iterations should 
+#' @param nAdapt (MCMC) integer indicating how many initial iterations should 
 #'   be used for adaptation of the jump-distribution matrix
 #' @param thin (MCMC) integer indicating the thinning interval of the mcmc-chain
-#' @param acc.rate (MCMC) numeric between 0 and 1 indicating the target 
+#' @param accRate (MCMC) numeric between 0 and 1 indicating the target 
 #'   acceptance rate Passed on to adaptMCMC::MCMC.
 #' @param gamma (MCMC) controls the speed of adaption. Should be between 0.5 and
 #'   1. A lower gamma leads to faster adaption. Passed on to adaptMCMC::MCMC.
-#' @param n.chains (MCMC) integer indicating the number of chains to run. 
+#' @param nChains (MCMC) integer indicating the number of chains to run. 
 #'   Defaults to 2 chains, from which the first one is a sample from the prior 
 #'   distribution (see samplePrior).
 #' @param samplePrior (MCMC) logical indicating if sampling from the prior 
-#'   should be done for the first chain (see n.chains). This is useful to 
+#'   should be done for the first chain (see nChains). This is useful to 
 #'   compare mcmc's for an overlap between prior and posterior distributions. 
 #'   Default is TRUE.
 #'   
@@ -282,45 +301,11 @@ NULL
 #' @export
 POUMM <- function(
   z, tree, zName = 'z', treeName = 'tree', 
-  removeTips = NULL,
-  distgr = c('maxlik', 'normal'), divideEdgesBy = 1, parDigits = 6, usempfr = 0, 
-  ...,
-  verbose = FALSE, 
-                  
-  doML = TRUE, 
-  parFixed = c(), 
-  parLower = c(alpha = 0, theta = 0, sigma = 0, sigmae = 0), 
-  parUpper = c(alpha = 100, theta = 10, sigma = 20, sigmae = 10),
-  tol = 0.001, control = list(factr = 1e8),  
-  
-  doMCMC = TRUE, 
-  parToATSSe = function(par) {
-    cbind(par[, 1:2, drop = FALSE], 
-          sqrt(par[, 3:4, drop = FALSE])) 
-  },
-  parInit = function(chainNo) {
-    rbind(
-      c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 1),
-      c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 0),
-      c(alpha = 100, theta = 0, sigma2 = 1, sigmae2 = 1),
-      c(alpha = 20, theta = 0, sigma2 = 1, sigmae2 = 1),
-      c(alpha = 10, theta = 0, sigma2 = 1, sigmae2 = 0))[chainNo%%5+1, ]
-  },
-  parPrior = function(par) {
-    if(any(par[, c(1, 3, 4)]<0)) {
-      -Inf
-    } else {
-      dexp(par[,1], rate = .01, TRUE) + dunif(par[, 2], 0, 100, TRUE)+
-        dexp(par[,3],  rate = .0001, TRUE) + dexp(par[, 4], rate = .01, TRUE)  
-    }
-  },
-  scale = matrix(c(100,  0.00, 0.00, 0.00,
-                   0.00, 10.0, 0.00, 0.00,
-                   0.00, 0.00, 100,  0.00,
-                   0.00, 0.00, 0.00, 100), 
-                 nrow = 4, ncol = 4, byrow = TRUE),
-  n.mcmc = 2.2e6, n.adapt = 2e5, thin = 100, acc.rate = 0.01, gamma = 0.5, 
-  n.chains = 2, samplePrior = TRUE) {
+  removeTips = NULL, divideEdgesBy = 1,
+  parDigits = 6, usempfr = 0, 
+  ..., 
+  doML = TRUE, specML = NULL, doMCMC = TRUE, specMCMC = NULL, 
+  verbose = FALSE) {
   
   if(is.list(z)) {
     p <- z
@@ -344,22 +329,91 @@ POUMM <- function(
     }
   }
   
-  result <- list(z = z, tree = tree, removeTips = removeTips, 
-                 distgr = distgr, divideEdgesBy = divideEdgesBy, 
-                 N = length(tree$tip.label), 
-                 tMax = max(nodeTimes(tree, tipsOnly = TRUE)),
-                 tMean = mean(nodeTimes(tree, tipsOnly = TRUE)), ...)
-  
-  if(divideEdgesBy != 1) {
-    tree$edge.length <- tree$edge.length/divideEdgesBy
-  }
-  
   if(!doMCMC & !doML) {
     stop('Meaningless call to POUMM. ',
          'At least one of doMCMC or doML should be TRUE.')
   } 
   
-  if(!is.null(removeTips) & length(removeTips)>0) {
+  specMLDefault <- list(
+    parFixed = c(), 
+    parLower = c(alpha = 0, theta = 0, sigma = 0, sigmae = 0), 
+    parUpper = c(alpha = 100, theta = 10, sigma = 20, sigmae = 10),
+    g0 = NA, g0Prior = NULL, 
+    tol = 0.001, control = list(factr = 1e8)
+  )
+  
+  if(is.list(specML)) {
+    for(name in names(specMLDefault)) {
+      if(is.null(specML[[name]])) {
+        specML[[name]] <- specMLDefault[[name]]
+      } 
+    } 
+  } else {
+    specML <- specMLDefault
+  }
+  
+  specMCMCDefault <- list(
+    parMapping = function(par) {
+      cbind(par[, 1:2, drop = FALSE], 
+            sqrt(par[, 3:4, drop = FALSE]),
+            NA) 
+    },
+    parInit = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- c(fitML$par[c('alpha', 'theta')], 
+                   fitML$par[c('sigma', 'sigmae')]^2)
+        names(parML) <- c('alpha', 'theta', 'sigma2', 'sigmae2')
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 1),
+        parML,
+        c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 0),
+        c(alpha = 10, theta = 0, sigma2 = 1, sigmae2 = 0),
+        c(alpha = 20, theta = 0, sigma2 = 1, sigmae2 = 1),
+        c(alpha = 100, theta = 0, sigma2 = 1, sigmae2 = 1))
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parPrior = function(par) {
+      if(any(par[, c(1, 3, 4)] < 0)) {
+        -Inf
+      } else {
+        dexp(par[,1], rate = .01, TRUE) + dunif(par[, 2], 0, 100, TRUE)+
+          dexp(par[,3],  rate = .0001, TRUE) + dexp(par[, 4], rate = .01, TRUE)  
+      }
+    },
+    parScale = diag(c(100,  10, 100, 100)),
+    nSamples = 5e4, nAdapt = 1e4, thin = 100, accRate = 0.01, gamma = 0.5, 
+    nChains = 3, samplePrior = TRUE
+  )
+  
+  if(is.list(specMCMC)) {
+    for(name in names(specMCMCDefault)) {
+      if(is.null(specMCMC[[name]])) {
+        specMCMC[[name]] <- specMCMCDefault[[name]]
+      } 
+    } 
+  } else {
+    specMCMC <- specMCMCDefault
+  }
+  
+  result <- list(z = z, tree = tree, removeTips = removeTips, 
+                 divideEdgesBy = divideEdgesBy, 
+                 N = length(tree$tip.label), 
+                 tMax = max(nodeTimes(tree, tipsOnly = TRUE)),
+                 tMean = mean(nodeTimes(tree, tipsOnly = TRUE)), 
+                 specML = specML, specMCMC = specMCMC, 
+                 ...)
+  
+  if(divideEdgesBy != 1) {
+    tree$edge.length <- tree$edge.length/divideEdgesBy
+  }
+  
+  if(!is.null(removeTips) & length(removeTips) > 0) {
     if(!is.character(removeTips)) {
       stop("Remove tips should be a character vector denoting tips to be ",
            "removed from the tree before the model fit.")
@@ -378,44 +432,58 @@ POUMM <- function(
     }
   }
   
+  pruneInfo <- pruneTree(tree)
   
-  # all preprocessing on tree is done, so we generate pruneInfo and define the
-  # loglik function
-  pruneInfo=pruneTree(tree)
-  
-  loglik <- function(par, memo) {
+  # define a loglik function to be called during likelihood maximization as well
+  # as MCMC-sampling. 
+  # the argument par is a named numeric vector with elements "alpha", "theta",
+  # "sigma" and, optionally, "sigmae" and "g0". If not specified, the default
+  # values for the latter two are sigmae = 0 and g0 = NA. If g0 = NA the loglik
+  # funciton finds the value of g0 that maximizes the likelihood, i.e. 
+  # p(z | tree, alpha, theta, sigma, sigmae, g0), or if g0Prior specifiies a 
+  # normal distribution with mean g0Prior$mean and variance g0Prior$var, 
+  # p(z | tree, alpha, theta, sigma, sigmae, g0) x N(g0 | g0Prior$mean,
+  # g0Prior$var). 
+  loglik <- function(par, memo = NULL) {
     if(parDigits >= 0) {
       par <- round(par, parDigits)
     }
-    val <- do.call(likPOUMMGivenTreeVTips, 
-                   c(list(z, tree),
-                     as.list(par), list(log = TRUE, distgr = distgr), 
-                     list(pruneInfo = pruneInfo, usempfr = usempfr), 
-                     list(...)))
-    if(is.na(val) | is.nan(val) | is.infinite(val)) {
-      val <- -1e20
+    
+    val <- 
+      do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(par), list(
+        g0Prior = specML$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
+        usempfr = usempfr, ...)))
+    
+    if(is.na(val) | is.infinite(val)) {
+      val <- -1e100
+      attr(val, "g0") <- specML$g0
+      attr(val, "g0LogPrior") <- NA
     } 
     
-    valMemo <- mget('val', memo, ifnotfound = list(-Inf))$val
+    if(!is.null(memo)) {
+      valMemo <- mget('val', memo, ifnotfound = list(-Inf))$val  
+    } else {
+      valMemo <- NA
+    }
     
-    if(valMemo + 1 < val) {
-      if(usempfr <= 0) {
+    if(!is.na(valMemo) & valMemo + 1 < val) {
+      if(usempfr == 0) {
         if(verbose) {
           print(par)
-          cat('Forcing mpfr on: ', val, '>', valMemo)
+          cat('Rmpfr check on: ', val, '>', valMemo)
         }
-        val <- do.call(likPOUMMGivenTreeVTips, 
-                       c(list(z, tree), 
-                         as.list(par), list(log = TRUE, distgr = distgr), 
-                         list(pruneInfo = pruneInfo, usempfr = usempfr + 1), 
-                         list(...)))
+        
+        val <- 
+          do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(par), list(
+            g0Prior = specML$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
+            usempfr = usempfr + 1, ...)))
         
         if(verbose) {
           cat('. New: ', val, '.\n')
         }  
       }
     }
-    setattr(val, 'par', par)
+    attr(val, 'par') <- par
     val
   }
   
@@ -425,32 +493,30 @@ POUMM <- function(
     if(verbose) {
       print('Performing ML-fit...')
     }
-    mlfit <- maxLikPOUMMGivenTreeVTips(
-      loglik, parFixed = parFixed, parLower = parLower, parUpper = parUpper, 
-      tol = tol, control = control,
-      verbose = verbose)
+    fitML <- do.call(maxLikPOUMMGivenTreeVTips, 
+                     c(list(loglik = loglik, verbose = verbose), specML))
     
-    result[['ML']] <- mlfit
+    result[['fitML']] <- fitML
   } 
   
   if(doMCMC) {
     if(verbose) {
       print('Performing MCMC-fit...')
     }
-    mcmcfit <- mcmcPOUMMGivenPriorTreeVTips(
-      loglik, parPrior = parPrior, parToATSSe = parToATSSe, parInit = parInit, 
-      scale = scale, n.mcmc = n.mcmc, n.adapt = n.adapt, 
-      thin = thin, acc.rate = acc.rate, gamma = gamma, n.chains = n.chains,
-      samplePrior = samplePrior, verbose = verbose)
+    
+    fitMCMC <- do.call(
+      mcmcPOUMMGivenPriorTreeVTips, 
+      c(list(loglik = loglik, fitML = fitML, verbose = verbose), specMCMC))
     
     if(doML) {
       # if the max likelihood from the MCMC is bigger than the max likelihood 
       # from the ML-fit, it is likely that the ML fit got stuck in a local 
       # optimum, so we correct it.
-      if(mlfit$value < mcmcfit$valueMaxLoglik) {
-        parInit <- as.vector(mcmcfit$parMaxLoglik)
+      if(fitML$value < fitMCMC$valueMaxLoglik) {
+        parInit <- as.vector(fitMCMC$parMaxLoglik)
         
-        if(all(parInit >= parLower) & all(parInit <= parUpper)) {
+        if(all(parInit[1:4] >= specML$parLower) & 
+           all(parInit[1:4] <= specML$parUpper)) {
           if(verbose) {
             print("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
           }
@@ -461,15 +527,14 @@ POUMM <- function(
           # alpha found by the MCMC fit.
           
           phi <- 0.61803 # golden section ratio
-          a <- parLower["alpha"]
-          parUpper["alpha"] <- (parInit[1] - a) / (1 - phi) + a
+          a <- specML$parLower["alpha"]
+          specML$parUpper["alpha"] <- (parInit[1] - a) / (1 - phi) + a
+          specML$parInit <- parInit[1:4]
           
-          mlfit2 <- maxLikPOUMMGivenTreeVTips(
-            loglik, parFixed = parFixed, 
-            parLower = parLower, parUpper = parUpper, parInit = parInit,
-            tol = tol, control = control,
-            verbose = verbose)
-          result[['ML']] <- mlfit2
+          fitML2 <- do.call(maxLikPOUMMGivenTreeVTips, 
+                  c(list(loglik = loglik, verbose = verbose), specML))
+          
+          result[['fitML']] <- fitML2
           
         } else {
           warning("The MCMC-fit found a better likelihood outside of the search-region of the ML-fit.")
@@ -477,7 +542,7 @@ POUMM <- function(
       }
     }
     
-    result[['MCMC']] <- mcmcfit
+    result[['fitMCMC']] <- fitMCMC
   }
   class(result) <- c('POUMM', class(result))
   result
@@ -499,12 +564,13 @@ PMM <- function(
   parFixed = c(), 
   parLower = c(sigma = 0, sigmae = 0), 
   parUpper = c(sigma = 20, sigmae = 10),
+  g0 = NA, g0Prior = NULL, 
   tol = 0.001, control = list(factr = 1e8),  
   verbose = FALSE, 
   
   doMCMC = TRUE, 
-  parToATSSe = function(par) {
-    cbind(0, 0, sqrt(par[,1:2,drop = FALSE]))
+  parMapping = function(par) {
+    cbind(0, 0, sqrt(par[,1:2,drop = FALSE]), NA)
   },
   parInit = function(chainNo) {
     rbind(c(sigma2 = 1, sigmae2 = 1),
@@ -519,10 +585,10 @@ PMM <- function(
       dexp(par[,1],  rate = 10^-4, TRUE)+dexp(par[,2], rate = 10^-4, TRUE)
     }
   },
-  scale = rbind(c(0.02,  0.00),
+  parScale = rbind(c(0.02,  0.00),
                 c(0.00,  0.02)), 
-  n.mcmc = 2.2e6, n.adapt = 2e5, thin = 100, acc.rate = 0.01, 
-  gamma = 0.5, n.chains = 2, samplePrior = TRUE) {
+  nSamples = 2.2e6, nAdapt = 2e5, thin = 100, accRate = 0.01, 
+  gamma = 0.5, nChains = 2, samplePrior = TRUE) {
   
   parFixed <-  c(alpha = 0, theta = 0, parFixed)
   parLower <- c(alpha = 0, theta = 0, parLower)
@@ -530,22 +596,23 @@ PMM <- function(
   
   res <- POUMM(
     z = z, tree = tree, zName = zName, treeName = treeName, 
-    removeTips = removeTips, distgr = distgr, divideEdgesBy = divideEdgesBy, 
+    removeTips = removeTips, divideEdgesBy = divideEdgesBy, 
     parDigits = parDigits, usempfr = usempfr, ..., 
     
     doML = doML, 
     parFixed = parFixed, 
     parLower = parLower, 
     parUpper = parUpper,
+    g0 = g0, g0Prior = g0Prior,
     verbose = verbose,
     
     doMCMC = doMCMC,
-    parToATSSe = parToATSSe,
+    parMapping = parMapping,
     parInit = parInit,
     parPrior = parPrior,
-    scale = scale,
-    n.mcmc = n.mcmc, n.adapt = n.adapt, thin = thin, acc.rate = acc.rate, 
-    gamma = gamma, n.chains = n.chains, samplePrior = samplePrior)
+    parScale = parScale,
+    nSamples = nSamples, nAdapt = nAdapt, thin = thin, accRate = accRate, 
+    gamma = gamma, nChains = nChains, samplePrior = samplePrior)
   class(res) <- c('PMM', class(res))
   res
 }
@@ -554,14 +621,14 @@ PMM <- function(
 #' 
 #' @param object a POUMM object returned by POUMM or PMM functions.
 #' @param ... Not used, but declared for consistency with the generic method summary.
-#' @param start.MCMC,end.MCMC integers indicating the range of the MCMC chains
+#' @param startMCMC,endMCMC integers indicating the range of the MCMC chains
 #' to be used for the analysis (excluding the initial warm-up phase)
-#' @param thin.MCMC thinning interval of the MCMC chain to avoid strong 
+#' @param thinMCMC thinning interval of the MCMC chain to avoid strong 
 #' autocorrelation between sampled elements;
-#' @param stats.MCMC a named list of functions of the form function(par) { number },
+#' @param statsMCMC a named list of functions of the form function(par) { number },
 #' which are called for each sample of each mcmc chain in object. Defaults to 
-#' a call of mcmcStats(object) returning a list of statistics functions relevant for 
-#' the type of object (either a POUMM or a PMM). See also mcmcStats.
+#' a call of statisticsMCMC(object) returning a list of statistics functions relevant for 
+#' the type of object (either a POUMM or a PMM). See also statisticsMCMC.
 #' @param mode a character indicating the desired format of the returned summary 
 #' as follows:
 #' 'short' - a data.table with the ML and MCMC estimates of heritability, 
@@ -574,8 +641,8 @@ PMM <- function(
 #' 
 #' @export
 summary.POUMM <- function(object, ...,
-                          start.MCMC = 2e5, end.MCMC = 1.2e6, thin.MCMC = 1000, 
-                          stats.MCMC = mcmcStats(object),
+                          startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
+                          statsMCMC = statisticsMCMC(object),
                           mode = c('short', 'long', 'expert')) {
   mode <- tolower(mode)
   
@@ -583,181 +650,191 @@ summary.POUMM <- function(object, ...,
   tMax <- max(tipTimes)
   tMean <- mean(tipTimes)
   
-  if(!is.null(object$ML)) {
+  if(!is.null(object$fitML)) {
     anlist <- list(
-      H2e.ML = data.table(stat = 'H2e', min.ML = 0, max.ML = 1, 
-                        est.ML = H2e(z = object$z, sigmae = object$ML$par['sigmae'])),
+      H2e.ML = data.table(stat = 'H2e', lowerML = 0, upperML = 1, 
+                          estML = H2e(z = object$z, sigmae = object$fitML$par['sigmae'])),
       
-      H2tMean.ML = data.table(stat = 'H2tMean', min.ML = 0, max.ML = 1, 
-                            est.ML = H2(alpha = object$ML$par[1], 
-                                            sigma = object$ML$par[3], 
-                                            sigmae = object$ML$par[4],
-                                            t = object$tMean /
-                                              object$divideEdgesBy,
-                                            tm = 0)),
+      H2tMean.ML = data.table(stat = 'H2tMean', lowerML = 0, upperML = 1, 
+                              estML = H2(alpha = object$fitML$par[1], 
+                                          sigma = object$fitML$par[3], 
+                                          sigmae = object$fitML$par[4],
+                                          t = object$tMean /
+                                            object$divideEdgesBy,
+                                          tm = 0)),
       
-      H2tMax.ML = data.table(stat = 'H2tMax', min.ML = 0, max.ML = 1, 
-                           est.ML = H2(alpha = object$ML$par[1], 
-                                           sigma = object$ML$par[3], 
-                                           sigmae = object$ML$par[4],
-                                           t = object$tMax /
-                                             object$divideEdgesBy,
-                                           tm = 0)),
+      H2tMax.ML = data.table(stat = 'H2tMax', lowerML = 0, upperML = 1, 
+                             estML = H2(alpha = object$fitML$par[1], 
+                                         sigma = object$fitML$par[3], 
+                                         sigmae = object$fitML$par[4],
+                                         t = object$tMax /
+                                           object$divideEdgesBy,
+                                         tm = 0)),
       
-      H2tInf.ML = data.table(stat = 'H2tInf', min.ML = 0, max.ML = 1, 
-                           est.ML = H2(alpha = object$ML$par[1], 
-                                           sigma = object$ML$par[3], 
-                                           sigmae = object$ML$par[4],
-                                           t = Inf)),
+      H2tInf.ML = data.table(stat = 'H2tInf', lowerML = 0, upperML = 1, 
+                             estML = H2(alpha = object$fitML$par[1], 
+                                         sigma = object$fitML$par[3], 
+                                         sigmae = object$fitML$par[4],
+                                         t = Inf)),
       
-      loglik.ML = data.table(stat = 'loglik', min.ML = -Inf, max.ML = Inf, 
-                           est.ML = object$ML$value),
+      loglik.ML = data.table(stat = 'loglik', lowerML = -Inf, upperML = Inf, 
+                             estML = object$fitML$value),
       alpha.ML = data.table(stat = 'alpha', 
-                          min.ML = object$ML$parLower[1], 
-                          max.ML = object$ML$parUpper[1],
-                          est.ML = object$ML$par[1]),
+                            lowerML = object$fitML$parLower[1], 
+                            upperML = object$fitML$parUpper[1],
+                            estML = object$fitML$par[1]),
       theta.ML = data.table(stat = 'theta', 
-                          min.ML = object$ML$parLower[2], 
-                          max.ML = object$ML$parUpper[2],
-                          est.ML = object$ML$par[2]),
+                            lowerML = object$fitML$parLower[2], 
+                            upperML = object$fitML$parUpper[2],
+                            estML = object$fitML$par[2]),
       sigma2.ML = data.table(stat = 'sigma2', 
-                           min.ML = object$ML$parLower[3]^2, 
-                           max.ML = object$ML$parUpper[3]^2,
-                           est.ML = object$ML$par[3]^2),
+                             lowerML = object$fitML$parLower[3]^2, 
+                             upperML = object$fitML$parUpper[3]^2,
+                             estML = object$fitML$par[3]^2),
       sigmae2.ML = data.table(stat = 'sigmae2', 
-                            min.ML = object$ML$parLower[4]^2, 
-                            max.ML = object$ML$parUpper[4]^2,
-                            est.ML = object$ML$par[4]^2),
+                              lowerML = object$fitML$parLower[4]^2, 
+                              upperML = object$fitML$parUpper[4]^2,
+                              estML = object$fitML$par[4]^2),
       sigmaG2tMean.ML = data.table(stat  =  'sigmaG2tMean',
-                                 min.ML = varOU(alpha = object$ML$parUpper[1], 
-                                              sigma = object$ML$parLower[3], 
-                                              t = object$tMean /
-                                                object$divideEdgesBy),
-                                 max.ML = varOU(alpha = object$ML$parLower[1], 
-                                              sigma = object$ML$parUpper[3], 
-                                              t = object$tMean /
-                                                object$divideEdgesBy),
-                                 est.ML = varOU(alpha = object$ML$par[1], 
-                                              sigma = object$ML$par[3], 
-                                              t = object$tMean /
-                                                object$divideEdgesBy)),
+                                   lowerML = varOU(alpha = object$fitML$parUpper[1], 
+                                                  sigma = object$fitML$parLower[3], 
+                                                  t = object$tMean /
+                                                    object$divideEdgesBy),
+                                   upperML = varOU(alpha = object$fitML$parLower[1], 
+                                                  sigma = object$fitML$parUpper[3], 
+                                                  t = object$tMean /
+                                                    object$divideEdgesBy),
+                                   estML = varOU(alpha = object$fitML$par[1], 
+                                                  sigma = object$fitML$par[3], 
+                                                  t = object$tMean /
+                                                    object$divideEdgesBy)),
       sigmaG2tMax.ML=data.table(stat='sigmaG2tMax',
-                                min.ML = varOU(alpha=object$ML$parUpper[1], 
-                                                    sigma=object$ML$parLower[3], 
-                                                    t=object$tMax /
-                                                      object$divideEdgesBy),
-                                max.ML = varOU(alpha = object$ML$parLower[1], 
-                                                    sigma = object$ML$parUpper[3], 
-                                                    t = object$tMax /
-                                                      object$divideEdgesBy),
-                                est.ML = varOU(alpha = object$ML$par[1], 
-                                             sigma = object$ML$par[3], 
-                                             t = object$tMax /
-                                               object$divideEdgesBy)),
+                                lowerML = varOU(alpha=object$fitML$parUpper[1], 
+                                               sigma=object$fitML$parLower[3], 
+                                               t=object$tMax /
+                                                 object$divideEdgesBy),
+                                upperML = varOU(alpha = object$fitML$parLower[1], 
+                                               sigma = object$fitML$parUpper[3], 
+                                               t = object$tMax /
+                                                 object$divideEdgesBy),
+                                estML = varOU(alpha = object$fitML$par[1], 
+                                               sigma = object$fitML$par[3], 
+                                               t = object$tMax /
+                                                 object$divideEdgesBy)),
       sigmaG2tInf.ML=data.table(stat = 'sigmaG2tInf',
-                                min.ML = varOU(alpha = object$ML$parUpper[1], 
-                                             sigma = object$ML$parLower[3],
-                                             t = Inf),
-                                max.ML = varOU(alpha = object$ML$parLower[1], 
-                                             sigma = object$ML$parUpper[3],
-                                             t = Inf),
-                                est.ML = varOU(alpha = object$ML$par[1], 
-                                             sigma = object$ML$par[3],
-                                             t = Inf)),
-      g0.ML=data.table(stat='g0', min.ML=-Inf, max.ML=Inf,
-                       est.ML=object$ML$g0)
+                                lowerML = varOU(alpha = object$fitML$parUpper[1], 
+                                               sigma = object$fitML$parLower[3],
+                                               t = Inf),
+                                upperML = varOU(alpha = object$fitML$parLower[1], 
+                                               sigma = object$fitML$parUpper[3],
+                                               t = Inf),
+                                estML = varOU(alpha = object$fitML$par[1], 
+                                               sigma = object$fitML$par[3],
+                                               t = Inf)),
+      g0.ML=data.table(stat='g0', lowerML=-Inf, upperML=Inf,
+                       estML=object$fitML$g0)
     )
   } else {
     anlist <- list(
-      H2e.ML=data.table(stat='H2e', min.ML=0, max.ML=1, 
-                        est.ML=NA),
+      H2e.ML=data.table(stat='H2e', lowerML=0, upperML=1, 
+                        estML=NA),
       
-      H2tMean.ML=data.table(stat='H2tMax', min.ML=0, max.ML=1, 
-                            est.ML=NA),
+      H2tMean.ML=data.table(stat='H2tMax', lowerML=0, upperML=1, 
+                            estML=NA),
       
-      H2tMax.ML=data.table(stat='H2tMax', min.ML=0, max.ML=1, 
-                           est.ML=NA),
+      H2tMax.ML=data.table(stat='H2tMax', lowerML=0, upperML=1, 
+                           estML=NA),
       
-      H2tInf.ML=data.table(stat='H2tInf', min.ML=0, max.ML=1, 
-                           est.ML=NA),
-      loglik.ML=data.table(stat='loglik', min.ML=NA, max.ML=NA, 
-                           est.ML=NA),
-      alpha.ML=data.table(stat='alpha', min.ML=NA, max.ML=NA,
-                          est.ML=NA),
-      theta.ML=data.table(stat='theta', min.ML=NA, max.ML=NA,
-                          est.ML=NA),
-      sigma2.ML=data.table(stat='sigma2', min.ML=NA, max.ML=NA,
-                           est.ML=NA),
-      sigmae2.ML=data.table(stat='sigmae2', min.ML=NA, max.ML=NA,
-                            est.ML=NA),
+      H2tInf.ML=data.table(stat='H2tInf', lowerML=0, upperML=1, 
+                           estML=NA),
+      loglik.ML=data.table(stat='loglik', lowerML=NA, upperML=NA, 
+                           estML=NA),
+      alpha.ML=data.table(stat='alpha', lowerML=NA, upperML=NA,
+                          estML=NA),
+      theta.ML=data.table(stat='theta', lowerML=NA, upperML=NA,
+                          estML=NA),
+      sigma2.ML=data.table(stat='sigma2', lowerML=NA, upperML=NA,
+                           estML=NA),
+      sigmae2.ML=data.table(stat='sigmae2', lowerML=NA, upperML=NA,
+                            estML=NA),
       
-      sigmaG2tMean.ML=data.table(stat='sigmaG2tMean', min.ML=NA, max.ML=NA, 
-                                 est.ML=NA),
-      sigmaG2tMax.ML=data.table(stat='sigmaG2tMax', min.ML=NA, max.ML=NA, 
-                                est.ML=NA),
-      sigmaG2tInf.ML=data.table(stat='sigmaG2tInf', min.ML=NA, max.ML=NA, 
-                                est.ML=NA),
-      g0.ML=data.table(stat='g0', min.ML=NA, max.ML=NA,
-                       est.ML=NA)
+      sigmaG2tMean.ML=data.table(stat='sigmaG2tMean', lowerML=NA, upperML=NA, 
+                                 estML=NA),
+      sigmaG2tMax.ML=data.table(stat='sigmaG2tMax', lowerML=NA, upperML=NA, 
+                                estML=NA),
+      sigmaG2tInf.ML=data.table(stat='sigmaG2tInf', lowerML=NA, upperML=NA, 
+                                estML=NA),
+      g0.ML=data.table(stat='g0', lowerML=NA, upperML=NA,
+                       estML=NA)
     )
   }
   
   an.ML <- rbindlist(anlist)
   an.ML[, N:=object$N]
-  setcolorder(an.ML, c('stat', 'N', 'min.ML', 'max.ML', 'est.ML'))
+  setcolorder(an.ML, c('stat', 'N', 'lowerML', 'upperML', 'estML'))
   
-  if(!is.null(object$MCMC)) {
-    anlist <- lapply(1:length(stats.MCMC), function(i) {
-      analyseMCMCs(object$MCMC$chains, 
-                   stat=stats.MCMC[[i]], statName=names(stats.MCMC)[i],
-                   start=start.MCMC, end=end.MCMC, thin=thin.MCMC, 
+  if(!is.null(object$fitMCMC)) {
+    if(is.na(startMCMC)) {
+      startMCMC <- object$fitMCMC$nSamples / 10
+    } 
+    if(is.na(endMCMC)) {
+      endMCMC <- object$fitMCMC$nSamples
+    } 
+    
+    anlist <- lapply(1:length(statsMCMC), function(i) {
+      analyseMCMCs(object$fitMCMC$chains, 
+                   stat=statsMCMC[[i]], statName=names(statsMCMC)[i],
+                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
                    as.dt=TRUE)
     })
     
     anlist <- c(anlist, list(
-      analyseMCMCs(object$MCMC$chains, 
+      analyseMCMCs(object$fitMCMC$chains, 
                    stat=NULL, statName='logpost',
-                   start=start.MCMC, end=end.MCMC, thin=thin.MCMC, 
+                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
                    as.dt=TRUE),
-      analyseMCMCs(object$MCMC$chains, 
-                   stat=NULL, statName='loglik', logprior=object$MCMC$parPrior,
-                   start=start.MCMC, end=end.MCMC, thin=thin.MCMC, 
+      analyseMCMCs(object$fitMCMC$chains, 
+                   stat=NULL, statName='loglik', logprior=object$fitMCMC$parPrior,
+                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
                    as.dt=TRUE),
-      analyseMCMCs(object$MCMC$chains, 
-                   stat=NULL, statName='g0', logprior=object$MCMC$parPrior,
-                   start=start.MCMC, end=end.MCMC, thin=thin.MCMC, 
+      analyseMCMCs(object$fitMCMC$chains, 
+                   stat=NULL, statName='g0', logprior=object$fitMCMC$parPrior,
+                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
                    as.dt=TRUE)
     ))
     
     an.MCMC <- rbindlist(anlist)
-    an.MCMC[, samplePrior:=object$MCMC$samplePrior]
-  
+    an.MCMC[, samplePrior:=object$fitMCMC$samplePrior]
+    
     if(mode[1]!='expert') {
       an.MCMC <- an.MCMC[, 
-                         list(Mode=Mode[[which.max(sapply(Mode, function(m) 
+                         list(Mode = Mode[[which.max(sapply(Mode, function(m) 
                            attr(m, 'logpost')))]],
-                           Mean=mean(unlist(Mean)),
-                           HPD=list(colMeans(do.call(rbind, HPD))),
-                           HPD50=list(colMeans(do.call(rbind, HPD50))),
-                           start=start(mcs), 
-                           end=end(mcs), 
-                           thin=thin(mcs),
-                           ESS=sum(unlist(ESS)), 
-                           G.R.=if(length(mcs)>1) 
+                           Mean = mean(unlist(Mean)),
+                           HPD = list(colMeans(do.call(rbind, HPD))),
+                           HPD50 = list(colMeans(do.call(rbind, HPD50))),
+                           start = start(mcs), 
+                           end = end(mcs), 
+                           thin = thin(mcs),
+                           ESS = sum(unlist(ESS)), 
+                           G.R. = if(length(mcs)>1) { 
                              gelman.diag(mcs, autoburnin=FALSE)$psrf[1] 
-                           else as.double(NA), 
-                           n.chains=length(mcs),
-                           mcmc=mcmc.list(mcmc(do.call(rbind, mcs), thin=thin(mcs)))),
+                           } else {
+                             as.double(NA)
+                           },
+                           nChains = length(mcs),
+                           mcmc = mcmc.list(mcmc(do.call(rbind, mcs), thin=thin(mcs)))),
                          by=list(stat, samplePrior)]
     }
     
-    if(mode[1]=='short') {
-      an.MCMC <- an.MCMC[samplePrior==FALSE, list(stat, Mode, Mean, HPD, HPD50)]
-    } else if(mode[1]=='long') {
-      an.MCMC <- an.MCMC[samplePrior==FALSE, 
-                         list(stat, Mode, Mean, HPD, HPD50, start, end, thin, ESS, G.R., n.chains, mcmc)]
-    } else if(mode[1]=='expert') {
-      an.MCMC <- an.MCMC[, list(stat, samplePrior, Mode, Mean, HPD, HPD50, start, end, thin, ESS, mcmc=mcs)]
+    if(mode[1] == 'short') {
+      an.MCMC <- an.MCMC[samplePrior == FALSE, 
+                         list(stat, Mode, Mean, HPD, HPD50, ESS, G.R., nChains)]
+    } else if(mode[1] == 'long') {
+      an.MCMC <- an.MCMC[samplePrior == FALSE, 
+                         list(stat, Mode, Mean, HPD, HPD50, start, end, thin, ESS, G.R., nChains, mcmc)]
+    } else if(mode[1] == 'expert') {
+      an.MCMC <- an.MCMC[, list(stat, samplePrior, Mode, Mean, HPD, HPD50, start, end, thin, ESS, mcmc = mcs)]
     } else {
       warning(paste('mode should be one of "short", "long" or "expert", but was', mode[1], '.'))
     }
@@ -777,7 +854,8 @@ summary.POUMM <- function(object, ...,
       res <- an.MCMC
     }
   } else {
-    res <- list(ML=an.ML, MCMC=an.MCMC)
+    res <- list(specML = object$specML, specMCMC = object$specMCMC, 
+                ML = an.ML, MCMC = an.MCMC)
   }
   
   class(res) <- c('POUMM.summary', class(res))
@@ -790,81 +868,81 @@ summary.POUMM <- function(object, ...,
 #'
 #' @details This is a generic method.
 #' @export
-mcmcStats <- function(object) {
-  UseMethod('mcmcStats')
+statisticsMCMC <- function(object) {
+  UseMethod('statisticsMCMC')
 }
 
-#' @describeIn mcmcStats Relevant statistics from the sampled parameters of a
+#' @describeIn statisticsMCMC Relevant statistics from the sampled parameters of a
 #'   POUMM fit
 #' @export
-mcmcStats.POUMM <- function(object) {
+statisticsMCMC.POUMM <- function(object) {
   list(
     H2e = function(par) H2e(z = object$z,
-                                sigmae = object$MCMC$parToATSSe(par)[,4]),
-    H2tInf = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                                  sigma = object$MCMC$parToATSSe(par)[,3],
-                                  sigmae = object$MCMC$parToATSSe(par)[,4],
-                                  t = Inf),
-    H2tMax = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                                  sigma = object$MCMC$parToATSSe(par)[,3],
-                                  sigmae = object$MCMC$parToATSSe(par)[,4],
-                                  t = object$tMax /
-                                    object$divideEdgesBy),
-    H2tMean = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                                   sigma = object$MCMC$parToATSSe(par)[,3],
-                                   sigmae = object$MCMC$parToATSSe(par)[,4],
-                                   t = object$tMean /
-                                     object$divideEdgesBy),
-    alpha = function(par) object$MCMC$parToATSSe(par)[,1],
-    theta = function(par) object$MCMC$parToATSSe(par)[,2],
-    sigma2 = function(par) object$MCMC$parToATSSe(par)[,3]^2,
-    sigmae2 = function(par) object$MCMC$parToATSSe(par)[,4]^2,
-    sigmaG2tMean = function(par) varOU(alpha = object$MCMC$parToATSSe(par)[,1],
-                                       sigma = object$MCMC$parToATSSe(par)[,3],
+                            sigmae = object$fitMCMC$parMapping(par)[,4]),
+    H2tInf = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                              sigma = object$fitMCMC$parMapping(par)[,3],
+                              sigmae = object$fitMCMC$parMapping(par)[,4],
+                              t = Inf),
+    H2tMax = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                              sigma = object$fitMCMC$parMapping(par)[,3],
+                              sigmae = object$fitMCMC$parMapping(par)[,4],
+                              t = object$tMax /
+                                object$divideEdgesBy),
+    H2tMean = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                               sigma = object$fitMCMC$parMapping(par)[,3],
+                               sigmae = object$fitMCMC$parMapping(par)[,4],
+                               t = object$tMean /
+                                 object$divideEdgesBy),
+    alpha = function(par) object$fitMCMC$parMapping(par)[,1],
+    theta = function(par) object$fitMCMC$parMapping(par)[,2],
+    sigma2 = function(par) object$fitMCMC$parMapping(par)[,3]^2,
+    sigmae2 = function(par) object$fitMCMC$parMapping(par)[,4]^2,
+    sigmaG2tMean = function(par) varOU(alpha = object$fitMCMC$parMapping(par)[,1],
+                                       sigma = object$fitMCMC$parMapping(par)[,3],
                                        t = object$tMean /
                                          object$divideEdgesBy),
-    sigmaG2tMax = function(par) varOU(alpha = object$MCMC$parToATSSe(par)[,1],
-                                      sigma = object$MCMC$parToATSSe(par)[,3],
+    sigmaG2tMax = function(par) varOU(alpha = object$fitMCMC$parMapping(par)[,1],
+                                      sigma = object$fitMCMC$parMapping(par)[,3],
                                       t = object$tMax /
                                         object$divideEdgesBy),
-    sigmaG2tInf = function(par) varOU(alpha = object$MCMC$parToATSSe(par)[,1],
-                                      sigma = object$MCMC$parToATSSe(par)[,3],
+    sigmaG2tInf = function(par) varOU(alpha = object$fitMCMC$parMapping(par)[,1],
+                                      sigma = object$fitMCMC$parMapping(par)[,3],
                                       t = Inf))
-
+  
 }
 
-#' @describeIn mcmcStats Relevant statistics from the sampled parameters of a
+#' @describeIn statisticsMCMC Relevant statistics from the sampled parameters of a
 #'   PMM fit
 #' @export
-mcmcStats.PMM <- function(object) {
+statisticsMCMC.PMM <- function(object) {
   list(
     H2e = function(par) H2e(z = object$z,
-                                sigmae = object$MCMC$parToATSSe(par)[,4]),
-    H2tInf = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                              sigma = object$MCMC$parToATSSe(par)[,3],
-                              sigmae = object$MCMC$parToATSSe(par)[,4],
+                            sigmae = object$fitMCMC$parMapping(par)[,4]),
+    H2tInf = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                              sigma = object$fitMCMC$parMapping(par)[,3],
+                              sigmae = object$fitMCMC$parMapping(par)[,4],
                               t = Inf),
-    H2tMax = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                                  sigma = object$MCMC$parToATSSe(par)[,3],
-                                  sigmae = object$MCMC$parToATSSe(par)[,4],
-                                  t = object$tMax /
-                                    object$divideEdgesBy),
-    H2tMean = function(par) H2(alpha = object$MCMC$parToATSSe(par)[,1],
-                                   sigma = object$MCMC$parToATSSe(par)[,3],
-                                   sigmae = object$MCMC$parToATSSe(par)[,4],
-                                   t = object$tMean /
-                                     object$divideEdgesBy),
+    H2tMax = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                              sigma = object$fitMCMC$parMapping(par)[,3],
+                              sigmae = object$fitMCMC$parMapping(par)[,4],
+                              t = object$tMax /
+                                object$divideEdgesBy),
+    H2tMean = function(par) H2(alpha = object$fitMCMC$parMapping(par)[,1],
+                               sigma = object$fitMCMC$parMapping(par)[,3],
+                               sigmae = object$fitMCMC$parMapping(par)[,4],
+                               t = object$tMean /
+                                 object$divideEdgesBy),
     alpha = function(par) rep(0,nrow(par)),
     theta = function(par) rep(0,nrow(par)),
-    sigma2 = function(par) object$MCMC$parToATSSe(par)[,3]^2,
-    sigmae2 = function(par) object$MCMC$parToATSSe(par)[,4]^2,
-    sigmaG2tMean = function(par) varOU(alpha = object$MCMC$parToATSSe(par)[,1],
-                                       sigma = object$MCMC$parToATSSe(par)[,3],
+    sigma2 = function(par) object$fitMCMC$parMapping(par)[,3]^2,
+    sigmae2 = function(par) object$fitMCMC$parMapping(par)[,4]^2,
+    sigmaG2tMean = function(par) varOU(alpha = object$fitMCMC$parMapping(par)[,1],
+                                       sigma = object$fitMCMC$parMapping(par)[,3],
                                        t = object$tMean /
                                          object$divideEdgesBy),
-    sigmaG2tMax = function(par) varOU(alpha = object$MCMC$parToATSSe(par)[,1],
-                                      sigma = object$MCMC$parToATSSe(par)[,3],
+    sigmaG2tMax = function(par) varOU(alpha = object$fitMCMC$parMapping(par)[,1],
+                                      sigma = object$fitMCMC$parMapping(par)[,3],
                                       t = object$tMax /
                                         object$divideEdgesBy))
-
+  
 }

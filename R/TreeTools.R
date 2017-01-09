@@ -304,18 +304,19 @@ sampleNodeIds <- function(tree) {
 }
 
 #'Group tips according to distance from the root
-#'@param tree a phylo object
-#'@param nGroups integer, the desired number of groups (default 15)
-#'@param rootTipDists numeric vector of root to tip distances in the order of 
-#'  tree$tip.label. If not passed, this vector is calculated by the function
-#'  nodeTimes().
+#' @param tree a phylo object
+#' @param nGroups integer, the desired number of groups (default 15)
+#' @param rootTipDists numeric vector of root to tip distances in the order of 
+#'   tree$tip.label. If not passed, this vector is calculated by the function
+#'   nodeTimes().
+#' 
+#' 
 groupByRootDist <- function(tree, nGroups=15, rootTipDists=NULL) {
   N <- length(tree$tip.label)
   if(is.null(rootTipDists))
     rootTipDists <- nodeTimes(tree)[1:N]
   
-  rootTipDistGroups <- cut(rootTipDists, 
-                           breaks=seq(min(rootTipDists), max(rootTipDists), length.out=nGroups))
+  rootTipDistGroups <- cut(rootTipDists, breaks=nGroups, include.lowest = TRUE)
   names(rootTipDistGroups) <- tree$tip.label
   
   groupMeans <- sapply(levels(rootTipDistGroups), function(str) {

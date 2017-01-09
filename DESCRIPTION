@@ -12,18 +12,21 @@ Description: Functions for fast likelihood calculation, maximum likelihood and
     phylogenetic tree.
 License: GPL (>= 2.0)
 LazyData: true
-Depends: 
+Depends:
     R (>= 3.1.0),
-    stats (>= 3.3.1)
+    stats (>= 3.2)
 Imports:
-    ape (>= 3.5),
+    ape (>= 3.3),
     data.table (>= 1.9.6),
     adaptMCMC (>= 1.1),
     coda (>= 0.18-1),
     foreach (>= 1.4.3),
     gsl (>= 1.9-10.2)
-Suggests: 
+Suggests:
     testthat,
     TreeSim (>= 2.2),
-    Rmpfr (>= 0.6.0)
+    Rmpfr (>= 0.6.0),
+    knitr,
+    rmarkdown
 RoxygenNote: 5.0.1
+VignetteBuilder: knitr
