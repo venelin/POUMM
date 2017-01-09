@@ -1,0 +1,127 @@
+---
+title: "First Steps with the Phylogenetic Ornstein-Uhlenbeck Mixed Model"
+author: "Venelin Mitov"
+date: "`r Sys.Date()`"
+output: 
+  rmarkdown::html_vignette:
+    fig_caption: yes
+vignette: >
+  %\VignetteIndexEntry{First Steps with the Phylogenetic Ornstein-Uhlenbeck Mixed Model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+references:
+- id: mitov2016
+  title: The heritability of pahtogen traits - definitions and estimators
+  author:
+  - family: Mitov
+    given: Venelin
+  - family: Stadler
+    given: Tanja
+  container-title: BiorXiv
+  URL: 'https://doi.org/10.1101/058503'
+  DOI: 10.1101/058503
+  type: article-journal
+  issued:
+    year: 2016
+    month: 6
+- id: stadler2015
+  title: 'TreeSim: Simulating Phylogenetic Trees'
+  author:
+  - family: Stadler
+    given: Tanja
+  container-title: CRAN
+  URL: 'https://CRAN.R-project.org/package=TreeSim'
+  issued:
+    year: 2015
+---
+
+```{r setup, include = FALSE}
+# Make results reproducible
+set.seed(1)
+library(ggplot2)
+library(data.table)
+```
+Here, we introduce the R-package **poumm** - an implementation of the Pylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **poumm** package can be used to answer the following questions:
+
+* Is the POUMM an appropriate model for the data?
+* Does the trait evolve neutrally along the tree, or rather, under stabilising selection?
+* To what extent are the observed trait-values governed by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+
+In the first section below, we illustrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how simple diagnostics and plots can be used to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC as well as the consistency of the ML and the MCMC fits. Once this is done, we go forward to assess the consistency of the POUMM fit with the "true" model parameters set at the beginning of the simulation. 
+
+In the second section we use variants of the toy-simulation to show how the summary of a POUMM fit can be used to answer each of the questions stated above. 
+
+In the last section, we discuss common cases, where the POUMM is not the most appropriate method to analyse the data, and provide links to more relevant software packages.
+
+# Simulating trait evolution under the POUMM 
+First, we specify the parameters of the POUMM simulation: 
+```{r}
+g0 <- 0           
+alpha <- 1        
+theta <- 2        
+sigma <- 0.25     
+sigmae <- 0.25    
+```
+
+We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `poumm::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
+
+```{r, echo=FALSE, fig.height=4.4, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
+tStep <- 0.01
+t <- seq(0, 4, by = tStep)
+
+plot(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g")
+lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
+
+lines(t, poumm::rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
+lines(t, poumm::rTrajectoryOU(g0, tStep, alpha*2, theta, 0, length(t)), lty = 2, col = "magenta")
+
+lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue")
+
+abline(h=theta, lty = 3, col = "darkgrey")
+
+legend("bottomright", 
+       legend = c(expression(list(alpha == 1, theta == 2, sigma == 0.25)),
+                  expression(list(alpha == 1, theta == 2, sigma == 0.5)),
+                  expression(list(alpha == 1, theta == 2, sigma == 0)),
+                  
+                  expression(list(alpha == 2, theta == 2, sigma == 0.25)),
+                  expression(list(alpha == 2, theta == 2, sigma == 0)),
+                  
+                  expression(theta == 2)),
+       lty = c(1, 1, 2, 1, 2, 3), 
+       col = c("black", "blue", "black", "magenta", "magenta", "darkgrey"))
+```
+
+
+The POUMM models the evolution of a continuous trait, $z$, along a phylogenetic tree, assuming that $z$ is the sum of a genetic (heritable) component, $g$, and an independent non-heritable (environmental) component, $e\sim N(0,\sigma_e^2)$. At every branching in the tree, the daughter lineages inherit the $g$-value of their parent, adding their own environmental component $e$. The POUMM assumes the genetic component, $g$, evolves along each lineage according to an OU-process with initial state the $g$ value inherited from the parent-lineage and global parameters $\alpha$, $\theta$ and $\sigma$. 
+
+Once the POUMM parameters are specified, we use the **TreeSim** R-package [@stadler2015] to generate a random birth-death tree with 200 tips:
+
+```{r, results="hide"}
+# Number of tips
+N <- 200
+tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 2, deathsky = 1, timesky=c(0, Inf), sampprobsky = 1)[[1]]
+```
+
+We now simulate a trait along the tree and plot the resulting tree using a color scale for the trait values.
+
+```{r, fig.show = "hold", fig.height=4.4, fig.width=7}
+g <- poumm::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
+e <- rnorm(length(g), 0, sigmae)
+z <- g+e
+
+phytools::plotBranchbyTrait(tree, z, mode = "nodes", xlims = c(0,3), legend = FALSE, show.tip.label = FALSE, show.node.label = FALSE)
+
+tipGroups <- poumm:::groupByRootDist(tree, nGroups = 5)
+data <- data.table(z = z[1:N], t = tipGroups$rootTipDists, group = tipGroups$rootTipDistGroups)
+ggplot(data = data, aes(x = t, y = z, group = group)) + geom_boxplot()
+```
+
+In reality, none of the components $g$ and $e$ can be measured at any point on the tree their sum, $z = g + e$, is observed for each tip in the phylogeny. 
+
+```{r}
+fitPOUMM <- POUMM(z, tree, verbose = TRUE)
+```
+
+
+# References

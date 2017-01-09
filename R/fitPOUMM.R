@@ -7,7 +7,7 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 
   val <- f(par, memo = memo, ...)
   par <- attr(val, 'par', exact = TRUE)
-  
+
   if(valMemo < val) {
     assign('par', par, pos = memo)
     assign('val', val, pos = memo)
@@ -47,12 +47,69 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #'   parameters passed
 #'   
 #' @importFrom stats optim optimise runif
-#' @aliases maxLikPOUMMGivenTreeVTips ml.poumm
-maxLikPOUMMGivenTreeVTips <- ml.poumm <- function(
+maxLikPOUMMGivenTreeVTips <- function(
+  loglik, parLower, parUpper, parInit, g0 = NA, g0Prior = NULL,
+  control=list(factr = 1e8, fnscale = -1), 
+  verbose = FALSE) {
+  if(is.null(parLower) | is.null(parUpper)) {
+    stop("parLower and/or parUpper are NULL.")
+  }
+  
+  if(is.null(parInit)) {
+    parInit <- (parLower + parUpper) / 2
+  } 
+  
+  if(!(all(parInit >= parLower) & all(parInit <= parUpper))) {
+    stop("All parameters in parInit should be between parLower and parUpper.")
+  }
+  
+  if(is.null(control)) {
+    control <- list()
+  }
+  
+  # ensure that optim does maximization.
+  control$fnscale <- -1
+  
+  memoMaxLoglik <- new.env()
+  fnForOptim <- function(par) {
+    ll <- memoiseMax(
+      loglik, par = c(par, g0 = g0), memo = memoMaxLoglik, verbose = verbose)
+    g0LogPrior <- attr(ll, "g0LogPrior")
+    
+    if(is.finite(g0LogPrior)) {
+      ll + g0LogPrior
+    } else {
+      ll
+    }
+  }
+  
+  if(length(parInit) > 0) {
+    res <- optim(fn = fnForOptim, 
+                 par = parInit, lower = parLower, upper = parUpper, 
+                 method = 'L-BFGS-B', control = control)
+  } else {
+    stop("ML-fit: parInit has zero length.")
+  }
+  
+  maxPar <- get("par", pos = memoMaxLoglik)
+  maxValue <- get("val", pos = memoMaxLoglik)
+  callCount <- get("count", pos = memoMaxLoglik)
+  
+  list(par = maxPar,
+       value = maxValue, 
+       g0 = attr(maxValue, which="g0", exact = TRUE), 
+       g0LogPrior = attr(maxValue, which="g0LogPrior", exact = TRUE), 
+       count = callCount, parLower=parLower, parUpper=parUpper, 
+       control=control)
+}
+
+# Old likelihood optimizer, which used optimize on alpha with optim on the remaining parameters. 
+ml.poumm <- function(
   loglik, parFixed=c(), 
   parLower=c(alpha=0, theta=0, sigma=0, sigmae=0), 
   parUpper=c(alpha=100, theta=10, sigma=20, sigmae=10),
-  parInit = (parLower + parUpper) / 2,
+  parInit = NULL,
+  g0 = NA, g0Prior = NULL, 
   tol=0.001, control=list(factr = 1e8, fnscale = -1),  
   verbose=FALSE) {
   
@@ -96,7 +153,16 @@ maxLikPOUMMGivenTreeVTips <- ml.poumm <- function(
     names(alpha) <- "alpha"
     parFull <- 
       c(alpha, par, parFixedNoAlpha)[c("alpha", "theta", "sigma", "sigmae")]
-    memoiseMax(loglik, par = parFull, memo = memoMaxLoglik, verbose = verbose)
+    
+    ll <- memoiseMax(
+      loglik, par = c(parFull, g0 = g0), memo = memoMaxLoglik, verbose = verbose)
+    g0LogPrior <- attr(ll, "g0LogPrior")
+    
+    if(is.finite(g0LogPrior)) {
+      ll + g0LogPrior
+    } else {
+      ll
+    }
   }
   
   # This is going to be called by optimise or by this code if alpha is fixed by 
@@ -164,7 +230,9 @@ maxLikPOUMMGivenTreeVTips <- ml.poumm <- function(
   callCount <- get("count", pos = memoMaxLoglik)
   
   list(par = c(maxPar, parFixed)[c('alpha', 'theta', 'sigma', 'sigmae')],
-       value = maxValue, g0 = attr(maxValue, which="grmax", exact = TRUE), 
+       value = maxValue, 
+       g0 = attr(maxValue, which="g0", exact = TRUE), 
+       g0LogPrior = attr(maxValue, which="g0LogPrior", exact = TRUE), 
        count = callCount, 
        parFixed=parFixed, parLower=parLower, parUpper=parUpper, 
        control=control)
@@ -186,15 +254,14 @@ convertToMCMC <- function(obj, thin=1) {
   
   list(
     mcmc = winmcmc, log.p = log.p, 
-    acc.rate = obj$acceptance.rate, 
+    accRate = obj$acceptance.rate, 
     adaption = obj$adaption, n.sample = obj$n.sample, cov.jump = obj$cov.jump,
     sampling.parameters = obj$sampling.parameters, 
     scale.start = obj$scale.start)
 }
 
 analyseMCMCs <- function(chains, stat=NULL, statName="logpost", 
-                         start, end, thin, as.dt=FALSE, 
-                         logprior=NULL, loglik =NULL, ...) {
+                         start, end, thin, as.dt=FALSE, ...) {
   mcmcs <- lapply(chains, function(obj) {
     if(is.null(obj$mcmc)) 
       convertToMCMC(obj, thin)
@@ -236,8 +303,13 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     gelman <- NULL
   }
   ESS <- try(lapply(mcs, coda::effectiveSize), silent=TRUE)
-  if(class(ESS)=='try-error') 
+  if(class(ESS)=='try-error') {
+    warning(paste("For ", statName, 
+                  "calling coda::effectiveSize resulted in an error:", 
+                  toString(ESS)))
     ESS <- 0
+  }
+    
   names(ESS) <- NULL
   
   
@@ -311,19 +383,19 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #'   MCMC as a vector.
 #' @param parPrior a function(numeric-vector) returning the log-prior of the 
 #'   supplied vector
-#' @param parToATSSe a function(numeric-vector) transforming a sampled vector on
+#' @param parToATSSeG0 a function(numeric-vector) transforming a sampled vector on
 #'   the scale of the parameters alpha, theta, sigma, sigmae
-#' @param scale numeric matrix indicating the initial jump-distribution matrix
-#' @param n.mcmc integer indicating how many iterations should the mcmc-chain 
+#' @param parScale numeric matrix indicating the initial jump-distribution matrix
+#' @param nSamples integer indicating how many iterations should the mcmc-chain 
 #'   contain
-#' @param n.adapt integer indicating how many initial iterations should be used 
+#' @param nAdapt integer indicating how many initial iterations should be used 
 #'   for adaptation of the jump-distribution matrix
 #' @param thin integer indicating the thinning interval of the mcmc-chain
-#' @param acc.rate (MCMC) numeric between 0 and 1 indicating the target 
+#' @param accRate (MCMC) numeric between 0 and 1 indicating the target 
 #'   acceptance rate Passed on to adaptMCMC::MCMC.
 #' @param gamma (MCMC) controls the speed of adaption. Should be between 0.5 and
 #'   1. A lower gamma leads to faster adaption. Passed on to adaptMCMC::MCMC.
-#' @param n.chains integer indicating the number of chains to run. Defaults to 
+#' @param nChains integer indicating the number of chains to run. Defaults to 
 #'   1.
 #' @param samplePrior logical indicating if only the prior distribution should 
 #'   be sampled. This can be useful to compare with mcmc-runs for an overlap 
@@ -343,25 +415,30 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #'   
 #' @aliases mcmcPOUMMGivenPriorTreeVTips mcmc.poumm
 mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
-  loglik, parToATSSe = function(par) {c(par[1], par[2], sqrt(par[3:4]))},
-  parInit = function(chainNo) {c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 1)},
+  loglik, fitML = NULL,
+  parToATSSeG0 = function(par) {
+    c(par[1], par[2], sqrt(par[3:4]), NA)
+  },
+  parInit = function(chainNo, fitML = NULL) {
+    c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 1)
+  },
   parPrior = function(par) {
-    if(any(par[c(1, 3, 4)]<0)) {
+    if(any(par[c(1, 3, 4)] < 0)) {
       -Inf
     } else {
-      dexp(par[1], rate=.01, T) + dunif(par[2], 0, 100, T) +
-        dexp(par[3],  rate=.0001, T)+dexp(par[4], rate=.01, T)  
+      dexp(par[1], rate=.01, TRUE) + dunif(par[2], 0, 100, TRUE) +
+        dexp(par[3],  rate=.0001, TRUE) + dexp(par[4], rate=.01, TRUE)  
     }
   },
-  scale = matrix(c(100,  0.00, 0.00, 0.00,
+  parScale = matrix(c(100,  0.00, 0.00, 0.00,
                    0.00, 10.0, 0.00, 0.00,
                    0.00, 0.00, 100,  0.00,
                    0.00, 0.00, 0.00, 100), nrow = 4, ncol = 4, byrow = TRUE),
-  n.mcmc = 1.2e6, n.adapt = 2e5, thin = 100, acc.rate = 0.01, 
-  gamma = 0.5, n.chains = 1, samplePrior = FALSE, ..., 
+  nSamples = 1.2e6, nAdapt = 2e5, thin = 100, accRate = 0.01, 
+  gamma = 0.5, nChains = 1, samplePrior = FALSE, ..., 
   verbose = FALSE, zName = 'z', treeName = 'tree') {
   
-  samplePrior <- c(samplePrior, rep(FALSE, n.chains - 1))
+  samplePrior <- c(samplePrior, rep(FALSE, nChains - 1))
   
   if(!is.null(list(...)$debug)) {
     debug <- list(...)$debug
@@ -369,7 +446,7 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
     debug <- FALSE
   }
   
-  post <- function(par, memoMaxLoglik) {
+  post <- function(par, memoMaxLoglik, chainNo) {
     par <- matrix(par, nrow = 1)
     pr <- parPrior(par)
     if(debug) {
@@ -381,42 +458,54 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
     } else if(is.infinite(pr)) {
       c(pr, NA, NA)
     } else {
-      if(samplePrior[i]) {
-        lik <- 0
-        attr(lik, "grmax") <- NA
+      atsseg0 <- parToATSSeG0(par)
+      colnames(atsseg0) <- NULL
+      if(samplePrior[chainNo]) {
+        ll <- 0
+        attr(ll, "g0") <- par[5]
+        attr(ll, "g0LogPrior") <- NA
       } else {
-        atsse <- parToATSSe(par)
-        colnames(atsse) <- NULL
-        lik <- memoiseMax(loglik, par = atsse, memo = memoMaxLoglik,
-                          verbose = verbose)
+        ll <- memoiseMax(
+          loglik, par = atsseg0, memo = memoMaxLoglik, verbose = verbose)
         
         if(debug) {
-          cat("atsse: ", toString(round(atsse, 6)), ";", "lik:", lik)
+          cat("atsseg0: ", toString(round(atsseg0, 6)), ";", "ll:", ll)
         }
       }
       if(debug) {
         cat("\n")
       }
-      c(pr+lik, lik, attr(lik, "grmax"))
+      c(pr + ll, ll, attr(ll, "g0"), attr(ll, "g0LogPrior"))
     }
   }
   
+  #chains <- list()
+  #for(i in 1:nChains) {
   chains <- foreach::foreach(
-    i = 1:n.chains, .packages = c('coda', 'adaptMCMC', 'poumm')) %dopar% {
-      
+    i = 1:nChains, .packages = c('coda', 'adaptMCMC', 'poumm')) %dopar% {
+  # chains <- lapply(1:nChains, function(i) {    
       memoMaxLoglik <- new.env()
       
-      init <- parInit(i)
-      print(init)
+      if(verbose) {
+        cat('Chain No:', i, ', nSamples = ', nSamples, ', initial state: \n')  
+      }
+      
+      init <- parInit(i, fitML)
+      
+      if(verbose) {
+        print(init)  
+      }
       
       ch <- convertToMCMC(
         MCMC(
-          post, n = n.mcmc, init = init, scale = scale, adapt = n.adapt, 
-          acc.rate = acc.rate, gamma = gamma, 
-          memoMaxLoglik = memoMaxLoglik), 
+          post, n = nSamples, init = init, scale = parScale, adapt = nAdapt, 
+          acc.rate = accRate, gamma = gamma, 
+          memoMaxLoglik = memoMaxLoglik, chainNo = i), 
         thin = thin)
       
-      ch$scale.start <- scale    
+      print(paste("Finished chain no:", i))
+      
+      ch$parScale.start <- parScale    
       
       ch$parMaxLoglik <- mget("par", envir = memoMaxLoglik, 
                               ifnotfound = list(NULL))$par
@@ -424,7 +513,8 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
                                 ifnotfound = list(-Inf))$val
       
       ch
-    }
+      #chains[[i]] <- ch
+   }#)
   
   # maximum log-likelihood from each chain. This is used to correct ML fit in
   # case it got stuck in a local optimum.
@@ -434,10 +524,10 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
        post = post, 
        parMaxLoglik = chains[[which.max(maxLogliksFromChains)]]$parMaxLoglik,
        valueMaxLoglik = max(maxLogliksFromChains),
-       parToATSSe = parToATSSe, parInit = parInit, 
-       parPrior = parPrior, scale = scale, n.mcmc = n.mcmc, 
-       n.adapt = n.adapt, thin = thin, acc.rate = acc.rate, gamma = gamma, 
-       n.chains = n.chains, samplePrior = samplePrior)
+       parToATSSeG0 = parToATSSeG0, parInit = parInit, 
+       parPrior = parPrior, parScale = parScale, nSamples = nSamples, 
+       nAdapt = nAdapt, thin = thin, accRate = accRate, gamma = gamma, 
+       nChains = nChains, samplePrior = samplePrior)
 }
 
 #' (Adaptive) Metropolis Sampler
@@ -469,6 +559,7 @@ MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc
   X[1, ] <- init
   
   p.val.init <- p(X[1, ], ...)
+  
   p.val <- matrix(NA, nrow = n, ncol=length(p.val.init))
   p.val[1, ] <- p.val.init
   
@@ -478,10 +569,13 @@ MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc
   else {
     M <- scale
   }
-  if (ncol(M) != length(init)) 
-    stop("Length or dimension of 'init' and 'scale' do not match!")
-  if (length(init) == 1) 
+  if (ncol(M) != length(init)) {
+    stop(paste("Length or dimension of 'init' and 'scale' do not match!", 
+               "init:", toString(init), "scale:", toString(M)))
+  }
+  if (length(init) == 1) {
     stop("One-dimensional sampling is not possible!")
+  }
   S <- t(chol(M))
   cat("  generate", n, "samples \n")
   pb <- txtProgressBar(min = 0, max = n, style = 3)
@@ -495,6 +589,7 @@ MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc
     X.prop <- c(X[i - 1, ] + S %*% U)
     names(X.prop) <- names(init)
     p.val.prop <- p(X.prop, ...)
+    
     alpha <- min(1, exp(p.val.prop[1] - p.val[i - 1, 1]))
     if (!is.finite(alpha)) 
       alpha <- 0

@@ -1,5 +1,7 @@
+tests/BayesianValidation
 .Rproj.user
 .Rhistory
 .RData
 Read-and-delete-me
 man
+inst/doc
