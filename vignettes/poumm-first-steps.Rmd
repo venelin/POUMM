@@ -40,36 +40,42 @@ references:
 set.seed(1)
 library(ggplot2)
 library(data.table)
+knitr::opts_chunk$set(cache = TRUE)
+options(digits = 4)
 ```
-Here, we introduce the R-package **poumm** - an implementation of the Pylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **poumm** package can be used to answer the following questions:
+Here, we introduce the R-package **poumm** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **poumm** package can be used to answer the following questions:
 
 * Is the POUMM an appropriate model for the data?
-* Does the trait evolve neutrally along the tree, or rather, under stabilising selection?
-* To what extent are the observed trait-values governed by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+* Does the trait evolve under stabilising selection?
+* Given the trait undergoes stabilising selection, what are the long-term optimum value and the rate of convergence towards it?
+* To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+* What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
+* What are the maximum-likelihood genotypic values of the root and tips of the tree?
 
-In the first section below, we illustrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how simple diagnostics and plots can be used to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC as well as the consistency of the ML and the MCMC fits. Once this is done, we go forward to assess the consistency of the POUMM fit with the "true" model parameters set at the beginning of the simulation. 
+In the first section, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the ML and the MCMC fit. 
 
-In the second section we use variants of the toy-simulation to show how the summary of a POUMM fit can be used to answer each of the questions stated above. 
+In the second section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
 
 In the last section, we discuss common cases, where the POUMM is not the most appropriate method to analyse the data, and provide links to more relevant software packages.
 
 # Simulating trait evolution under the POUMM 
 First, we specify the parameters of the POUMM simulation: 
 ```{r}
+N <- 500
 g0 <- 0           
-alpha <- 1        
+alpha <- .5        
 theta <- 2        
-sigma <- 0.25     
-sigmae <- 0.25    
+sigma <- 0.2     
+sigmae <- 0.2 
 ```
 
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `poumm::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
 
-```{r, echo=FALSE, fig.height=4.4, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
+```{r, echo=FALSE, fig.height=4.6, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
 tStep <- 0.01
-t <- seq(0, 4, by = tStep)
+t <- seq(0, 6, by = tStep)
 
-plot(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g")
+plot(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
 lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
 
 lines(t, poumm::rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
@@ -79,13 +85,13 @@ lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col 
 
 abline(h=theta, lty = 3, col = "darkgrey")
 
-legend("bottomright", 
-       legend = c(expression(list(alpha == 1, theta == 2, sigma == 0.25)),
-                  expression(list(alpha == 1, theta == 2, sigma == 0.5)),
-                  expression(list(alpha == 1, theta == 2, sigma == 0)),
+legend("topleft", 
+       legend = c(expression(list(alpha == .5, theta == 2, sigma == 0.2)),
+                  expression(list(alpha == .5, theta == 2, sigma == 0.4)),
+                  expression(list(alpha == .5, theta == 2, sigma == 0)),
                   
-                  expression(list(alpha == 2, theta == 2, sigma == 0.25)),
-                  expression(list(alpha == 2, theta == 2, sigma == 0)),
+                  expression(list(alpha == 1, theta == 2, sigma == 0.2)),
+                  expression(list(alpha == 1, theta == 2, sigma == 0)),
                   
                   expression(theta == 2)),
        lty = c(1, 1, 2, 1, 2, 3), 
@@ -95,32 +101,115 @@ legend("bottomright",
 
 The POUMM models the evolution of a continuous trait, $z$, along a phylogenetic tree, assuming that $z$ is the sum of a genetic (heritable) component, $g$, and an independent non-heritable (environmental) component, $e\sim N(0,\sigma_e^2)$. At every branching in the tree, the daughter lineages inherit the $g$-value of their parent, adding their own environmental component $e$. The POUMM assumes the genetic component, $g$, evolves along each lineage according to an OU-process with initial state the $g$ value inherited from the parent-lineage and global parameters $\alpha$, $\theta$ and $\sigma$. 
 
-Once the POUMM parameters are specified, we use the **TreeSim** R-package [@stadler2015] to generate a random birth-death tree with 200 tips:
+Once the POUMM parameters are specified, we use the **TreeSim** R-package [@stadler2015] to generate a random birth-death tree with `r N` tips:
 
-```{r, results="hide"}
+```{r simulate-tree, results="hide"}
 # Number of tips
-N <- 200
-tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 2, deathsky = 1, timesky=c(0, Inf), sampprobsky = 1)[[1]]
+tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1, deathsky = .5, 
+                               timesky=c(0, Inf), sampprobsky = 1)[[1]]
 ```
 
-We now simulate a trait along the tree and plot the resulting tree using a color scale for the trait values.
+We now simulate a trait along the tree under the POUMM specified by $\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$:
 
-```{r, fig.show = "hold", fig.height=4.4, fig.width=7}
+```{r simulate-gez}
+# genotypic (heritable) values
 g <- poumm::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
+
+# environmental contributions
 e <- rnorm(length(g), 0, sigmae)
-z <- g+e
 
-phytools::plotBranchbyTrait(tree, z, mode = "nodes", xlims = c(0,3), legend = FALSE, show.tip.label = FALSE, show.node.label = FALSE)
-
-tipGroups <- poumm:::groupByRootDist(tree, nGroups = 5)
-data <- data.table(z = z[1:N], t = tipGroups$rootTipDists, group = tipGroups$rootTipDistGroups)
-ggplot(data = data, aes(x = t, y = z, group = group)) + geom_boxplot()
+# phenotypic values
+z <- g + e
 ```
 
-In reality, none of the components $g$ and $e$ can be measured at any point on the tree their sum, $z = g + e$, is observed for each tip in the phylogeny. 
+Starting from the root value $g_0$, we simulated the genotypic values and the environmental contributions at all internal nodes down to the tips of the phylogeny. In reality, though, only the phenotypic value, at the tips, i.e. \code{z[1:N]} are observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values.
+
+```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7}
+# This is easily done using the nodeTimes utility function in combination with
+# the cut-function from the base package.
+data <- data.table(z = z[1:N], t = poumm::nodeTimes(tree, tipsOnly = TRUE))
+data <- data[, group := cut(t, breaks = 5, include.lowest = TRUE)]
+
+ggplot(data = data, aes(x = t, y = z, group = group)) + 
+  geom_violin(aes(col = group)) + geom_point(aes(col = group), size=.5)
+```
+
+Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function. Before that, we create a parallel cluster on the local computer and register it as a parallel back-end. This enbales parallel execution of more than one MCMC fits (explained below). 
+
+```{r fitPOUMM-1, results="hide", cache=TRUE}
+# set up a parallel cluster on the local computer for parallel MCMC:
+cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+doParallel::registerDoParallel(cluster)
+
+fitPOUMM <- poumm::POUMM(z[1:N], tree, spec = list(parallelMCMC = TRUE))
+
+# Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
+parallel::stopCluster(cluster)
+```
+
+The above code runs for about 3 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}) and are explained in the poumm-settings vignette. 
+
+The strategy of executing three MCMC chains instead of one allows to assess: 
+
+* the quality of the MCMC fit: a mismatch between the sampling distributions of the second and third chains suggests that at least one of the chains has not converged to a region of high posterior density (HPD). 
+* the presence of signal for the POUMM parameters in the data: a close match between prior and posterior distributions suggests lack of signal in the data. 
+
+We plot traces and posterior sample densities from the MCMC fit:
+
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPOUMM, interactive = FALSE)
+```
+
+A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This observation can be confirmed by considering the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
+
+```{r, warning=FALSE}
+summary(fitPOUMM)
+```
+
+The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
+
+
+```{r fitPOUMM-2, cache=TRUE}
+cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+doParallel::registerDoParallel(cluster)
+
+fitPOUMM2 <- poumm::POUMM(z, tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
+
+parallel::stopCluster(cluster)
+```
+
+
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPOUMM2, interactive = FALSE)
+```
+
+
+```{r, warning=FALSE}
+summary(fitPOUMM2)
+```
+
+Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The mismatch from chain 1 suggests that the data has signal for all POUMM parameters as well as the derived statistics, such as the phylogenetic heritability $H^2_{\bar{t}}$, $\bar{t}$ denoting the mean root-tip distance in the tree. The 95% high posterior density (HPD) intervals contain the true values for all POUMM parameters. This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
+
 
 ```{r}
-fitPOUMM <- POUMM(z, tree, verbose = TRUE)
+# pp <- patherit::PP(z[1:length(tree$tip.label)], tree)
+# summPP <- summary(pp)
+# #summPP[, tTipMean:=tMean+tauMean/2]
+# summPP[tauQuantileType=="qu"&stat=="rA", list(tauQuantile, N, est, CI.lower, CI.upper, tauMean, tMean)]
+```
+
+
+```{r}
+# curve(covPOUMM(alpha, sigma, sigmae, mean(nodeTimes(tree, tipsOnly = TRUE)), x, corr=TRUE), from = 0, to = 12, ylim=c(0,1))
+# parOU <- coef(fitPOUMM)
+# curve(covPOUMM(parOU["alpha"], parOU["sigma"], parOU["sigmae"], 
+#                mean(nodeTimes(tree, tipsOnly = TRUE)), x, corr=TRUE), 
+#       from = 0, to = 12, col = "green", add=TRUE)
+# parBM <- coef(fitPMM)
+# curve(covPOUMM(0, parBM["sigma"], parBM["sigmae"], 
+#                mean(nodeTimes(tree, tipsOnly = TRUE)), x, corr=TRUE), 
+#       from = 0, to = 12, col = "brown", add=TRUE)
+# summPP[tauQuantileType=="qu"&stat=="rA", points(x=tauMean, y=est)]
 ```
 
 
