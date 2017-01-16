@@ -221,126 +221,63 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       }
       
       # use is.double(alpha) to check whether Rmpfr is being used
-      # if(is.double(alpha) & availgpuR & usegpuR) {
-      #   doubleType <- if(gpuR::deviceHasDouble()) {
-      #     "double"      
-      #   } else {
-      #     warning("GPU doesn't support double type. Using float instead.")
-      #     "float"
-      #   }
-      #   
-      #   edge <- gpuR::vclMatrix(pruneInfo$edge) 
-      #   
-      #   M <- pruneInfo$M
-      #   
-      #   endingAt <- gpuR::vclVector(pruneInfo$endingAt)
-      #   nodesVector <- gpuR::vclVector(pruneInfo$nodesVector)
-      #   nodesIndex <-  gpuR::vclVector(pruneInfo$nodesIndex)
-      #   nLevels <- pruneInfo$nLevels
-      #   unVector <-  gpuR::vclVector(pruneInfo$unVector)
-      #   unIndex <-  gpuR::vclVector(pruneInfo$unIndex)
-      #   unJ <- 1
-      #   
-      #   t <- gpuR::vclVector(tree$edge.length, type = doubleType)
-      #   
-      #   alphasigma2 <- alpha/sigma/sigma
-      #   theta2 <- theta^2
-      #   sigma2 <- sigma^2
-      #   sigmae2 <- sigmae^2
-      #   logsigma <- log(sigma)
-      #   logsigmae <- log(sigmae)
-      #   
-      #   talpha <-  t * alpha
-      #   etalpha <- exp(talpha)
-      #   if(alpha != 0) {
-      #     fetalpha <- alpha / (1 - etalpha)
-      #   } else {
-      #     fetalpha <- -1 / t
-      #   }
-      #   
-      #   e2talpha <- etalpha * etalpha
-      #   limitfe2talpha <- -0.5 / t
-      #   if(alpha != 0) {
-      #     fe2talpha <- alpha / (1 - e2talpha)
-      #   } else {
-      #     fe2talpha <- limitfe2talpha
-      #   }
-      #   
-      #   if(availRmpfr & usempfr & usempfr < maxmpfr) {
-      #     if(any(fe2talpha >= 0) | any(fe2talpha < limitfe2talpha)) {
-      #       usempfr <- usempfr + 1
-      #       next 
-      #     }
-      #   }
-      #   
-      #   log_fe2talpha <- log(-fe2talpha)
-      #   
-      #   fe2talphasigma2 <- fe2talpha / sigma2
-      #   
-      #   # for sigmae=0
-      #   r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
-      #   
-      #   # matrix for paramsIntegForks one pif for every node
-      #   # the following code creates a matrix for the class of alpha,
-      #   # i.e. could be mpfr as well as double
-      #   pif <- gpuR::vclMatrix(alpha*0, nrow = M, ncol = 3, type = doubleType)
-      # } else {
-        edge <- tree$edge
-        
-        M <- pruneInfo$M
-        endingAt <- pruneInfo$endingAt
-        nodesVector <- pruneInfo$nodesVector
-        nodesIndex <- pruneInfo$nodesIndex
-        nLevels <- pruneInfo$nLevels
-        unVector <- pruneInfo$unVector
-        unIndex <- pruneInfo$unIndex
-        unJ <- 1
-        
-        t <- tree$edge.length
-        
-        alphasigma2 <- alpha/sigma/sigma
-        theta2 <- theta^2
-        sigma2 <- sigma^2
-        sigmae2 <- sigmae^2
-        logsigma <- log(sigma)
-        logsigmae <- log(sigmae)
-        
-        talpha <- t*alpha
-        etalpha <- exp(talpha)
-        if(alpha != 0) {
-          fetalpha <- alpha/(1 - etalpha)
-        } else {
-          fetalpha <- -1/t
+
+      edge <- tree$edge
+      
+      M <- pruneInfo$M
+      endingAt <- pruneInfo$endingAt
+      nodesVector <- pruneInfo$nodesVector
+      nodesIndex <- pruneInfo$nodesIndex
+      nLevels <- pruneInfo$nLevels
+      unVector <- pruneInfo$unVector
+      unIndex <- pruneInfo$unIndex
+      unJ <- 1
+      
+      t <- tree$edge.length
+      
+      alphasigma2 <- alpha/sigma/sigma
+      theta2 <- theta^2
+      sigma2 <- sigma^2
+      sigmae2 <- sigmae^2
+      logsigma <- log(sigma)
+      logsigmae <- log(sigmae)
+      
+      talpha <- t*alpha
+      etalpha <- exp(talpha)
+      if(alpha != 0) {
+        fetalpha <- alpha/(1 - etalpha)
+      } else {
+        fetalpha <- -1/t
+      }
+      
+      e2talpha <- etalpha*etalpha
+      limitfe2talpha <- -0.5 / t
+      if(alpha != 0) {
+        fe2talpha <- alpha / (1 - e2talpha)
+      } else {
+        fe2talpha <- limitfe2talpha
+      }
+      
+      if(availRmpfr & usempfr & usempfr < maxmpfr) {
+        if(any(fe2talpha >= 0) | any(fe2talpha < limitfe2talpha)) {
+          usempfr <- usempfr + 1
+          next 
         }
-        
-        e2talpha <- etalpha*etalpha
-        limitfe2talpha <- -0.5 / t
-        if(alpha != 0) {
-          fe2talpha <- alpha / (1 - e2talpha)
-        } else {
-          fe2talpha <- limitfe2talpha
-        }
-        
-        if(availRmpfr & usempfr & usempfr < maxmpfr) {
-          if(any(fe2talpha >= 0) | any(fe2talpha < limitfe2talpha)) {
-            usempfr <- usempfr + 1
-            next 
-          }
-        }
-        
-        log_fe2talpha <- log(-fe2talpha)
-        
-        fe2talphasigma2 <- fe2talpha / sigma2
-        
-        # for sigmae=0
-        r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
-        
-        # matrix for paramsIntegForks one pif for every node
-        # the following code creates a matrix for the class of alpha,
-        # i.e. could be mpfr as well as double
-        pif <- rep(alpha*0, M*3)
-        dim(pif) <- c(M, 3)
-      #}
+      }
+      
+      log_fe2talpha <- log(-fe2talpha)
+      
+      fe2talphasigma2 <- fe2talpha / sigma2
+      
+      # for sigmae=0
+      r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
+      
+      # matrix for paramsIntegForks one pif for every node
+      # the following code creates a matrix for the class of alpha,
+      # i.e. could be mpfr as well as double
+      pif <- rep(alpha*0, M*3)
+      dim(pif) <- c(M, 3)
+      
       
       for(i in 1:nLevels) {
         es <- endingAt[nodesVector[(nodesIndex[i]+1):nodesIndex[i+1]]]
