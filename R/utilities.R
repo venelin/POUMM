@@ -16,6 +16,7 @@ pruneTree <- function(tree) {
   endingAt <- order(rbind(tree$edge, c(0, N+1))[, 2])
   
   edge <- tree$edge
+  mode(edge) <- "integer"
   
   nonVisitedChildren <- rep(0, M)
   ee1 <- edge[, 1]
@@ -27,20 +28,20 @@ pruneTree <- function(tree) {
   }
   
   # start from the edges leading to tips
-  nodesVector <- c()
-  nodesIndex <- c(0)
+  nodesVector <- as.integer(c())
+  nodesIndex <- as.integer(c(0))
   
-  unVector <- c()
-  unIndex <- c(0)
+  unVector <- as.integer(c())
+  unIndex <- as.integer(c(0))
   
-  nodes <- 1:N
+  nodes <- as.integer(1:N)
   
   while(nodes[1] != N+1) {
     nodesIndex <- c(nodesIndex, nodesIndex[length(nodesIndex)]+length(nodes))
     nodesVector <- c(nodesVector, nodes)
     
     es <- endingAt[nodes]
-    nodes <- c()
+    nodes <- as.integer(c())
     edgeEnds <- edge[es, 2]
     
     #update parent pifs
@@ -54,7 +55,7 @@ pruneTree <- function(tree) {
       es <- es[-un]
     }
   }
-  list(M=M, endingAt=endingAt, 
+  list(M=M, edge = edge, endingAt=endingAt, 
        nodesVector=nodesVector, nodesIndex=nodesIndex, nLevels=length(nodesIndex)-1, 
        unVector=unVector, unIndex=unIndex)
 }
@@ -309,8 +310,6 @@ sampleNodeIds <- function(tree) {
 #' @param rootTipDists numeric vector of root to tip distances in the order of 
 #'   tree$tip.label. If not passed, this vector is calculated by the function
 #'   nodeTimes().
-#' 
-#' 
 groupByRootDist <- function(tree, nGroups=15, rootTipDists=NULL) {
   N <- length(tree$tip.label)
   if(is.null(rootTipDists))

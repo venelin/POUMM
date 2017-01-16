@@ -6,7 +6,6 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
   assign("count", countMemo + 1, pos = memo)
 
   val <- f(par, memo = memo, ...)
-  par <- attr(val, 'par', exact = TRUE)
 
   if(valMemo < val) {
     assign('par', par, pos = memo)
@@ -48,27 +47,22 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #'   
 #' @importFrom stats optim optimise runif
 maxLikPOUMMGivenTreeVTips <- function(
-  loglik, parLower, parUpper, parInit, g0 = NA, g0Prior = NULL,
+  loglik, parLower, parUpper, parInitML = NULL, g0 = NA, g0Prior = NULL,
   control=list(factr = 1e8, fnscale = -1), 
-  verbose = FALSE) {
+  verbose = FALSE, ...) {
   if(is.null(parLower) | is.null(parUpper)) {
     stop("parLower and/or parUpper are NULL.")
   }
   
-  if(is.null(parInit)) {
-    parInit <- (parLower + parUpper) / 2
-  } 
   
-  if(!(all(parInit >= parLower) & all(parInit <= parUpper))) {
-    stop("All parameters in parInit should be between parLower and parUpper.")
+  if(is.null(parInitML)) {
+    listParInitML <- list(0.1 * (parLower + parUpper), 
+                      0.5 * (parLower + parUpper),
+                      0.9 * (parLower + parUpper))
+  } else {
+    listParInitML <- list(parInitML)
   }
   
-  if(is.null(control)) {
-    control <- list()
-  }
-  
-  # ensure that optim does maximization.
-  control$fnscale <- -1
   
   memoMaxLoglik <- new.env()
   fnForOptim <- function(par) {
@@ -83,12 +77,29 @@ maxLikPOUMMGivenTreeVTips <- function(
     }
   }
   
-  if(length(parInit) > 0) {
-    res <- optim(fn = fnForOptim, 
-                 par = parInit, lower = parLower, upper = parUpper, 
-                 method = 'L-BFGS-B', control = control)
-  } else {
-    stop("ML-fit: parInit has zero length.")
+  for(iOptimTry in 1:length(listParInitML)) {
+    parInitML <- listParInitML[[iOptimTry]]
+    if(!(all(parInitML >= parLower) & all(parInitML <= parUpper))) {
+      stop(paste0("All parameters in parInitML should be between parLower=", 
+                  toString(round(parLower, 6)), "and parUpper=", 
+                  toString(round(parUpper, 6)), ", but were ", 
+                  toString(round(parInitML, 6)), "."))
+    }
+    
+    if(is.null(control)) {
+      control <- list()
+    }
+    
+    # ensure that optim does maximization.
+    control$fnscale <- -1
+    
+    if(length(parInitML) > 0) {
+      res <- optim(fn = fnForOptim, 
+                   par = parInitML, lower = parLower, upper = parUpper, 
+                   method = 'L-BFGS-B', control = control)
+    } else {
+      stop("ML-fit: parInitML has zero length.")
+    }
   }
   
   maxPar <- get("par", pos = memoMaxLoglik)
@@ -240,37 +251,37 @@ ml.poumm <- function(
 
 
 #' @importFrom stats window start end
-convertToMCMC <- function(obj, thin=1) {
+convertToMCMC <- function(obj, thinMCMC=1) {
   codaobj <- adaptMCMC::convert.to.coda(obj)
   
   winmcmc <- window(codaobj, start = start(codaobj), end = end(codaobj), 
-                    thin = thin)
+                    thin = thinMCMC)
   
   log.p <- window(mcmc(obj$log.p, 
                        start = start(codaobj), 
                        end = end(codaobj), 
                        thin = 1), 
-                  start = start(codaobj), end = end(codaobj), thin = thin)
+                  start = start(codaobj), end = end(codaobj), thin = thinMCMC)
   
   list(
     mcmc = winmcmc, log.p = log.p, 
-    accRate = obj$acceptance.rate, 
+    accRateMCMC = obj$acceptance.rate, 
     adaption = obj$adaption, n.sample = obj$n.sample, cov.jump = obj$cov.jump,
     sampling.parameters = obj$sampling.parameters, 
     scale.start = obj$scale.start)
 }
 
 analyseMCMCs <- function(chains, stat=NULL, statName="logpost", 
-                         start, end, thin, as.dt=FALSE, ...) {
+                         start, end, thinMCMC, as.dt=FALSE, ...) {
   mcmcs <- lapply(chains, function(obj) {
     if(is.null(obj$mcmc)) 
-      convertToMCMC(obj, thin)
+      convertToMCMC(obj, thinMCMC)
     else
       obj
   })
   
   log.ps <- window(coda::as.mcmc.list(lapply(mcmcs, function(mc) { mc$log.p })),
-                   start=start, end=end, thin=thin)
+                   start=start, end=end, thin=thinMCMC)
   
   if(statName=='logpost') {
     mcs <- coda::as.mcmc.list(
@@ -286,7 +297,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     names(mcs) <- names(chains)
   } else {
     mcs <- coda::as.mcmc.list(lapply(mcmcs, function(mc) {
-      winmcmc <- window(mc$mcmc, start = start, end = end, thin = thin)
+      winmcmc <- window(mc$mcmc, start = start, end = end, thin = thinMCMC)
       data <- matrix(stat(winmcmc, ...), nrow = nrow(winmcmc), byrow = TRUE)
       coda::mcmc(data, start = start(winmcmc), end = end(winmcmc), 
                  thin = thin(winmcmc))
@@ -316,7 +327,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
   HPD <- lapply(mcs, function(.) {
     int <- try(coda::HPDinterval(.), silent = TRUE)
     if(class(int) == 'try-error') {
-      int <- matrix(NA, nrow = ncol(as.matrix(.)), ncol = 2)
+      int <- matrix(as.double(NA), nrow = ncol(as.matrix(.)), ncol = 2)
       colnames(int) <- c("lower", "upper")
       int
     } else {
@@ -327,7 +338,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
   HPD50 <- lapply(mcs, function(.) {
     int <- try(coda::HPDinterval(., 0.5), silent = TRUE)
     if(class(int) == 'try-error') {
-      int <- matrix(NA, nrow = ncol(as.matrix(.)), ncol = 2)
+      int <- matrix(as.double(NA), nrow = ncol(as.matrix(.)), ncol = 2)
       colnames(int) <- c("lower", "upper")
       int
     } else {
@@ -335,31 +346,31 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     }
   })
   
-  Mode <- list()
-  for(i in 1:length(mcs)) {
-    Mode[[i]] <- {
-      par <- mcs[[i]][which.max(log.ps[[i]][, 1]), ]
-      setattr(par, 'logpost', max(log.ps[[i]][, 1]))
-      par
-    }
-  }
-  
-  Mean <- list()
-  for(i in 1:length(mcs)) {
-    Mean[[i]] <- colMeans(mcs[[i]])
-  }
+  # Mode <- list()
+  # for(i in 1:length(mcs)) {
+  #   Mode[[i]] <- {
+  #     par <- mcs[[i]][which.max(log.ps[[i]][, 1]), ]
+  #     setattr(par, 'logpost', max(log.ps[[i]][, 1]))
+  #     par
+  #   }
+  # }
+
+
+  Mean <- sapply(1:length(mcs), function(i) {
+    colMeans(mcs[[i]])
+  })
   
   if(as.dt) {
     data.table(
-      chain=1:length(mcs), stat=statName, start=start, end=end, thin=thin, 
-      ESS=ESS, Mode=Mode, Mean=Mean, HPD=HPD, HPD50=HPD50, mcs=mcs)
+      chain=1:length(mcs), stat=statName, start=start, end=end, thinMCMC=thinMCMC, 
+      ESS=ESS, Mean=Mean, HPD=HPD, HPD50=HPD50, mcs=mcs)
   } else {
-    l <- list(stat=statName, start=start, end=end, thin=thin, 
-              ESS=ESS, Mode=Mode, Mean=Mean, HPD=HPD, HPD50=HPD50, G.R.=gelman, mcs=mcs, log.ps=log.ps)
+    l <- list(stat=statName, start=start, end=end, thinMCMC=thinMCMC, 
+              ESS=ESS, Mean=Mean, HPD=HPD, HPD50=HPD50, G.R.=gelman, mcs=mcs, log.ps=log.ps)
     
     # without this we are running into trouble:
-    names(l) <- c('stat', 'start', 'end', 'thin',
-                  'ESS', 'Mode', Mean=Mean, 'HPD', 'HPD50', 'G.R.', 'mcs', 'log.ps')    
+    names(l) <- c('stat', 'start', 'end', 'thinMCMC',
+                  'ESS', Mean=Mean, 'HPD', 'HPD50', 'G.R.', 'mcs', 'log.ps')    
     l
   }
 }
@@ -381,23 +392,23 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #'   should be divided by 10.
 #' @param parInit a function(chainNumber) returning the starting point of the 
 #'   MCMC as a vector.
-#' @param parPrior a function(numeric-vector) returning the log-prior of the 
+#' @param parPriorMCMC a function(numeric-vector) returning the log-prior of the 
 #'   supplied vector
-#' @param parToATSSeG0 a function(numeric-vector) transforming a sampled vector on
+#' @param parMapping a function(numeric-vector) transforming a sampled vector on
 #'   the scale of the parameters alpha, theta, sigma, sigmae
-#' @param parScale numeric matrix indicating the initial jump-distribution matrix
-#' @param nSamples integer indicating how many iterations should the mcmc-chain 
+#' @param parScaleMCMC numeric matrix indicating the initial jump-distribution matrix
+#' @param nSamplesMCMC integer indicating how many iterations should the mcmc-chain 
 #'   contain
-#' @param nAdapt integer indicating how many initial iterations should be used 
+#' @param nAdaptMCMC integer indicating how many initial iterations should be used 
 #'   for adaptation of the jump-distribution matrix
-#' @param thin integer indicating the thinning interval of the mcmc-chain
-#' @param accRate (MCMC) numeric between 0 and 1 indicating the target 
+#' @param thinMCMC integer indicating the thinning interval of the mcmc-chain
+#' @param accRateMCMC (MCMC) numeric between 0 and 1 indicating the target 
 #'   acceptance rate Passed on to adaptMCMC::MCMC.
-#' @param gamma (MCMC) controls the speed of adaption. Should be between 0.5 and
-#'   1. A lower gamma leads to faster adaption. Passed on to adaptMCMC::MCMC.
-#' @param nChains integer indicating the number of chains to run. Defaults to 
+#' @param gammaMCMC (MCMC) controls the speed of adaption. Should be between 0.5 and
+#'   1. A lower gammaMCMC leads to faster adaption. Passed on to adaptMCMC::MCMC.
+#' @param nChainsMCMC integer indicating the number of chains to run. Defaults to 
 #'   1.
-#' @param samplePrior logical indicating if only the prior distribution should 
+#' @param samplePriorMCMC logical indicating if only the prior distribution should 
 #'   be sampled. This can be useful to compare with mcmc-runs for an overlap 
 #'   between prior and posterior distributions.
 #' @param ... Additional arguments passed to likPOUMMGivenTreeVTips. If ...
@@ -411,34 +422,16 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #'   package.
 #'   
 #' @return a list of coda objects
-#' @importFrom  foreach foreach %dopar%
+#' @importFrom  foreach foreach %dopar% %do%
 #'   
 #' @aliases mcmcPOUMMGivenPriorTreeVTips mcmc.poumm
 mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   loglik, fitML = NULL,
-  parToATSSeG0 = function(par) {
-    c(par[1], par[2], sqrt(par[3:4]), NA)
-  },
-  parInit = function(chainNo, fitML = NULL) {
-    c(alpha = 0, theta = 0, sigma2 = 1, sigmae2 = 1)
-  },
-  parPrior = function(par) {
-    if(any(par[c(1, 3, 4)] < 0)) {
-      -Inf
-    } else {
-      dexp(par[1], rate=.01, TRUE) + dunif(par[2], 0, 100, TRUE) +
-        dexp(par[3],  rate=.0001, TRUE) + dexp(par[4], rate=.01, TRUE)  
-    }
-  },
-  parScale = matrix(c(100,  0.00, 0.00, 0.00,
-                   0.00, 10.0, 0.00, 0.00,
-                   0.00, 0.00, 100,  0.00,
-                   0.00, 0.00, 0.00, 100), nrow = 4, ncol = 4, byrow = TRUE),
-  nSamples = 1.2e6, nAdapt = 2e5, thin = 100, accRate = 0.01, 
-  gamma = 0.5, nChains = 1, samplePrior = FALSE, ..., 
-  verbose = FALSE, zName = 'z', treeName = 'tree') {
+  parMapping, parInitMCMC, parPriorMCMC, parScaleMCMC, nSamplesMCMC, nAdaptMCMC, thinMCMC, accRateMCMC, 
+  gammaMCMC, nChainsMCMC, samplePriorMCMC, ..., 
+  verbose = FALSE, parallelMCMC = FALSE, zName = 'z', treeName = 'tree') {
   
-  samplePrior <- c(samplePrior, rep(FALSE, nChains - 1))
+  samplePriorMCMC <- c(samplePriorMCMC, rep(FALSE, nChainsMCMC - 1))
   
   if(!is.null(list(...)$debug)) {
     debug <- list(...)$debug
@@ -447,29 +440,26 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   }
   
   post <- function(par, memoMaxLoglik, chainNo) {
-    par <- matrix(par, nrow = 1)
-    pr <- parPrior(par)
+    pr <- parPriorMCMC(par)
     if(debug) {
       cat("par:", toString(round(par, 6)), 'prior:', pr, ";")
     }
     if(is.nan(pr) | is.na(pr)) {
       warning(paste0("NA or NaN prior for ", toString(par)))
-      c(-Inf, NA, NA)
+      c(-Inf, NA, NA, NA)
     } else if(is.infinite(pr)) {
-      c(pr, NA, NA)
+      c(pr, NA, NA, NA)
     } else {
-      atsseg0 <- parToATSSeG0(par)
-      colnames(atsseg0) <- NULL
-      if(samplePrior[chainNo]) {
+      if(samplePriorMCMC[chainNo]) {
         ll <- 0
         attr(ll, "g0") <- par[5]
         attr(ll, "g0LogPrior") <- NA
       } else {
         ll <- memoiseMax(
-          loglik, par = atsseg0, memo = memoMaxLoglik, verbose = verbose)
+          loglik, par = par, memo = memoMaxLoglik, verbose = verbose)
         
         if(debug) {
-          cat("atsseg0: ", toString(round(atsseg0, 6)), ";", "ll:", ll)
+          cat("par: ", toString(round(par, 6)), ";", "ll:", ll)
         }
       }
       if(debug) {
@@ -479,43 +469,55 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
     }
   }
   
-  #chains <- list()
-  #for(i in 1:nChains) {
-  chains <- foreach::foreach(
-    i = 1:nChains, .packages = c('coda', 'adaptMCMC', 'poumm')) %dopar% {
-  # chains <- lapply(1:nChains, function(i) {    
-      memoMaxLoglik <- new.env()
-      
-      if(verbose) {
-        cat('Chain No:', i, ', nSamples = ', nSamples, ', initial state: \n')  
-      }
-      
-      init <- parInit(i, fitML)
-      
-      if(verbose) {
-        print(init)  
-      }
-      
-      ch <- convertToMCMC(
-        MCMC(
-          post, n = nSamples, init = init, scale = parScale, adapt = nAdapt, 
-          acc.rate = accRate, gamma = gamma, 
-          memoMaxLoglik = memoMaxLoglik, chainNo = i), 
-        thin = thin)
-      
-      print(paste("Finished chain no:", i))
-      
-      ch$parScale.start <- parScale    
-      
-      ch$parMaxLoglik <- mget("par", envir = memoMaxLoglik, 
-                              ifnotfound = list(NULL))$par
-      ch$valueMaxLoglik <- mget("val", envir = memoMaxLoglik,
-                                ifnotfound = list(-Inf))$val
-      
-      ch
-      #chains[[i]] <- ch
-   }#)
+  doMCMC <- function(i) {
+    memoMaxLoglik <- new.env()
+    
+    if(verbose) {
+      cat('Chain No:', i, ', nSamplesMCMC = ', nSamplesMCMC, ', initial state: \n')
+    }
+    
+    init <- parInitMCMC(i, fitML)
+    
+    if(verbose) {
+      print(init)  
+    }
+    
+    ch <- convertToMCMC(
+      MCMC(
+        post, n = nSamplesMCMC, init = init, scale = parScaleMCMC, adapt = nAdaptMCMC, 
+        acc.rate = accRateMCMC, gamma = gammaMCMC, 
+        memoMaxLoglik = memoMaxLoglik, chainNo = i), 
+      thinMCMC = thinMCMC)
+    
+    print(paste("Finished chain no:", i))
+    
+    ch$parScaleMCMC.start <- parScaleMCMC    
+    
+    ch$parMaxLoglik <- mget("par", envir = memoMaxLoglik, 
+                            ifnotfound = list(NULL))$par
+    ch$valueMaxLoglik <- mget("val", envir = memoMaxLoglik,
+                              ifnotfound = list(-Inf))$val
+    
+    ch
+  }
   
+  if(parallelMCMC) {
+    chains <- foreach::foreach(
+      i = 1:nChainsMCMC, .packages = c('coda', 'adaptMCMC', 'poumm')) %dopar% {
+        chain <- try(doMCMC(i), silent = TRUE)
+      }
+  } else {
+    chains <- foreach::foreach(
+      i = 1:nChainsMCMC, .packages = c('coda', 'adaptMCMC', 'poumm')) %do% {
+        chain <- try(doMCMC(i), silent = TRUE)
+      }
+  }
+  
+  for(i in 1:length(chains)) {
+    if(class(chains[[i]]) == "try-error") {
+      warning(paste0("Error in MCMC chain no ", i, ":", toString(chains[[i]])))
+    }
+  }
   # maximum log-likelihood from each chain. This is used to correct ML fit in
   # case it got stuck in a local optimum.
   maxLogliksFromChains <- sapply(chains, function(.) .$valueMaxLoglik)
@@ -523,11 +525,8 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   list(chains = chains, 
        post = post, 
        parMaxLoglik = chains[[which.max(maxLogliksFromChains)]]$parMaxLoglik,
-       valueMaxLoglik = max(maxLogliksFromChains),
-       parToATSSeG0 = parToATSSeG0, parInit = parInit, 
-       parPrior = parPrior, parScale = parScale, nSamples = nSamples, 
-       nAdapt = nAdapt, thin = thin, accRate = accRate, gamma = gamma, 
-       nChains = nChains, samplePrior = samplePrior)
+       valueMaxLoglik = max(maxLogliksFromChains)
+       )
 }
 
 #' (Adaptive) Metropolis Sampler
