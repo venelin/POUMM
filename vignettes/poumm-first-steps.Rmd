@@ -56,8 +56,6 @@ In the first section, we demonstrate how the package works. To that end, we run 
 
 In the second section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
 
-In the last section, we discuss common cases, where the POUMM is not the most appropriate method to analyse the data, and provide links to more relevant software packages.
-
 But before we start, quickly install the needed packages:
 
 ```{r install, eval=FALSE}
@@ -159,10 +157,10 @@ phytools::plotBranchbyTrait(tree, z, mode = "nodes",
                             show.tip.label = FALSE, show.node.label = FALSE) 
 ```
 
-## A first POUMM fit
+## Fitting the POUMM
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function. Before that, we create a parallel cluster on the local computer and register it as a parallel back-end. This enbales parallel execution of more than one MCMC fits (explained below). 
 
-```{r fitPOUMM-1, eval=FALSE}
+```{r fitPOUMM-1, eval=TRUE}
 # set up a parallel cluster on the local computer for parallel MCMC:
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
@@ -192,10 +190,10 @@ A mismatch of the posterior sample density plots from chains 2 and 3, in particu
 summary(fitPOUMM)
 ```
 
-The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
+The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
 
 
-```{r fitPOUMM-2, eval=FALSE}
+```{r fitPOUMM-2, eval=TRUE}
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
 
@@ -214,6 +212,7 @@ plot(fitPOUMM2, interactive = FALSE)
 summary(fitPOUMM2)
 ```
 
+## Consistency of the fit with the "true" simulation parameters
 The 95% high posterior density (HPD) intervals contain the true values for all five POUMM parameters ($\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$). This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
 
 ```{r}
@@ -242,8 +241,10 @@ c(H2empirical = var(g[1:N])/var(z[1:N]))
 summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 ```
 
-# Biological interpretation of the POUMM fit
+# Using the POUMM fit to answer biological questions
 TODO
+
+
 
 
 # References
