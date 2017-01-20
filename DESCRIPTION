@@ -5,9 +5,12 @@ Version: 1.0.0
 Date: 2016-12-20
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre"))
-Description: Functions for fast likelihood calculation, maximum likelihood and 
-    Bayesian inference of the univariate Phylogenetic Ornstein-Uhlenbeck Mixed 
-    Model; Functions for summarizing and plotting the inference results; 
+Description: Combined maximum likelihood and Bayesian inference of the 
+    univariate Phylogenetic Ornstein-Uhlenbeck Mixed Model; Fast POUMM likelihood
+    calculation. Maximum likelihood inference of the genotypic values
+    at the tips of a phylogeny assuming that the trait has evolved on it 
+    according to a POUMM model with specified genotypic value at the root.
+    Functions for summarizing and plotting the inference results; 
     Functions for simulation of univariate continuous trait evolution along a 
     phylogenetic tree.
 License: GPL (>= 2.0)
@@ -21,11 +24,12 @@ Imports:
     adaptMCMC (>= 1.1),
     coda (>= 0.18-1),
     foreach (>= 1.4.3),
-    gsl (>= 1.9-10.2)
 Suggests:
     testthat,
     TreeSim (>= 2.2),
     Rmpfr (>= 0.6.0),
+    ggplot2 (>= 2.1.0),
+    gsl (>= 1.9-10.2),
     knitr,
     rmarkdown
 RoxygenNote: 5.0.1

@@ -40,25 +40,37 @@ references:
 set.seed(1)
 library(ggplot2)
 library(data.table)
-knitr::opts_chunk$set(cache = TRUE)
+knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
 ```
 Here, we introduce the R-package **poumm** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **poumm** package can be used to answer the following questions:
 
 * Is the POUMM an appropriate model for the data?
-* Does the trait evolve under stabilising selection?
-* Given the trait undergoes stabilising selection, what are the long-term optimum value and the rate of convergence towards it?
+* Does the trait evolve under stabilizing selection?
+* Given the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
 * To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
 * What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
 * What are the maximum-likelihood genotypic values of the root and tips of the tree?
 
-In the first section, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the ML and the MCMC fit. 
+In the first section, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation.
 
 In the second section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
 
 In the last section, we discuss common cases, where the POUMM is not the most appropriate method to analyse the data, and provide links to more relevant software packages.
 
+But before we start, quickly install the needed packages:
+
+```{r install, eval=FALSE}
+install.packages('poumm_1.0.0.tgz', type='binary', repos=NULL)
+install.packages("TreeSim")
+install.packages("data.table")
+install.packages("ggplot2")
+```
+
+
 # Simulating trait evolution under the POUMM 
+
+## Parameters of the simulation
 First, we specify the parameters of the POUMM simulation: 
 ```{r}
 N <- 500
@@ -101,6 +113,7 @@ legend("topleft",
 
 The POUMM models the evolution of a continuous trait, $z$, along a phylogenetic tree, assuming that $z$ is the sum of a genetic (heritable) component, $g$, and an independent non-heritable (environmental) component, $e\sim N(0,\sigma_e^2)$. At every branching in the tree, the daughter lineages inherit the $g$-value of their parent, adding their own environmental component $e$. The POUMM assumes the genetic component, $g$, evolves along each lineage according to an OU-process with initial state the $g$ value inherited from the parent-lineage and global parameters $\alpha$, $\theta$ and $\sigma$. 
 
+## Simulating the phylogeny
 Once the POUMM parameters are specified, we use the **TreeSim** R-package [@stadler2015] to generate a random birth-death tree with `r N` tips:
 
 ```{r simulate-tree, results="hide"}
@@ -109,9 +122,11 @@ tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1, deathsky = .5,
                                timesky=c(0, Inf), sampprobsky = 1)[[1]]
 ```
 
-We now simulate a trait along the tree under the POUMM specified by $\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$:
+## Simulating trait evolution on the phylogeny
+Starting from the root value $g_0$, we simulate the genotypic values, $g$, and the environmental contributions, $e$, at all internal nodes down to the tips of the phylogeny:
 
-```{r simulate-gez}
+
+```{r simulate-gez-OU}
 # genotypic (heritable) values
 g <- poumm::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
 
@@ -122,7 +137,8 @@ e <- rnorm(length(g), 0, sigmae)
 z <- g + e
 ```
 
-Starting from the root value $g_0$, we simulated the genotypic values and the environmental contributions at all internal nodes down to the tips of the phylogeny. In reality, though, only the phenotypic value, at the tips, i.e. \code{z[1:N]} are observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values.
+## Visualizing the data
+In reality, only the phenotypic value, at the tips, i.e. \code{z[1:N]} will be observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values - an important prerequisite for the POUMM.
 
 ```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7}
 # This is easily done using the nodeTimes utility function in combination with
@@ -134,9 +150,12 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
   geom_violin(aes(col = group)) + geom_point(aes(col = group), size=.5)
 ```
 
+
+
+
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function. Before that, we create a parallel cluster on the local computer and register it as a parallel back-end. This enbales parallel execution of more than one MCMC fits (explained below). 
 
-```{r fitPOUMM-1, results="hide", cache=TRUE}
+```{r fitPOUMM-1, eval=FALSE}
 # set up a parallel cluster on the local computer for parallel MCMC:
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
@@ -147,7 +166,7 @@ fitPOUMM <- poumm::POUMM(z[1:N], tree, spec = list(parallelMCMC = TRUE))
 parallel::stopCluster(cluster)
 ```
 
-The above code runs for about 3 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}) and are explained in the poumm-settings vignette. 
+The above code runs for about 3 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}) and are explained in the poumm-settings vignette. 
 
 The strategy of executing three MCMC chains instead of one allows to assess: 
 
@@ -160,7 +179,7 @@ We plot traces and posterior sample densities from the MCMC fit:
 plot(fitPOUMM, interactive = FALSE)
 ```
 
-A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This observation can be confirmed by considering the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
+A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
 
 ```{r, warning=FALSE}
 summary(fitPOUMM)
@@ -169,27 +188,129 @@ summary(fitPOUMM)
 The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
 
 
-```{r fitPOUMM-2, cache=TRUE}
+```{r fitPOUMM-2, eval=FALSE}
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
 
-fitPOUMM2 <- poumm::POUMM(z, tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
+fitPOUMM2 <- poumm::POUMM(z[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
+
+parallel::stopCluster(cluster)
+```
+
+Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
+
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPOUMM2, interactive = FALSE)
+```
+
+```{r, warning=FALSE}
+summary(fitPOUMM2)
+```
+
+The 95% high posterior density (HPD) intervals contain the true values for all five POUMM parameters ($\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$). This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
+
+```{r}
+tMean <- mean(poumm::nodeTimes(tree, tipsOnly = TRUE))
+tMax <- max(poumm::nodeTimes(tree, tipsOnly = TRUE))
+
+c(# phylogenetic heritability at mean root-tip distance: 
+  H2tMean = poumm::H2(alpha, sigma, sigmae, t = tMean),
+  # phylogenetic heritability at long term equilibirium:
+  H2tInf = poumm::H2(alpha, sigma, sigmae, t = Inf),
+  # empirical (time-independent) phylogenetic heritability, 
+  H2e = poumm::H2e(z[1:N], sigmae),
+  # genotypic variance at mean root-tip distance: 
+  sigmaG2tMean = poumm::varOU(t = tMean, alpha, sigma),
+  # genotypic variance at max root-tip distance: 
+  sigmaG2tMean = poumm::varOU(t = tMax, alpha, sigma),
+  # genotypic variance at long-term equilibrium:
+  sigmaG2tInf = poumm::varOU(t = Inf, alpha, sigma)
+  )
+```
+
+Finally, we compare the ratio of empirical genotypic to total phenotypic variance with the HPD-interval for the phylogenetic heritability. 
+
+```{r, warning=FALSE}
+c(H2empirical = var(g[1:N])/var(z[1:N]))
+summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
+```
+
+# Biological interpretation of the POUMM fit
+Let us come back to the question we stated at the beginning.
+
+## Is the POUMM an appropriate model for the data?
+
+Once we are convinced that the POUMM fits well to our data, we can go forward with the questions stated at the beginning. 
+
+```{r fit-PMM}
+cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+doParallel::registerDoParallel(cluster)
+
+fitPMM <- poumm::PMM(z[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))
+
+parallel::stopCluster(cluster)
+```
+
+
+```{r simulate-gez-BM}
+# genotypic (heritable) values
+gBM <- poumm::rVNodesGivenTreePOUMM(tree, g0, 0, theta, sigma)
+
+# environmental contributions
+eBM <- rnorm(length(gBM), 0, sigmae)
+
+# phenotypic values
+zBM <- gBM + eBM
+```
+
+```{r violin-plots-BM, fig.show = "hold", fig.height=4, fig.width=7}
+# This is easily done using the nodeTimes utility function in combination with
+# the cut-function from the base package.
+data <- data.table(z = zBM[1:N], t = poumm::nodeTimes(tree, tipsOnly = TRUE))
+data <- data[, group := cut(t, breaks = 5, include.lowest = TRUE)]
+
+ggplot(data = data, aes(x = t, y = z, group = group)) + 
+  geom_violin(aes(col = group)) + geom_point(aes(col = group), size=.5)
+```
+
+
+```{r fitPOUMM-PMM, eval=FALSE}
+cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+doParallel::registerDoParallel(cluster)
+
+fitPOUMM3 <- poumm::POUMM(zBM[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
+
+fitPMM <- poumm::PMM(zBM[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))
 
 parallel::stopCluster(cluster)
 ```
 
 
 ```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
-plot(fitPOUMM2, interactive = FALSE)
+plot(fitPOUMM3, interactive = FALSE)
 ```
 
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPOUMM3, startMCMC = 2e5, interactive = FALSE)
+```
 
 ```{r, warning=FALSE}
-summary(fitPOUMM2)
+summary(fitPOUMM3, startMCMC = 2e5)
 ```
 
-Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The mismatch from chain 1 suggests that the data has signal for all POUMM parameters as well as the derived statistics, such as the phylogenetic heritability $H^2_{\bar{t}}$, $\bar{t}$ denoting the mean root-tip distance in the tree. The 95% high posterior density (HPD) intervals contain the true values for all POUMM parameters. This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
 
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPMM, interactive = FALSE)
+```
+
+```{r, warning=FALSE}
+summary(fitPMM)
+```
+
+
+```{r}
+var(gBM[1:N])/var(zBM[1:N])
+```
 
 ```{r}
 # pp <- patherit::PP(z[1:length(tree$tip.label)], tree)

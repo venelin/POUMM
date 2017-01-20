@@ -115,13 +115,15 @@ dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
 #' @param sigmae the standard deviation of the environmental deviation added to
 #'   the genetic contribution at each tip, by default 0, meaning no
 #'   environmental deviation.
-#' @param distgr a character or a numeric describing the distribution or fixed
-#'   value to be assumed for the genetic contribution at the root. If a
-#'   character the acceptable values are : 'normal'- normal distribution with
-#'   mean mugr and standard deviation sigmagr; 'maxlik' - fixed value that would
-#'   maximise the conditional likelihood on gr.
-#' @param mugr see distgr
-#' @param sigmagr see distgr
+#' @param g0 Numeric, NA or NaN, either a fixed genotypic value at the root of 
+#'   tree or NA or NaN. A NA "Not Available" will cause to analytically
+#'   calculate the value of g0 that would maximize the conditional likelihood of
+#'   the data given g0. A NaN "Not a Number" will cause integration over g0
+#'   taking values in (-Inf,+Inf) assuming that g0 is normally distributed with
+#'   mean g0Prior$mean and variance g0Prior$var (see parameter g0Prior).
+#' @param g0Prior Either NULL or a list with named numeric or character members
+#'  "mean" and "var". Specifies a prior normal distribution for the parameter g0.
+#'  If characters, the members mean and var are evaluated as R-expressions.
 #' @param log Logical indicating whether log-likelihood should be returned
 #'   instead of likelihood, default is TRUE.
 #' @param pruneInfo list returned by pruneTree(tree) to be passed in explicit
@@ -143,11 +145,9 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
   z, tree, alpha, theta, sigma, sigmae = 0, g0 = NA, g0Prior = NULL,
   log = TRUE, pruneInfo = pruneTree(tree), 
   usempfr = 0, maxmpfr = 2, precbits = 128, 
-  #usegpuR = 0,
   debug = FALSE) {
   
   availRmpfr <- requireNamespace("Rmpfr", quietly = TRUE) 
-  availgpuR <- requireNamespace("gpuR", quietly = TRUE)
   
   alphaorig <- alpha
   thetaorig <- theta

@@ -1,12 +1,14 @@
+# A utility function used to save the maximum point of f (used as wrapper for
+# likelihod-functions).
 memoiseMax <- function(f, par, memo, verbose, ...) {
   countMemo <- mget('count', envir = memo, ifnotfound = list(0))$count
   valMemo <- mget('val', envir = memo, ifnotfound = list(-Inf))$val
   parMemo <- mget('par', envir = memo, ifnotfound = list(NULL))$par
   
   assign("count", countMemo + 1, pos = memo)
-
+  
   val <- f(par, memo = memo, ...)
-
+  
   if(valMemo < val) {
     assign('par', par, pos = memo)
     assign('val', val, pos = memo)
@@ -19,6 +21,8 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
   } 
   val
 }
+
+
 
 #' Find a maximum likelihood fit of the POUMM model
 #'
@@ -49,16 +53,16 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 maxLikPOUMMGivenTreeVTips <- function(
   loglik, parLower, parUpper, parInitML = NULL, g0 = NA, g0Prior = NULL,
   control=list(factr = 1e8, fnscale = -1), 
-  verbose = FALSE, ...) {
+  verbose = FALSE, debug = FALSE, ...) {
   if(is.null(parLower) | is.null(parUpper)) {
     stop("parLower and/or parUpper are NULL.")
   }
   
   
   if(is.null(parInitML)) {
-    listParInitML <- list(0.1 * (parLower + parUpper), 
+    listParInitML <- list(parLower + 0.1 * (parUpper - parLower), 
                       0.5 * (parLower + parUpper),
-                      0.9 * (parLower + parUpper))
+                      parLower + 0.9 * (parUpper - parLower))
   } else {
     listParInitML <- list(parInitML)
   }
@@ -67,7 +71,7 @@ maxLikPOUMMGivenTreeVTips <- function(
   memoMaxLoglik <- new.env()
   fnForOptim <- function(par) {
     ll <- memoiseMax(
-      loglik, par = c(par, g0 = g0), memo = memoMaxLoglik, verbose = verbose)
+      loglik, par = par, memo = memoMaxLoglik, verbose = verbose)
     g0LogPrior <- attr(ll, "g0LogPrior")
     
     if(is.finite(g0LogPrior)) {
@@ -80,9 +84,9 @@ maxLikPOUMMGivenTreeVTips <- function(
   for(iOptimTry in 1:length(listParInitML)) {
     parInitML <- listParInitML[[iOptimTry]]
     if(!(all(parInitML >= parLower) & all(parInitML <= parUpper))) {
-      stop(paste0("All parameters in parInitML should be between parLower=", 
-                  toString(round(parLower, 6)), "and parUpper=", 
-                  toString(round(parUpper, 6)), ", but were ", 
+      stop(paste0("All parameters in parInitML should be between \n parLower=", 
+                  toString(round(parLower, 6)), " and \n parUpper=", 
+                  toString(round(parUpper, 6)), ", but were \n ", 
                   toString(round(parInitML, 6)), "."))
     }
     
@@ -438,6 +442,8 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   } else {
     debug <- FALSE
   }
+  
+  print(parPriorMCMC) 
   
   post <- function(par, memoMaxLoglik, chainNo) {
     pr <- parPriorMCMC(par)

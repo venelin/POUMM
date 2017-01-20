@@ -72,12 +72,17 @@ summary.POUMM <- function(object, ...,
       analyseMCMCs(object$fitMCMC$chains, 
                    stat=NULL, statName='loglik', logprior=object$spec$parPrior,
                    start=startMCMC, end=endMCMC, thin=thinMCMC, 
-                   as.dt=TRUE),
-      analyseMCMCs(object$fitMCMC$chains, 
-                   stat=NULL, statName='g0', logprior=object$spec$parPrior,
-                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
                    as.dt=TRUE)
     ))
+    
+    if( !("g0" %in% names(stats)) ) {
+      anlist <- c(anlist, list(
+        analyseMCMCs(object$fitMCMC$chains, 
+                     stat=NULL, statName='g0', logprior=object$spec$parPrior,
+                     start=startMCMC, end=endMCMC, thin=thinMCMC, 
+                     as.dt=TRUE))
+      )
+    }
     
     an.MCMC <- rbindlist(anlist)
     an.MCMC[, samplePriorMCMC:=c(object$spec$samplePriorMCMC, 
@@ -111,7 +116,7 @@ summary.POUMM <- function(object, ...,
       an.MCMC <- an.MCMC[
         samplePriorMCMC == FALSE, 
         list(stat, Mean, HPD, HPD50, start, end, 
-             thin = thinMCMC, ESS, G.R., nChains, mcmc, chain)]
+             thin = thinMCMC, ESS, G.R., nChains, mcmc)]
     } else if(mode[1] == 'expert') {
       an.MCMC <- an.MCMC[, list(stat, samplePriorMCMC, 
                                 Mean, HPD, HPD50, start, end, thin = thinMCMC,
@@ -141,10 +146,95 @@ summary.POUMM <- function(object, ...,
                 ML = an.ML, MCMC = an.MCMC)
   }
   
-  class(res) <- c('POUMM.summary', class(res))
+  class(res) <- c('summary.POUMM', class(res))
   res
 }
 
+#' Plot a summary of a POUMM fit
+#' @param object An object of class POUMM.
+#' @param type A character indicating the type of plot(s) to be generated.
+#'   Defaults to "MCMC", resulting in a trace and density plot for the selected
+#'   statistics (see argument stat).
+#' @param doPlot Logical indicating whether a plot should be printed on the 
+#'   currently active graphics device or whether to return a list of ggplot 
+#'   objects for further processing. Defaults to TRUE.
+#' @param interactive Logical indicating whether the user should press a key 
+#'   before generating a next plot (when needed to display two or more plots).
+#'   Defaults to TRUE. Meaningless if 
+#'   doPlot = FALSE.
+#' @param stat A character vector with the names of statistics to be plotted.
+#'   These should be names from the stats-list (see argument statFunctions).
+#'   Defaults to c("alpha", "theta", "sigma", "sigmae", "H2tMean", "H2tInf").
+#' @param chain A vector of integers indicating the chains to be plotted. 
+#' 
+#' @import ggplot2
+#'    
+#' @export
+plot.summary.POUMM <- function(
+  object, type=c("MCMC"), 
+  doPlot = TRUE, interactive = TRUE,
+  stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
+  chain=NULL) {
+  
+  if(class(object) == "summary.POUMM" & !is.null(object$MCMC)) {
+    .stat <- stat
+    .chain <- chain
+    
+    data <- merge(object$ML, object$MCMC, by = "stat")
+    
+    data <- data[
+      { 
+        if(!is.null(.stat)) {stat %in% .stat} else TRUE 
+      } & { 
+        if(!is.null(.chain)) {chain %in% .chain} else TRUE
+      }]
+    
+    setkey(data, stat)
+    
+    data <- data[J(.stat)]
+    
+    data <- data[{ 
+      if(!is.null(.stat)) {stat %in% .stat} else TRUE 
+    } & {
+      if(!is.null(.chain)) {chain %in% .chain} else TRUE 
+    }, list(
+      N, estML, 
+      samplePriorMCMC, 
+      HPDLower = sapply(HPD, function(.) .[1]),
+      HPDUpper = sapply(HPD, function(.) .[2]),
+      HPD50Lower = sapply(HPD50, function(.) .[1]),
+      HPD50Upper = sapply(HPD50, function(.) .[2]), 
+      ESS,
+      value = unlist(mcmc), 
+      it = seq(object$startMCMC, by = object$thinMCMC, along.with = mcmc[[1]])), 
+    by = list(stat = factor(stat), chain = factor(chain))]
+    
+    if(type == "MCMC") {
+      traceplot <- ggplot(data) + 
+        geom_line(aes(x=it, y=value, col = chain)) + 
+        facet_wrap(~stat, scales = "free")
+      
+      densplot <- ggplot(data) + 
+        geom_density(aes(x=value, col = chain)) + 
+        geom_segment(aes(x=HPDLower, xend=HPDUpper, y=0, yend=0, col = chain)) +
+        geom_point(aes(x=estML, y=0)) +
+        facet_wrap(~stat, scales = "free")
+      
+      if(doPlot) {
+        print(traceplot) 
+        if(interactive) {
+          print("Press Enter to see the next plot")
+          scan("", what = "character", nlines = 1)
+        }
+        print(densplot) 
+      } else {
+        list(data = data, traceplot = traceplot, densplot = densplot)  
+      }
+    }
+  } else {
+    stop("plot.summary.POUMM called on a non summary.POUMM-object or a missing MCMC element. Verify that summary.POUMM has been called with mode = 'expert'")
+  }
+}
 
 #' Extract statistics from sampled or inferred parameters of a 
 #' POUMM/PMM fit
@@ -189,8 +279,6 @@ statistics.POUMM <- function(object) {
     theta = function(par) object$spec$parMapping(par)[, 'theta'],
     sigma = function(par) object$spec$parMapping(par)[, 'sigma'],
     sigmae = function(par) object$spec$parMapping(par)[, 'sigmae'],
-    sigma2 = function(par) object$spec$parMapping(par)[, 'sigma']^2,
-    sigmae2 = function(par) object$spec$parMapping(par)[, 'sigmae']^2,
     
     sigmaG2tMean = function(par) varOU(alpha = object$spec$parMapping(par)[, 'alpha'],
                                        sigma = object$spec$parMapping(par)[, 'sigma'],
