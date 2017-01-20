@@ -443,7 +443,11 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
     debug <- FALSE
   }
   
-  print(parPriorMCMC) 
+  if(debug) {
+    cat("Using prior function:\n")
+    print(parPriorMCMC) 
+  }
+  
   
   post <- function(par, memoMaxLoglik, chainNo) {
     pr <- parPriorMCMC(par)
