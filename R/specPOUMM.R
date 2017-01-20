@@ -1,16 +1,17 @@
-#' @title Specify parameters for fitting a POUMM model. 
-#' 
 #' @name specifyPOUMM_PMM
+#' 
+#' @title Specifying a POUMM fit
 #' 
 #' @description Specification and validation of POUMM/PMM settings.
 #' specifyPOUMM sets default POUMM settings. 
 #' Read the "Specification"-section in \code{vignette("poumm-first-steps")} for 
-#' guidelines and examples on how to use this function. 
+#' guidelines and examples on how to use these functions. 
 #'
-#' @param zMin,zMean,zMax,zVar,zSD summary statistics of the observed values 
-#'   used for constructing default parameter values and limits;
-#' @param tMin,tMean,tMax summary statistics of the root-tip disntances in the
-#'   phylogenetic tree.
+#' @param zMin,zMean,zMax,zVar,zSDtMin,tMean,tMax summary statistics of the
+#'   observed tip-values (z) and root-tip distances (t). Some of these values
+#'    are used for constructing default parameter values and limits; If you
+#'    don't specify meaningful values for these arguments, you should specify
+#'    explicitly all of the following arguments.
 #' @param parMapping An R-function that can handle, both, a numeric vector 
 #'   or a numeric matrix as argument. This function should transform the input 
 #'   vector or each row-vector (if the input is matrix) into a (row-)vector of 
@@ -23,7 +24,8 @@
 #'   an error during likelihood calculation. Only finite numerical values are 
 #'   allowed for theta. The parameter
 #'   g0 is treated in a special way and can assume either a finite numerical 
-#'   value or one of NA or NaN. If g0 = finite value, this value is used together
+#'   value or one of NA or NaN. If g0 = finite value, this value is used
+#'   together
 #'   with the corresponding values of alpha, theta, sigma, and sigmae for 
 #'   likelihood calcuation. If g0 = NA (meaing value Not Avaiable), the value of
 #'   g0 is calculated analytically during likelihood calculation in order to 
@@ -75,16 +77,26 @@
 #' # Default for POUMM:
 #' parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), sigma = 0, sigmae = 0)
 #' parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-#'              sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = zSD, t = tMean), 
-#'              sigmae = zSD)
+#'              sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+#'              sigmae = 2 * zSD)
 #'
 #' # Default for PMM:
 #' parLower = c(sigma = 0, sigmae = 0)
-#' parUpper = c(sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae=zSD, t = tMean), 
-#'              sigmae = sd(z))
+#' parUpper = c(sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+#'              sigmae = 2 * zSD)
 #' }
 #' 
-#' @param g0Prior 
+#'  @param g0Prior Either NULL or a list with named numeric or character 
+#'    members "mean" and "var". Specifies a prior normal distribution for the
+#'    parameter g0. If characters, the members "mean" and "var" are evaluated as
+#'    R-expressions - useful if these are functions of some of other parameters.
+#'    Note that if g0Prior is not NULL and g0 is not NaN (either a fixed number
+#'    or NA), then the likelihood maximization takes into account the prior for 
+#'    g0, that is, the optimization is done over the product 
+#'    p(g0) x lik(data|g0, other parameters and tree). This can be helpful to 
+#'    prevent extremely big or low estimates of g0. To avoid this behavior and
+#'    always maximize the likelihood, use g0Prior = NULL. 
+#'  
 #' @param control List of parameters passed on to optim in the ML-fit, default 
 #'   list(factr=1e9), see ?optim.
 #'
@@ -95,7 +107,7 @@
 #'  # Default for POUMM:
 #'  parInitMCMC = function(chainNo, fitML) {
 #'    if(!is.null(fitML)) {
-#'      parML <- c(fitML$par[c('alpha', 'theta', 'sigma', 'sigmae')])
+#'      parML <- fitML$par
 #'    } else {
 #'      parML <- NULL
 #'    }
@@ -112,7 +124,7 @@
 #'  # Default for PMM:
 #'  parInitMCMC = function(chainNo, fitML = NULL) {
 #'    if(!is.null(fitML)) {
-#'      parML <- c(fitML$par[c('sigma', 'sigmae')])
+#'      parML <- fitML$par
 #'    } else {
 #'      parML <- NULL
 #'    }
@@ -172,27 +184,34 @@
 #'   parallel execution to be done, you should create a computing cluster and
 #'   register it as parallel back-end (see example in package vignette and the 
 #'   web-page https://github.com/tobigithub/R-parallel/wiki/R-parallel-Setups).
-#'   
+#' @param validateSpec Logical indicating whether the passed parameters should 
+#'   be validated. This parameter is used internally and should always be TRUE.
 #' @return A named list to be passed as a spec argument to POUMM or PMM. 
+NULL
+
+#' @describeIn specifyPOUMM_PMM Specify parameters for fitting a POUMM model. 
+#'   Parameter vector is c(alpha, theta, sigma, sigmae) 
 #' 
 #' @export
-specifyPOUMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar), 
-                         tMin, tMean, tMax, 
-                         parMapping = NULL, 
-                         parLower = NULL, parUpper = NULL, 
-                         g0Prior = NULL,
-                         parInitML = NULL,
-                         control = NULL,
-                         
-                         parPriorMCMC = NULL, 
-                         parInitMCMC = NULL, 
-                         parScaleMCMC = NULL,
-                         nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
-                         thinMCMC = 100, 
-                         accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
-                         samplePriorMCMC = TRUE,
-                         parallelMCMC = FALSE
-                         ) {
+specifyPOUMM <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE,
+  validateSpec=TRUE) {
+  
   spec <- list(parMapping = parMapping, 
                parLower = parLower, parUpper = parUpper, 
                g0Prior = g0Prior,
@@ -224,8 +243,8 @@ specifyPOUMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
                  sigma = 0, sigmae = 0), 
     
     parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = zSD, t = tMean), 
-                 sigmae = zSD),
+                 sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+                 sigmae = 2 * zSD),
     
     g0Prior = NULL, 
     
@@ -243,8 +262,7 @@ specifyPOUMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
     
     parInitMCMC = function(chainNo, fitML = NULL) {
       if(!is.null(fitML)) {
-        parML <- c(fitML$par[c('alpha', 'theta', 'sigma', 'sigmae')])
-        names(parML) <- c('alpha', 'theta', 'sigma', 'sigmae')
+        parML <- fitML$par
       } else {
         parML <- NULL
       }
@@ -276,27 +294,129 @@ specifyPOUMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
     spec <- specDefault
   }
   
+  if(validateSpec) {
+    validateSpecPOUMM(spec)
+  }
+  
+  spec
+}
+
+#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with sampling of g0.
+#'  Parameter vector is c(alpha, theta, sigma, sigmae, g0).
+#' @export
+specifyPOUMM_ATSSeG0 <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      par
+    },
+    
+    parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
+                 sigma = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
+    
+    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+                 sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dexp(par[1], rate = .1, log = TRUE) +
+        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+        dexp(par[3],  rate = .1, TRUE) +
+        dexp(par[4], rate = .1, log = TRUE) + 
+        dnorm(par[5], zMean, 5 * zSD, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, sigma = 1, sigmae = 0, g0 = zMin),
+        parML,
+        c(alpha = 0, theta = 0, sigma = 1, sigmae = 1, g0 = zMax)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(5),
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
   validateSpecPOUMM(spec)
   spec
 }
 
-#' @describeIn specifyPOUMM_PMM Specify parameter for fitting a PMM model
-#' 
-specifyPMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar), 
-                       tMin, tMean, tMax, 
-                       parMapping = NULL, 
-                       parLower = NULL, parUpper = NULL, 
-                       g0Prior = NULL,
-                       parInitML = NULL,
-                       control = NULL,
-                       parPriorMCMC = NULL, 
-                       parInitMCMC = NULL, 
-                       parScaleMCMC = NULL,
-                       nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
-                       thinMCMC = 100, 
-                       accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
-                       samplePriorMCMC = TRUE,
-                       parallelMCMC = FALSE) {
+
+#' @describeIn specifyPOUMM_PMM Specify parameter for fitting a PMM model. 
+#'   Parameter vector is c(sigma, sigmae)
+#' @export
+specifyPMM <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
 
   spec <- list(parMapping = parMapping, 
                parLower = parLower, parUpper = parUpper, 
@@ -314,6 +434,7 @@ specifyPMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
   
   specDefault <- specifyPOUMM(
     zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
     parMapping = function(par) {
       if(is.matrix(par)) {
         atsseg0 <- cbind(0, 0, par[, 1:2, drop = FALSE], NA) 
@@ -327,17 +448,17 @@ specifyPMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
     
     parLower = c(sigma = 0, sigmae = 0),
     parUpper = c(
-      sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = zSD, t = tMean), 
-      sigmae = zSD),
+      sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+      sigmae = 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1],  rate = .1, TRUE) +
-        dexp(par[2], rate = .1, TRUE)
+      dexp(par[1],  rate = .1, log = TRUE) +
+        dexp(par[2], rate = .1, log = TRUE)
     },
 
     parInitMCMC = function(chainNo, fitML = NULL) {
       if(!is.null(fitML)) {
-        parML <- c(fitML$par[c('sigma', 'sigmae')])
+        parML <- fitML$par
       } else {
         parML <- NULL
       }
@@ -350,7 +471,9 @@ specifyPMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
     },
-    parScaleMCMC = diag(2)
+    parScaleMCMC = diag(2), 
+    
+    validateSpec = FALSE
   )
   
   if(is.list(spec)) {
@@ -366,6 +489,504 @@ specifyPMM <- function(zMin, zMean, zMax, zVar, zSD = sqrt(zVar),
   validateSpecPOUMM(spec)
   spec
 }
+
+#' @describeIn specifyPOUMM_PMM Specify parameter for fitting a PMM model with
+#'  sampling of g0. Parameter vector is c(sigma, sigmae, g0).
+#' @export
+specifyPMM_SSeG0 <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        atsseg0 <- cbind(0, 0, par[, 1:2, drop = FALSE]) 
+        colnames(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        atsseg0 <- c(0, 0, par[1:2]) 
+        names(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      atsseg0
+    },
+    
+    parLower = c(sigma = 0, sigmae = 0, g0 = zMin - 2 * zSD),
+    parUpper = c(
+      sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+      sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dexp(par[1],  rate = .1, log = TRUE) +
+        dexp(par[2], rate = .1, log = TRUE) + 
+        dnorm(par[3], zMean, 5 * zSD, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(sigma = 1, sigmae = 0, g0 = zMin),
+        parML,
+        c(sigma = 1, sigmae = 1, g0 = zMax)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    parScaleMCMC = diag(3), 
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
+#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with a uniform prior for
+#'  the phylogenetic heritability at mean root-tip distance. Parameter vector is
+#'  c(alpha, theta, H2tMean, sigmae).
+#' @export
+specifyPOUMM_ATH2tMeanSe <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        par[, 3] <- poumm::sigma(par[, 3], par[, 1], par[, 4], tMean)
+        par <- cbind(par, NA)
+        
+        colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par <- c(par, NA)
+        
+        names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      par
+    },
+    
+    parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
+                 H2tMean = 0, sigmae = 0), 
+    
+    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+                 H2tMean = .99, sigmae = 2 * zSD),
+  
+    parPriorMCMC = function(par) {
+      dexp(par[1], rate = .1, log = TRUE) +
+        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+        dunif(par[3], min = 0, max = 1, log = TRUE) +
+        dexp(par[4], rate = .1, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, H2tMean = .9, sigmae = 0),
+        parML,
+        c(alpha = 0, theta = 0, H2tMean = .1, sigmae = 1)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(4), 
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
+
+
+#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with a uniform prior for
+#'  the phylogenetic heritability at mean root-tip with sampling of g0.
+#'  Parameter vector is c(alpha, theta, H2tMean, sigmae, g0).
+#' @export
+specifyPOUMM_ATH2tMeanSeG0 <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        par[, 3] <- poumm::sigma(par[, 3], par[, 1], par[, 4], tMean)
+        
+        colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        
+        names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      par
+    },
+    
+    parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
+                 H2tMean = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
+    
+    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+                 H2tMean = .99, sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dexp(par[1], rate = .1, log = TRUE) +
+        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+        dunif(par[3], min = 0, max = 1, log = TRUE) +
+        dexp(par[4], rate = .1, log = TRUE) + 
+        dnorm(par[5], zMean, 5 * zSD, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, H2tMean = .9, sigmae = 0, g0 = zMin),
+        parML,
+        c(alpha = 0, theta = 0, H2tMean = .1, sigmae = 1, g0 = zMax)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(5), 
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
+
+
+#' @describeIn specifyPOUMM_PMM Fitting a PMM model with a uniform prior for
+#'  the phylogenetic heritability at mean root-tip distance. Parameter vector is
+#'  c(H2tMean, sigmae).
+#' @export
+specifyPMM_H2tMeanSe <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        par <- cbind(0, 0, par[, 1:2, drop = FALSE], NA)
+        par[, 3] <- poumm::sigma(par[, 3], 0, par[, 4], tMean)
+        par <- cbind(par, NA)
+        
+        colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        par <- c(0, 0, par, NA)
+        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par <- c(par, NA)
+        
+        names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      par
+    },
+    
+    parLower = c(H2tMean = 0, sigmae = 0), 
+    
+    parUpper = c(H2tMean = .99, sigmae = 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dunif(par[1], min = 0, max = 1, log = TRUE) +
+        dexp(par[2], rate = .1, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(H2tMean = .9, sigmae = 0),
+        parML,
+        c(H2tMean = .1, sigmae = 1)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(2), 
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
+
+#' @describeIn specifyPOUMM_PMM Fitting a PMM model with a uniform prior for
+#'  the phylogenetic heritability at mean root-tip distance with sampling of G0.
+#'  Parameter vector is c(H2tMean, sigmae, g0).
+#' @export
+specifyPMM_H2tMeanSeG0 <- function(
+  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
+  tMin = NA, tMean = NA, tMax = NA, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        par <- cbind(0, 0, par)
+        par[, 3] <- poumm::sigma(par[, 3], 0, par[, 4], tMean)
+        
+        colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        par <- c(0, 0, par)
+        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        
+        names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      par
+    },
+    
+    parLower = c(H2tMean = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
+    
+    parUpper = c(H2tMean = .99, sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dunif(par[1], min = 0, max = 1, log = TRUE) +
+        dexp(par[2], rate = .1, log = TRUE) + 
+        dnorm(par[3], zMean, 5 * zSD)
+      
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(H2tMean = .9, sigmae = 0, g0 = zMin),
+        parML,
+        c(H2tMean = .1, sigmae = 1, g0 = zMax)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1,]
+    },
+    
+    parScaleMCMC = diag(3), 
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
 
 ######### Validate specification ###########
 validateSpecPOUMM <- function(spec) {
@@ -400,6 +1021,20 @@ validateSpecPOUMM <- function(spec) {
       }
     }
     
+    if(is.null(parLower) | is.null(parUpper) | 
+       any(is.na(parLower)) | any(is.na(parUpper))) {
+      cat("parLower:")
+      print(parLower)
+      cat("parUpper:")
+      print(parUpper)
+      
+      
+      stop("NULL parLower and/or parUpper or some NA or NaNs found in parLower
+           and/or parUpper. Did you forget
+           specifying some of the parameters zMin, zMean, zMax, zVar, tMin,
+           tMean, tMax? If yes, you can fix them or specify parLower and
+           parUpper explicitly.")
+    }
     if(length(parLower) != parLen | length(parUpper) != parLen | 
        !identical(parNames, names(parLower)) | !identical(parNames, names(parUpper))) {
       warning("parInitMCMC returns vectors of different length or with different names from parLower and parUpper.")

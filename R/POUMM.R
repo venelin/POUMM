@@ -1,3 +1,4 @@
+
 # Implementation of the POUMM likelihood and heritability estimators
 
 #' @title The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model
@@ -30,8 +31,9 @@
 #'   confidence intervals for the estimated parameters.
 #' @param parallelMCMC Logical: should the MCMC chains be run in parallel. 
 #'
-#' @param verbose A logical indicating whether to print informative messages on 
-#'   the standard output.
+#' @param verbose,debug Logical flags indicating whether to print informative 
+#'  and/or debug information on the standard output (both are set to to FALSE by
+#'  default).
 #'   
 #'   
 #' @details The PMM function fits the PMM model to the tree and data
@@ -39,7 +41,7 @@
 #'   
 #' @return For POUMM, an object of class 'POUMM'. For PMM, an object of class 'PMM'.
 #'   
-#' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif
+#' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
 NULL
 
 #' @describeIn POUMM_PMM Maximum likelihood and Bayesian fit of the POUMM
@@ -50,7 +52,7 @@ POUMM <- function(
   parDigits = 6, usempfr = 0, 
   ..., 
   spec = NULL, doMCMC = TRUE,
-  verbose = FALSE) {
+  verbose = FALSE, debug=FALSE) {
   
   ###### Verify input data ######
   if(is.list(z)) {
@@ -182,7 +184,15 @@ POUMM <- function(
     print('Performing ML-fit...')
   }
   fitML <- do.call(maxLikPOUMMGivenTreeVTips, 
-                   c(list(loglik = loglik, verbose = verbose), spec))
+                   c(list(loglik = loglik, verbose = verbose, debug = debug), 
+                     spec))
+  
+  if(verbose) {
+    cat("max loglik from ML: \n")
+    print(fitML$value)
+    cat("parameters at max loglik from ML: \n")
+    print(fitML$par)
+  }
   
   result[['fitML']] <- fitML
   
@@ -193,7 +203,15 @@ POUMM <- function(
     
     fitMCMC <- do.call(
       mcmcPOUMMGivenPriorTreeVTips, 
-      c(list(loglik = loglik, fitML = fitML, verbose = verbose), spec))
+      c(list(loglik = loglik, fitML = fitML, verbose = verbose, debug = debug),
+        spec))
+    
+    if(verbose) {
+      cat("max loglik from MCMCs: \n")
+      print(fitMCMC$valueMaxLoglik)
+      cat("parameters at max loglik from MCMCs: \n")
+      print(fitMCMC$parMaxLoglik)
+    }
     
     # if the max likelihood from the MCMC is bigger than the max likelihood 
     # from the ML-fit, it is likely that the ML fit got stuck in a local 
@@ -204,7 +222,7 @@ POUMM <- function(
       
       if(all(c(parInitML >= spec$parLower, parInitML <= spec$parUpper))) {
         if(verbose) {
-          print("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
+          cat("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
         }
         
         spec[["parInitML"]] <- parInitML
@@ -214,7 +232,9 @@ POUMM <- function(
         result[['fitML']] <- fitML2
         
       } else {
-        warning("The MCMC-fit found a better likelihood outside of the search-region of the ML-fit.")
+        message <- "The MCMC-fit found a better likelihood outside of the search-region of the ML-fit."
+        cat(message)
+        warning(message)
       }
     }
     
@@ -234,7 +254,7 @@ PMM <- function(
   z, tree, zName = 'z', treeName = 'tree', 
   parDigits = 6, usempfr = 0,
   ...,
-  spec = NULL, doMCMC = TRUE, parallelMCMC = FALSE,
+  spec = NULL, doMCMC = TRUE, 
   verbose = FALSE) {
   
   if(is.list(z)) {
@@ -271,7 +291,7 @@ PMM <- function(
   res <- POUMM(
     z = z, tree = tree, zName = zName, treeName = treeName, 
     parDigits = parDigits, usempfr = usempfr, ..., 
-    spec = spec, doMCMC = doMCMC, parallelMCMC = parallelMCMC, 
+    spec = spec, doMCMC = doMCMC, 
     verbose = verbose)
   class(res) <- c('PMM', class(res))
   res
@@ -376,8 +396,13 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
 #' @param type A character indicating the type of plot(s) to be generated.
 #'   Defaults to "MCMC", resulting in a trace and density plot for the selected
 #'   statistics (see argument stat).
+#' @param doPlot Logical indicating whether a plot should be printed on the 
+#'   currently active graphics device or whether to return a list of ggplot 
+#'   objects for further processing. Defaults to TRUE.
 #' @param interactive Logical indicating whether the user should press a key 
 #'   before generating a next plot (when needed to display two or more plots).
+#'   Defaults to TRUE. Meaningless if 
+#'   doPlot = FALSE.
 #' @param stat A character vector with the names of statistics to be plotted.
 #'   These should be names from the stats-list (see argument statFunctions).
 #'   Defaults to c("alpha", "theta", "sigma", "sigmae", "H2tMean", "H2tInf").
@@ -392,7 +417,7 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
 plot.POUMM <- 
   function(object, type=c("MCMC"), 
            doPlot = TRUE, interactive = TRUE,
-           stat=c("alpha", "theta", "sigma", "sigmae", "H2tMean", "H2tInf"),
+           stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
            chain=NULL,
            startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
            statFunctions = statistics(object)) {
@@ -401,61 +426,7 @@ plot.POUMM <-
     summ <- summary(object, mode = "expert", 
                     startMCMC = startMCMC, endMCMC = endMCMC, 
                     thinMCMC = thinMCMC, stats = statFunctions)
-    .stat <- stat
-    .chain <- chain
-    
-    data <- merge(summ$ML, summ$MCMC, by = "stat")
-    
-    data <- data[
-      { 
-        if(!is.null(.stat)) {stat %in% .stat} else TRUE 
-      } & { 
-        if(!is.null(.chain)) {chain %in% .chain} else TRUE
-      }]
-    
-    setkey(data, stat)
-    
-    data <- data[J(.stat)]
-    
-    data <- data[{ 
-        if(!is.null(.stat)) {stat %in% .stat} else TRUE 
-      } & {
-        if(!is.null(.chain)) {chain %in% .chain} else TRUE 
-      }, list(
-        N, estML, 
-        samplePriorMCMC, 
-        HPDLower = sapply(HPD, function(.) .[1]),
-        HPDUpper = sapply(HPD, function(.) .[2]),
-        HPD50Lower = sapply(HPD50, function(.) .[1]),
-        HPD50Upper = sapply(HPD50, function(.) .[2]), 
-        ESS,
-        value = unlist(mcmc), 
-        it = seq(summ$startMCMC, by = summ$thinMCMC, along.with = mcmc[[1]])), 
-      by = list(stat = factor(stat), chain = factor(chain))]
-    
-    if(type == "MCMC") {
-      traceplot <- ggplot2::ggplot(data) + 
-        geom_line(aes(x=it, y=value, col = chain)) + 
-        facet_wrap(~stat, scales = "free")
-      
-      densplot <- ggplot2::ggplot(data) + 
-        geom_density(aes(x=value, col = chain)) + 
-        geom_segment(aes(x=HPDLower, xend=HPDUpper, y=0, yend=0, col = chain)) +
-        geom_point(aes(x=estML, y=0)) +
-        facet_wrap(~stat, scales = "free")
-      
-      if(doPlot) {
-        print(traceplot) 
-        if(interactive) {
-          print("Press Enter to see the next plot")
-          scan("", what = "character", nlines = 1)
-        }
-        print(densplot) 
-      } else {
-        list(data = data, traceplot = traceplot, densplot = densplot)  
-      }
-    }
-    
+    plot(summ)
   } else {
     stop("plot.POUMM called on a non POUMM-object.")
   }
