@@ -84,7 +84,7 @@ sigmae <- 0.2
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `poumm::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
 
 ```{r, echo=FALSE, fig.height=4.6, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
-tStep <- 0.01
+tStep <- 0.025
 t <- seq(0, 6, by = tStep)
 
 plot(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
@@ -118,7 +118,7 @@ Once the POUMM parameters are specified, we use the **TreeSim** R-package [@stad
 
 ```{r simulate-tree, results="hide"}
 # Number of tips
-tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1, deathsky = .5, 
+tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6, 
                                timesky=c(0, Inf), sampprobsky = 1)[[1]]
 ```
 
@@ -138,7 +138,7 @@ z <- g + e
 ```
 
 ## Visualizing the data
-In reality, only the phenotypic value, at the tips, i.e. \code{z[1:N]} will be observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values - an important prerequisite for the POUMM.
+In reality, only the phenotypic value, at the tips, i.e. \code{z[1:N]} will be observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values - an important prerequisite for the POUMM. 
 
 ```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7}
 # This is easily done using the nodeTimes utility function in combination with
@@ -150,9 +150,16 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
   geom_violin(aes(col = group)) + geom_point(aes(col = group), size=.5)
 ```
 
+A somewhat fancier but not always useful way to visualize data is to plot the phylogeny with colored branches, scaling the intensity of the color by the trait value at the end of each branch:
 
+```{r colored-tree-plots, fig.show = "hold", fig.height=4, fig.width=7}
+# This is easily done using the nodeTimes utility function in combination with
+# the cut-function from the base package.
+phytools::plotBranchbyTrait(tree, z, mode = "nodes", 
+                            show.tip.label = FALSE, show.node.label = FALSE) 
+```
 
-
+## A first POUMM fit
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function. Before that, we create a parallel cluster on the local computer and register it as a parallel back-end. This enbales parallel execution of more than one MCMC fits (explained below). 
 
 ```{r fitPOUMM-1, eval=FALSE}
