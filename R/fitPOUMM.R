@@ -63,6 +63,8 @@ maxLikPOUMMGivenTreeVTips <- function(
     listParInitML <- list(parLower + 0.1 * (parUpper - parLower), 
                       0.5 * (parLower + parUpper),
                       parLower + 0.9 * (parUpper - parLower))
+  } else if(is.list(parInitML)) {
+    listParInitML <- parInitML
   } else {
     listParInitML <- list(parInitML)
   }
@@ -256,7 +258,31 @@ ml.poumm <- function(
 
 #' @importFrom stats window start end
 convertToMCMC <- function(obj, thinMCMC=1) {
-  codaobj <- adaptMCMC::convert.to.coda(obj)
+  convert.to.coda <- function (sample) 
+  {
+    if (!is.null(names(sample))) {
+      if (is.matrix(sample)) {
+        obj <- coda::mcmc(sample)
+      }
+      if (is.list(sample)) {
+        obj <- coda::mcmc(sample$samples)
+      }
+      return(obj)
+    }
+    else {
+      if (is.matrix(sample[[1]])) {
+        obj <- as.mcmc.list(lapply(sample, coda::mcmc))
+      }
+      if (is.list(sample[[1]])) {
+        obj <- as.mcmc.list(lapply(sample, function(x) {
+          coda::mcmc(x$samples)
+        }))
+      }
+      return(obj)
+    }
+  }
+  
+  codaobj <- convert.to.coda(obj)
   
   winmcmc <- window(codaobj, start = start(codaobj), end = end(codaobj), 
                     thin = thinMCMC)
@@ -513,12 +539,12 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   
   if(parallelMCMC) {
     chains <- foreach::foreach(
-      i = 1:nChainsMCMC, .packages = c('coda', 'adaptMCMC', 'poumm')) %dopar% {
+      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %dopar% {
         chain <- try(doMCMC(i), silent = TRUE)
       }
   } else {
     chains <- foreach::foreach(
-      i = 1:nChainsMCMC, .packages = c('coda', 'adaptMCMC', 'poumm')) %do% {
+      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %do% {
         chain <- try(doMCMC(i), silent = TRUE)
       }
   }

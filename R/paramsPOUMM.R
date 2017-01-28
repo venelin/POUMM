@@ -201,13 +201,13 @@ rTrajectoryOU <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #' # At POUMM stationary state (equilibrium, t=Inf)
 #' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = Inf)     # 0.4
 #' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = Inf)    # 0.75
-#' sigma <- sigma(H2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
+#' sigma <- sigmaOUH2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
 #' sigmae <- sigmae(H2 = H2, alpha = 0.75, sigma = 1, t = Inf) # 1
 #' 
 #' # At finite time t = 0.2
 #' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = 0.2)     # 0.1473309
 #' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = 0.2)    # 0.75
-#' sigma <- sigma(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
+#' sigma <- sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
 #' sigmae <- sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
 #' 
 #' # Comparing with the empirical H2e from a simulation
@@ -235,7 +235,7 @@ NULL
 #' @export
 alpha <- function(H2, sigma, sigmae, t = Inf) {
   # if(!all(H2>=0 & H2 <=1 & sigma >= 0 & sigmae >=0 & t>=0)) {
-  #   warning(paste0("Function poumm::alpha was called on invalid parameters. ", 
+  #   warning(paste0("Function POUMM::alpha was called on invalid parameters. ", 
   #                  "Check that H2>=0 & H2 <=1 & sigma >= 0 & sigmae >=0 & t>=0.",
   #                  "Parameter values were: ", 
   #                  toString(c(H2=H2, sigma=sigma, sigmae=sigmae, t=t))))
@@ -264,8 +264,11 @@ alpha <- function(H2, sigma, sigmae, t = Inf) {
 #' @describeIn PhylogeneticH2 Calculate sigma given time t, H2 at time t, alpha
 #'   and sigmae
 #'   
+#' @note This function is called sigmaOU and not simply sigma to avoid a conflict 
+#' with a function sigma in the base R-package.
+#'   
 #' @export
-sigma <- function(H2, alpha, sigmae, t=Inf) {
+sigmaOU <- function(H2, alpha, sigmae, t=Inf) {
   res <- if(is.infinite(t)) {
     if(alpha == 0) {
       # BM

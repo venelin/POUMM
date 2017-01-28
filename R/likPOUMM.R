@@ -24,7 +24,7 @@
 rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
   g <- ape::rTraitCont(tree, 
                        function(x, l, .a, .t, .s) {
-                         poumm::rOU(n = 1, z0 = x, t = l, alpha = .a, theta = .t, sigma = .s)
+                         POUMM::rOU(n = 1, z0 = x, t = l, alpha = .a, theta = .t, sigma = .s)
                        }, root.value = z0, ancestor = TRUE, 
                        .a = alpha, .t = theta, .s = sigma)
   if(sigmae > 0) {
@@ -86,8 +86,6 @@ dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
   ifelse(log, sum(probs, de), exp(sum(probs, de)))
 }
 
-#' Store debug information from likPOUMMGivenTreeVTips
-.likVTreeOUDebug <- NULL
 
 #' Density of observed tip-values given a tree, assuming Ornstein-Uhlenbeck 
 #' process for the genetic contributions along the tree and normally distributed
@@ -135,8 +133,8 @@ dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
 #'   the Rmpfr package. Note that when using mpfr, the time for one likelihood
 #'   calculation can increase more than 100-fold. Default (0).
 #' @param precbits integer specifying precision bits for mpfr. Default is 512.
-#' @param debug logical, if set to TRUE some debugging information is stored in
-#'   a global list called .likVTreeOUDebug
+#' @param debug logical, if set to TRUE some debugging information is printed 
+#'   during likelihood calculation
 #'   
 #' @import data.table
 #' @aliases likPOUMMGivenTreeVTips dVTipsGivenTreePOUMM
@@ -430,12 +428,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         g0LogPrior = list(g0LogPrior), loglik = list(loglik), 
         availRmpfr = list(availRmpfr), usempfr = list(usempfr), 
         precbits = list(precbits))
-
-      if(!exists('.likVTreeOUDebug')) {
-        .likVTreeOUDebug <<- debugdata
-      } else {
-        .likVTreeOUDebug <<- rbindlist(list(.likVTreeOUDebug, debugdata))
-      }
+      print(debudata)
     }
     
     if(is.double(alphaorig) & is.double(thetaorig) & is.double(sigmaorig) & 

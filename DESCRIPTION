@@ -1,8 +1,8 @@
-Package: poumm
+Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 1.0.0
-Date: 2016-12-20
+Version: 1.1.0
+Date: 2016-01-28
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre"))
 Description: Combined maximum likelihood and Bayesian inference of the 
@@ -21,7 +21,6 @@ Depends:
 Imports:
     ape (>= 3.3),
     data.table (>= 1.9.6),
-    adaptMCMC (>= 1.1),
     coda (>= 0.18-1),
     foreach (>= 1.4.3),
 Suggests:
@@ -34,3 +33,4 @@ Suggests:
     rmarkdown
 RoxygenNote: 5.0.1
 VignetteBuilder: knitr
+RdMacros: Rdpack
