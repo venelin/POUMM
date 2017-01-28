@@ -43,7 +43,7 @@ library(data.table)
 knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
 ```
-Here, we introduce the R-package **poumm** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **poumm** package can be used to answer the following questions:
+Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
 
 * Is the POUMM an appropriate model for the data?
 * Does the trait evolve under stabilizing selection?
@@ -59,7 +59,7 @@ In the second section we use variants of the toy-simulation to show how the  POU
 But before we start, quickly install the needed packages:
 
 ```{r install, eval=FALSE}
-install.packages('poumm_1.0.0.tgz', type='binary', repos=NULL)
+install.packages('POUMM_1.1.0.tgz', type='binary', repos=NULL)
 install.packages("TreeSim")
 install.packages("data.table")
 install.packages("ggplot2")
@@ -79,19 +79,19 @@ sigma <- 0.2
 sigmae <- 0.2 
 ```
 
-We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `poumm::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
+We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `POUMM::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
 
 ```{r, echo=FALSE, fig.height=4.6, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
 tStep <- 0.025
 t <- seq(0, 6, by = tStep)
 
-plot(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
-lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
+plot(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
+lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
 
-lines(t, poumm::rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
-lines(t, poumm::rTrajectoryOU(g0, tStep, alpha*2, theta, 0, length(t)), lty = 2, col = "magenta")
+lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
+lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha*2, theta, 0, length(t)), lty = 2, col = "magenta")
 
-lines(t, poumm::rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue")
+lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue")
 
 abline(h=theta, lty = 3, col = "darkgrey")
 
@@ -126,7 +126,7 @@ Starting from the root value $g_0$, we simulate the genotypic values, $g$, and t
 
 ```{r simulate-gez-OU}
 # genotypic (heritable) values
-g <- poumm::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
+g <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
 
 # environmental contributions
 e <- rnorm(length(g), 0, sigmae)
@@ -141,7 +141,7 @@ In reality, only the phenotypic value, at the tips, i.e. \code{z[1:N]} will be o
 ```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7}
 # This is easily done using the nodeTimes utility function in combination with
 # the cut-function from the base package.
-data <- data.table(z = z[1:N], t = poumm::nodeTimes(tree, tipsOnly = TRUE))
+data <- data.table(z = z[1:N], t = POUMM::nodeTimes(tree, tipsOnly = TRUE))
 data <- data[, group := cut(t, breaks = 5, include.lowest = TRUE)]
 
 ggplot(data = data, aes(x = t, y = z, group = group)) + 
@@ -165,13 +165,13 @@ Once all simulated data is available, it is time proceed with a first POUMM fit.
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
 
-fitPOUMM <- poumm::POUMM(z[1:N], tree, spec = list(parallelMCMC = TRUE))
+fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec = list(parallelMCMC = TRUE))
 
 # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
 parallel::stopCluster(cluster)
 ```
 
-The above code runs for about 3 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}) and are explained in the poumm-settings vignette. 
+The above code runs for about 3 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}) and are explained in the POUMM-settings vignette. 
 
 The strategy of executing three MCMC chains instead of one allows to assess: 
 
@@ -197,7 +197,7 @@ The G.R. diagnostic is used to check whether two random samples originate from t
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
 
-fitPOUMM2 <- poumm::POUMM(z[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
+fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, doMCMC = TRUE, spec=list(nSamplesMCMC = 4e5, parallelMCMC = TRUE))  
 
 parallel::stopCluster(cluster)
 ```
@@ -216,21 +216,21 @@ summary(fitPOUMM2)
 The 95% high posterior density (HPD) intervals contain the true values for all five POUMM parameters ($\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$). This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
 
 ```{r}
-tMean <- mean(poumm::nodeTimes(tree, tipsOnly = TRUE))
-tMax <- max(poumm::nodeTimes(tree, tipsOnly = TRUE))
+tMean <- mean(POUMM::nodeTimes(tree, tipsOnly = TRUE))
+tMax <- max(POUMM::nodeTimes(tree, tipsOnly = TRUE))
 
 c(# phylogenetic heritability at mean root-tip distance: 
-  H2tMean = poumm::H2(alpha, sigma, sigmae, t = tMean),
+  H2tMean = POUMM::H2(alpha, sigma, sigmae, t = tMean),
   # phylogenetic heritability at long term equilibirium:
-  H2tInf = poumm::H2(alpha, sigma, sigmae, t = Inf),
+  H2tInf = POUMM::H2(alpha, sigma, sigmae, t = Inf),
   # empirical (time-independent) phylogenetic heritability, 
-  H2e = poumm::H2e(z[1:N], sigmae),
+  H2e = POUMM::H2e(z[1:N], sigmae),
   # genotypic variance at mean root-tip distance: 
-  sigmaG2tMean = poumm::varOU(t = tMean, alpha, sigma),
+  sigmaG2tMean = POUMM::varOU(t = tMean, alpha, sigma),
   # genotypic variance at max root-tip distance: 
-  sigmaG2tMean = poumm::varOU(t = tMax, alpha, sigma),
+  sigmaG2tMean = POUMM::varOU(t = tMax, alpha, sigma),
   # genotypic variance at long-term equilibrium:
-  sigmaG2tInf = poumm::varOU(t = Inf, alpha, sigma)
+  sigmaG2tInf = POUMM::varOU(t = Inf, alpha, sigma)
   )
 ```
 

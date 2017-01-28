@@ -9,9 +9,11 @@
 #'
 #' @param zMin,zMean,zMax,zVar,zSDtMin,tMean,tMax summary statistics of the
 #'   observed tip-values (z) and root-tip distances (t). Some of these values
-#'    are used for constructing default parameter values and limits; If you
-#'    don't specify meaningful values for these arguments, you should specify
-#'    explicitly all of the following arguments.
+#'    are used for constructing default parameter values and limits; These 
+#'    arguments are given default values which will most likely be meaningless
+#'    in your specific use-case. If you don't specify meaningful values for
+#'    these arguments, you should specify explicitly all of the following
+#'    arguments.
 #' @param parMapping An R-function that can handle, both, a numeric vector 
 #'   or a numeric matrix as argument. This function should transform the input 
 #'   vector or each row-vector (if the input is matrix) into a (row-)vector of 
@@ -77,12 +79,12 @@
 #' # Default for POUMM:
 #' parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), sigma = 0, sigmae = 0)
 #' parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-#'              sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+#'              sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
 #'              sigmae = 2 * zSD)
 #'
 #' # Default for PMM:
 #' parLower = c(sigma = 0, sigmae = 0)
-#' parUpper = c(sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+#' parUpper = c(sigma = POUMM::sigmaOU(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
 #'              sigmae = 2 * zSD)
 #' }
 #' 
@@ -194,8 +196,8 @@ NULL
 #' 
 #' @export
 specifyPOUMM <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -243,7 +245,7 @@ specifyPOUMM <- function(
                  sigma = 0, sigmae = 0), 
     
     parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
                  sigmae = 2 * zSD),
     
     g0Prior = NULL, 
@@ -301,12 +303,109 @@ specifyPOUMM <- function(
   spec
 }
 
+#' @describeIn specifyPOUMM_PMM Fitting a POU model with fixed sigmae.
+#'  Parameter vector is c(alpha, theta, sigma).
+#' @export
+specifyPOUMM_ATS <- function(
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE, 
+  sigmaeFixed = 0) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  specDefault <- specifyPOUMM(
+    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        atsseg0 <- cbind(par[, 1:3, drop = FALSE], sigmaeFixed, NA) 
+        colnames(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        atsseg0 <- c(par[1:3], sigmaeFixed, NA) 
+        names(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      atsseg0
+    },
+    
+    parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
+                 sigma = 0), 
+    
+    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean)),
+    
+    parPriorMCMC = function(par) {
+      dexp(par[1], rate = .1, log = TRUE) +
+        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+        dexp(par[3],  rate = .1, TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, sigma = 1),
+        parML,
+        c(alpha = 0, theta = 0, sigma = 1)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(3),
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
+
+
 #' @describeIn specifyPOUMM_PMM Fitting a POUMM model with sampling of g0.
 #'  Parameter vector is c(alpha, theta, sigma, sigmae, g0).
 #' @export
 specifyPOUMM_ATSSeG0 <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -351,7 +450,7 @@ specifyPOUMM_ATSSeG0 <- function(
                  sigma = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
     
     parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = poumm::sigma(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
                  sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
@@ -402,8 +501,8 @@ specifyPOUMM_ATSSeG0 <- function(
 #'   Parameter vector is c(sigma, sigmae)
 #' @export
 specifyPMM <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -448,7 +547,7 @@ specifyPMM <- function(
     
     parLower = c(sigma = 0, sigmae = 0),
     parUpper = c(
-      sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+      sigma = POUMM::sigmaOU(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
       sigmae = 2 * zSD),
     
     parPriorMCMC = function(par) {
@@ -494,8 +593,8 @@ specifyPMM <- function(
 #'  sampling of g0. Parameter vector is c(sigma, sigmae, g0).
 #' @export
 specifyPMM_SSeG0 <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -540,7 +639,7 @@ specifyPMM_SSeG0 <- function(
     
     parLower = c(sigma = 0, sigmae = 0, g0 = zMin - 2 * zSD),
     parUpper = c(
-      sigma = poumm::sigma(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+      sigma = POUMM::sigmaOU(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
       sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
@@ -588,8 +687,8 @@ specifyPMM_SSeG0 <- function(
 #'  c(alpha, theta, H2tMean, sigmae).
 #' @export
 specifyPOUMM_ATH2tMeanSe <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -623,12 +722,12 @@ specifyPOUMM_ATH2tMeanSe <- function(
     
     parMapping = function(par) {
       if(is.matrix(par)) {
-        par[, 3] <- poumm::sigma(par[, 3], par[, 1], par[, 4], tMean)
+        par[, 3] <- POUMM::sigmaOU(par[, 3], par[, 1], par[, 4], tMean)
         par <- cbind(par, NA)
         
         colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
-        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par[3] <- POUMM::sigmaOU(par[3], par[1], par[4], tMean)
         par <- c(par, NA)
         
         names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
@@ -691,8 +790,8 @@ specifyPOUMM_ATH2tMeanSe <- function(
 #'  Parameter vector is c(alpha, theta, H2tMean, sigmae, g0).
 #' @export
 specifyPOUMM_ATH2tMeanSeG0 <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -726,11 +825,11 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
     
     parMapping = function(par) {
       if(is.matrix(par)) {
-        par[, 3] <- poumm::sigma(par[, 3], par[, 1], par[, 4], tMean)
+        par[, 3] <- POUMM::sigmaOU(par[, 3], par[, 1], par[, 4], tMean)
         
         colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
-        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par[3] <- POUMM::sigmaOU(par[3], par[1], par[4], tMean)
         
         names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       }
@@ -793,8 +892,8 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
 #'  c(H2tMean, sigmae).
 #' @export
 specifyPMM_H2tMeanSe <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -829,13 +928,13 @@ specifyPMM_H2tMeanSe <- function(
     parMapping = function(par) {
       if(is.matrix(par)) {
         par <- cbind(0, 0, par[, 1:2, drop = FALSE], NA)
-        par[, 3] <- poumm::sigma(par[, 3], 0, par[, 4], tMean)
+        par[, 3] <- POUMM::sigmaOU(par[, 3], 0, par[, 4], tMean)
         par <- cbind(par, NA)
         
         colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
         par <- c(0, 0, par, NA)
-        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par[3] <- POUMM::sigmaOU(par[3], par[1], par[4], tMean)
         par <- c(par, NA)
         
         names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
@@ -893,8 +992,8 @@ specifyPMM_H2tMeanSe <- function(
 #'  Parameter vector is c(H2tMean, sigmae, g0).
 #' @export
 specifyPMM_H2tMeanSeG0 <- function(
-  zMin = NA, zMean = NA, zMax = NA, zVar = NA, zSD = sqrt(zVar), 
-  tMin = NA, tMean = NA, tMax = NA, 
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
   parLower = NULL, parUpper = NULL, 
   g0Prior = NULL,
@@ -929,12 +1028,12 @@ specifyPMM_H2tMeanSeG0 <- function(
     parMapping = function(par) {
       if(is.matrix(par)) {
         par <- cbind(0, 0, par)
-        par[, 3] <- poumm::sigma(par[, 3], 0, par[, 4], tMean)
+        par[, 3] <- POUMM::sigmaOU(par[, 3], 0, par[, 4], tMean)
         
         colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
         par <- c(0, 0, par)
-        par[3] <- poumm::sigma(par[3], par[1], par[4], tMean)
+        par[3] <- POUMM::sigmaOU(par[3], par[1], par[4], tMean)
         
         names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       }
@@ -989,6 +1088,14 @@ specifyPMM_H2tMeanSeG0 <- function(
 
 
 ######### Validate specification ###########
+#' Validate a POUMM specification
+#' @param spec A list object returned by one of the specifyPOUMM or specifyPMM
+#'  functions with possibly modified entries afterwards.
+#' 
+#' @return The function either returns TRUE or exits with an error message if it
+#'  finds a problem with the specificaiton.
+#'  
+#' @export
 validateSpecPOUMM <- function(spec) {
   with(spec, {
     if(nChainsMCMC <= 0) {
@@ -1015,7 +1122,14 @@ validateSpecPOUMM <- function(spec) {
     parLen <- length(listParInitMCMC[[1]])
     
     if(!is.null(parInitML)) {
-      if(!is.vector(parInitML) | length(parInitML) != parLen | 
+      if(is.list(parInitML)) {
+        sapply(parInitML, function(v) {
+          if(!is.vector(v) | length(v) != parLen | 
+             !identical(names(v), parNames)) {
+            stop("If passing a list for parInitML, this should contain vectors of the same length and with the same names as each vector returned by parInitMCMC.")
+          }
+        } )
+      } else if(!is.vector(parInitML) | length(parInitML) != parLen | 
          !identical(names(parInitML), parNames)) {
         stop("parInitML should be a vector of the same length and with the same names as each vector returned by parInitMCMC.")
       }

@@ -23,12 +23,15 @@
 #'   (?dVGivenTreeOU for details).
 #' @param spec A named list specifying how the ML and MCMC fit should be done.
 #'   See ?specifyPOUMM.
-#' @param doMCMC logical: should a MCMC fit be performed. This is TRUE by 
-#'   default. Note, however, that, to obtain meaningful estimates MCMC may need 
-#'   to run for hours, especially on bigger trees. An MCMC fit provides a sample
+#' @param doMCMC logical: should a MCMC fit be performed. An MCMC fit provides a sample
 #'   from the posterior distribution of the parameters given a prior 
 #'   distribution and the data. Unlike the ML-fit, it allows to estimate 
-#'   confidence intervals for the estimated parameters.
+#'   confidence intervals for the estimated parameters. This argument is TRUE by 
+#'   default. The current implementation uses a modified version of the adaptive 
+#'   Metropolis sampler from the package "adaptMCMC" written by Andreas Scheidegger. 
+#'   To obtain meaningful estimates MCMC may need 
+#'   to run for several millions of iterations (parameter nSamplesMCMC set to 1e5 by default). 
+#'   See parameters ending at MCMC in ?specifyPOUMM for details.
 #' @param parallelMCMC Logical: should the MCMC chains be run in parallel. 
 #'
 #' @param verbose,debug Logical flags indicating whether to print informative 
@@ -37,10 +40,11 @@
 #'   
 #'   
 #' @details The PMM function fits the PMM model to the tree and data
-#'   by fixing the parameter alpha to 0.
+#'   by fixing the parameter alpha to 0. 
 #'   
-#' @return For POUMM, an object of class 'POUMM'. For PMM, an object of class 'PMM'.
-#'   
+#' @return For POUMM, an object of S3 class 'POUMM'. For PMM, an object of S3 class 'PMM'.
+#'
+#' @references \insertRef{Vihola:2012by}{POUMM}   
 #' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
 NULL
 
@@ -109,10 +113,18 @@ POUMM <- function(
   tTips <- nodeTimes(tree, tipsOnly = TRUE)
   
   ######## Default POUMM spec ###########
-  spec <- do.call(specifyPOUMM, 
-                  c(list(zMin = min(z), zMean = mean(z), zMax = max(z), 
-                         zVar = var(z), tMin = min(tTips), tMean = mean(tTips),
-                         tMax = max(tTips)), spec))
+  if(is.function(spec)) {
+    spec <- do.call(spec, 
+                    list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                         zVar = var(z), zSD = sd(z), 
+                         tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
+  } else {
+    spec <- 
+      do.call(specifyPOUMM, 
+              c(list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                     zVar = var(z), tMin = min(tTips), tMean = mean(tTips),
+                     tMax = max(tTips)), spec))
+  }
   
   result <- list(z = z[1:length(tree$tip.label)], tree = tree, 
                  N = length(tree$tip.label), 
@@ -168,6 +180,12 @@ POUMM <- function(
           do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(atsseg0), list(
             g0Prior = spec$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
             usempfr = usempfr + 1, ...)))
+        
+        if(is.na(val) | is.infinite(val)) {
+          val <- -1e100
+          attr(val, "g0") <- atsseg0[5]
+          attr(val, "g0LogPrior") <- NA
+        } 
         
         if(verbose) {
           cat('. New: ', val, '.\n')
@@ -284,8 +302,18 @@ PMM <- function(
   zMin <- min(z); zMean <- mean(z); zMax <- max(z); zVar <- var(z); zSD <- sd(z);
   tMin <- min(tTips); tMean <- mean(tTips); tMax <- max(tTips);
   
-  spec <- do.call(specifyPMM, 
-                  c(list(zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax), spec))
+  if(is.function(spec)) {
+    spec <- do.call(spec, 
+                    list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                         zVar = var(z), zSD = sd(z), 
+                         tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
+  } else {
+    spec <- 
+      do.call(specifyPMM, 
+              list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                   zVar = var(z), zSD = sd(z), 
+                   tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
+  }
   
   
   res <- POUMM(
