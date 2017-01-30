@@ -161,7 +161,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
     warning('Some parameters are NA or NaN')
     ifelse(log, -Inf, 0)
   } 
-
+  
   if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
      all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
@@ -249,6 +249,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       }
       
       e2talpha <- etalpha*etalpha
+      
       limitfe2talpha <- -0.5 / t
       if(alpha != 0) {
         fe2talpha <- alpha / (1 - e2talpha)
@@ -263,22 +264,14 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         }
       }
       
-      log_fe2talpha <- log(-fe2talpha)
-      
-      fe2talphasigma2 <- fe2talpha / sigma2
-      
-      # for sigmae=0
-      r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
-      
       # matrix for paramsIntegForks one pif for every node
       # the following code creates a matrix for the class of alpha,
       # i.e. could be mpfr as well as double
       pif <- rep(alpha*0, M*3)
       dim(pif) <- c(M, 3)
       
-      
       for(i in 1:nLevels) {
-        es <- endingAt[nodesVector[(nodesIndex[i]+1):nodesIndex[i+1]]]
+        es <- endingAt[nodesVector[(nodesIndex[i] + 1):nodesIndex[i + 1]]]
         
         edgeEnds <- edge[es, 2]
         
@@ -286,28 +279,38 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
           # all es pointing to tips
           if(sigmae==0) {
             # no environmental deviation
-            g1 <- z[edgeEnds]  # tip values
-            etalphag1thetatheta <- etalpha[es] * (g1 - theta) + theta
+            #!!! g1 <- z[edgeEnds]  # tip values
+            g1 <- z[edgeEnds] - theta  # tip values
             
-            pif[edgeEnds, 1] <- fe2talphasigma2[es]
-            pif[edgeEnds, 2] <- -2 * etalphag1thetatheta * fe2talphasigma2[es]
-            pif[edgeEnds, 3] <- r0[es] + etalphag1thetatheta^2 * fe2talphasigma2[es]
+            #etalphag1thetatheta <- etalpha[es] * (g1 - theta) + theta
+            etalphag1thetatheta <- etalpha[es] * g1
+            
+            pif[edgeEnds, 1] <- fe2talpha[es] / sigma2
+            pif[edgeEnds, 2] <- -2 * etalphag1thetatheta * pif[edgeEnds, 1]
+            pif[edgeEnds, 3] <- talpha[es] + 0.5*log(-fe2talpha[es]) - 
+              0.5*logpi - logsigma + etalphag1thetatheta^2 * pif[edgeEnds, 1]
           } else {
-            z1 <- z[edgeEnds]  # tip values
+            # z1 <- z[edgeEnds]  # (possibly reordered) tip values
+            z1 <- z[edgeEnds] - theta # (possibly reordered) tip values
             
-            u <- -0.5/sigmae2
-            v <- z1/sigmae2
-            w <- -0.5 * loge2 - 0.5 * logpi  - z1^2 / (2 * sigmae2) - logsigmae 
+            u <- -0.5 / sigmae2
+            v <- z1 / sigmae2
+            #w <- -0.5 * loge2 - 0.5 * logpi  - z1^2 / (2 * sigmae2) - logsigmae
+            w <- -0.5 * (loge2 + logpi  + z1 * v) - logsigmae 
             
-            gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+            #gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+            gutalphasigma2 <- e2talpha[es] + (u * sigma2) / fe2talpha[es]
             
             pif[edgeEnds, 1] <- u / gutalphasigma2
+            
             pif[edgeEnds, 2] <- 
-              (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+              #(etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+              (etalpha[es] * v) / gutalphasigma2
+            
             pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
-              0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
-              alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
-              ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
+              0.25 * sigma2 * v * v / (fe2talpha[es] - alpha + u * sigma2) +
+              #alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
+              #((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
               talpha[es] + w
           }
         } else {
@@ -316,15 +319,29 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
           v <- pif[edgeEnds, 2]
           w <- pif[edgeEnds, 3]
           
-          gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+          usigma2 <- u * sigma2
+          utheta <- u * theta
+          uthetax2 <- utheta + utheta
+          
+          #gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+          
+          #gutalphasigma2 <- fe2talpha_alpha4usigma2 / fe2talphaes
+          gutalphasigma2 <- e2talpha[es] + (u * sigma2) / fe2talpha[es]
           
           pif[edgeEnds, 1] <- u / gutalphasigma2
+          
           pif[edgeEnds, 2] <- 
-            (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+            #(etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+             #(etalpha[es] * (uthetax2 + v) - uthetax2) / gutalphasigma2
+            (etalpha[es] * v) / gutalphasigma2
+          
           pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
-            0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
-            alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
-            ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
+            #0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
+            0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + usigma2) +
+            #alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
+            # alpha * theta * (utheta - etalpha[es] * (utheta + v)) /
+            # ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
+            # ((1 + etalpha[es]) * (usigma2 - alpha) + fetalpha[es]) +
             talpha[es] + w
         } 
         
@@ -356,11 +373,15 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       # fixed g0 specified as parameter; 
       
       # pdf of the data conditioned on fixed g0
-      loglik <- abc[1]*g0^2 + abc[2]*g0 + abc[3]
+      #!!! loglik <- abc[1]*g0^2 + abc[2]*g0 + abc[3]
+      g0_theta <- g0 - theta
+      loglik <- abc[1] * g0_theta^2 + abc[2] * g0_theta + abc[3]
       
       if(is.list(g0Prior)) {
         # Normal prior for g0 with mean g0Mean and variance g0Var
-        g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = sqrt(as.double(g0Var)), log = log)
+        g0LogPrior <- dnorm(as.double(g0), 
+                            mean = as.double(g0Mean), 
+                            sd = sqrt(as.double(g0Var)), log = log)
       } else {
         # No prior for g0 specified
         g0LogPrior <- NA
@@ -374,14 +395,34 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         # (1) Normal prior for g0 with mean g0Mean and variance g0Var
         # max(loglik + g0Prior): derivative : 
         # 2 * (abc[1] - 1 / (2 * g0Var)) * g0 + (abc[2] + g0Mean / g0Var) == 0
-        g0 <- -0.5 * (abc[2] + g0Mean / g0Var) / (abc[1] - 1 / (2 * g0Var))
-        loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
-        g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = as.double(sqrt(g0Var)), log = log)
+        #!!! g0 <- -0.5 * (abc[2] + g0Mean / g0Var) / (abc[1] - 1 / (2 * g0Var))
+        #!!! loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
+        #!!! g0LogPrior <- dnorm(as.double(g0), 
+        #!!!                     mean = as.double(g0Mean), 
+        #!!!                     sd = as.double(sqrt(g0Var)), log = log)
+        g0_theta <- 
+          -0.5 * (abc[2] + (g0Mean - theta) / g0Var) / 
+          (abc[1] - 1 / (2 * g0Var))
+        
+        loglik <- abc[1] * g0_theta^2 + abc[2] * g0_theta + abc[3]
+        
+        g0 <- g0_theta + theta
+        
+        g0LogPrior <- dnorm(as.double(g0), 
+                            mean = as.double(g0Mean), 
+                            sd = as.double(sqrt(g0Var)), log = log)
       } else {
         # (2) No prior for g0 specified
         # max(loglik): derivative : 2 * abc[1] * g0 + abc[2] == 0
-        g0 <- -0.5 * abc[2] / abc[1]
-        loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
+        #!!! g0 <- -0.5 * abc[2] / abc[1]
+        #!!! loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
+        #!!! g0LogPrior <- NA
+        g0_theta <- -0.5 * abc[2] / abc[1]
+        
+        loglik <- abc[1] * g0_theta^2 + abc[2] * g0_theta + abc[3]
+        
+        g0 <- g0_theta + theta
+        
         g0LogPrior <- NA
       }
     } else {
@@ -391,22 +432,27 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       # is the stationary OU normal distribution with mean, theta, and variance, 
       # varOU(Inf, alpha, sigma)
       if(!is.list(g0Prior)) {
-        g0Mean <- theta
+        #!!! g0Mean <- theta
         g0Var <- varOU(Inf, alpha, sigma)
       }
       
       if(g0Var != 0) {
         def <- c(-0.5 / g0Var, 
-                 g0Mean / g0Var, 
-                 -0.5 * g0Mean^2 / g0Var - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
+                 #!!! g0Mean / g0Var, 
+                 0, 
+                 #!!! -0.5 * g0Mean^2 / g0Var - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
+                 - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
         abc <- abc + def
         loglik <- abc[3] + 0.5 * (logpi - log(-abc[1])) - abc[2]^2 / (4 * abc[1])
         g0 <- NaN
         g0LogPrior <- NaN
       } else {
         #g0Var = 0, i.e. gr=g0Mean with probability 1
-        loglik <- abc[1]*g0Mean[1]^2 + abc[2]*g0Mean[1] + abc[3]
+        #!!! loglik <- abc[1]*g0Mean[1]^2 + abc[2]*g0Mean[1] + abc[3]
+        loglik <- abc[1]*(g0Mean[1]-theta)^2 + abc[2]*(g0Mean[1]-theta) + abc[3]
+        
         g0 <- g0Mean
+        
         g0LogPrior <- Inf
       }
     }
@@ -422,7 +468,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         t = list(t),
         talpha = list(talpha), etalpha = list(etalpha), 
         e2talpha = list(e2talpha), 
-        fe2talpha = list(fe2talpha), log_fe2talpha = list(log_fe2talpha), 
+        fe2talpha = list(fe2talpha),
         r0 = list(r0), pif = list(pif), abc = list(abc), 
         g0 = list(g0), g0Mean = list(g0Mean), g0Var = list(g0Var),
         g0LogPrior = list(g0LogPrior), loglik = list(loglik), 
