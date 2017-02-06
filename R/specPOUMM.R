@@ -7,13 +7,17 @@
 #' Read the "Specification"-section in \code{vignette("poumm-first-steps")} for 
 #' guidelines and examples on how to use these functions. 
 #'
+#' @param z,tree a numeric vector and a phylo object on which the fit is to be done. 
+#'    These arguments are used in order to guess meaningful values for the parLower,
+#'    parUpper and parPriorMCMC arguments. See also, zMin,zMean,...,tMax below.
 #' @param zMin,zMean,zMax,zVar,zSDtMin,tMean,tMax summary statistics of the
 #'   observed tip-values (z) and root-tip distances (t). Some of these values
 #'    are used for constructing default parameter values and limits; These 
 #'    arguments are given default values which will most likely be meaningless
-#'    in your specific use-case. If you don't specify meaningful values for
-#'    these arguments, you should specify explicitly all of the following
-#'    arguments.
+#'    in your specific use-case. The default values will be overwritten with the
+#'    corresponding statistics from the z and tree arguments if these were specified.
+#'    If none of tree and z, nor these parameters are specified, then the
+#'    arguments parLower, parUpper, parPriorMCMC must be specified explicitly.
 #' @param parMapping An R-function that can handle, both, a numeric vector 
 #'   or a numeric matrix as argument. This function should transform the input 
 #'   vector or each row-vector (if the input is matrix) into a (row-)vector of 
@@ -196,6 +200,7 @@ NULL
 #' 
 #' @export
 specifyPOUMM <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -228,6 +233,13 @@ specifyPOUMM <- function(
                gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
+  
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
   
   specDefault <- list(
     parMapping = function(par) {
@@ -307,6 +319,7 @@ specifyPOUMM <- function(
 #'  Parameter vector is c(alpha, theta, sigma).
 #' @export
 specifyPOUMM_ATS <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -338,8 +351,15 @@ specifyPOUMM_ATS <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -404,6 +424,7 @@ specifyPOUMM_ATS <- function(
 #'  Parameter vector is c(alpha, theta, sigma, sigmae, g0).
 #' @export
 specifyPOUMM_ATSSeG0 <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -434,8 +455,15 @@ specifyPOUMM_ATSSeG0 <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -501,6 +529,7 @@ specifyPOUMM_ATSSeG0 <- function(
 #'   Parameter vector is c(sigma, sigmae)
 #' @export
 specifyPMM <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -517,6 +546,7 @@ specifyPMM <- function(
   samplePriorMCMC = TRUE,
   parallelMCMC = FALSE) {
 
+  
   spec <- list(parMapping = parMapping, 
                parLower = parLower, parUpper = parUpper, 
                g0Prior = g0Prior,
@@ -531,8 +561,15 @@ specifyPMM <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -593,6 +630,7 @@ specifyPMM <- function(
 #'  sampling of g0. Parameter vector is c(sigma, sigmae, g0).
 #' @export
 specifyPMM_SSeG0 <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -623,8 +661,15 @@ specifyPMM_SSeG0 <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -687,6 +732,7 @@ specifyPMM_SSeG0 <- function(
 #'  c(alpha, theta, H2tMean, sigmae).
 #' @export
 specifyPOUMM_ATH2tMeanSe <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -717,8 +763,15 @@ specifyPOUMM_ATH2tMeanSe <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -790,6 +843,7 @@ specifyPOUMM_ATH2tMeanSe <- function(
 #'  Parameter vector is c(alpha, theta, H2tMean, sigmae, g0).
 #' @export
 specifyPOUMM_ATH2tMeanSeG0 <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -820,8 +874,15 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -892,6 +953,7 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
 #'  c(H2tMean, sigmae).
 #' @export
 specifyPMM_H2tMeanSe <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -922,8 +984,15 @@ specifyPMM_H2tMeanSe <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -992,6 +1061,7 @@ specifyPMM_H2tMeanSe <- function(
 #'  Parameter vector is c(H2tMean, sigmae, g0).
 #' @export
 specifyPMM_H2tMeanSeG0 <- function(
+  z = NULL, tree = NULL,
   zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
   tMin = 0.1, tMean = 2, tMax = 10, 
   parMapping = NULL, 
@@ -1022,8 +1092,15 @@ specifyPMM_H2tMeanSeG0 <- function(
                samplePriorMCMC = samplePriorMCMC,
                parallelMCMC = parallelMCMC)
   
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
   specDefault <- specifyPOUMM(
-    zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
     
     parMapping = function(par) {
       if(is.matrix(par)) {
@@ -1088,6 +1165,41 @@ specifyPMM_H2tMeanSeG0 <- function(
 
 
 ######### Validate specification ###########
+#' Validate phenotypic values and phylogenetic tree
+#' @param z trait (phenotypic) values at the tips of the tree
+#' @param tree A phylo object with the same number of tips as the length of z.
+#' @return The function either returns TRUE or exits with an error message if it
+#'  finds a problem with the specificaiton.
+validateZTree <- function(z, tree) {
+  if(!is.null(z) & !is.null(tree)) {
+    if(!is.vector(z, mode="double")) {
+      stop("The trait-vector z should be a vector of mode 'double'!")
+    }
+    if(length(z) == 0) {
+      stop("The trait-vector z is empty, but should contain at least 1 element!")
+    }
+    if(any(is.na(z)) | any(is.infinite(z))) {
+      stop("The trait vector z contains infinite or NA values. All trait-values should be finite!")
+    }
+    if(!("phylo"%in%class(tree))) {
+      stop("tree must be a phylo object!")
+    }
+    if(length(tree$tip.label) != length(z)) {
+      stop("z should have the same length as the number of tips in tree!")
+    } 
+    if(any(tree$edge.length <= 0)) {
+      stop('All edge lengths in tree should be positive!')
+    }
+    if(!is.null(names(z))) {
+      if(!all(names(z) == tree$tip.label)) {
+        stop("Some of the names in the trait-vector do not correspond to tip-labels. names(z) should be either NULL or it should be identical (in the same order) as tree$tip.label.")  
+      }
+    }
+    TRUE  
+  } else {
+    FALSE
+  }
+}
 #' Validate a POUMM specification
 #' @param spec A list object returned by one of the specifyPOUMM or specifyPMM
 #'  functions with possibly modified entries afterwards.
@@ -1205,4 +1317,5 @@ validateSpecPOUMM <- function(spec) {
       }
     }
   })
+  TRUE
 }

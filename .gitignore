@@ -1,7 +1,10 @@
-tests/BayesianValidation
 .Rproj.user
 .Rhistory
 .RData
 Read-and-delete-me
 man
 inst/doc
+src/RcppExports.cpp
+src/*.o
+src/*.so
+R/RcppExports.R

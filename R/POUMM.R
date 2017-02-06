@@ -46,6 +46,7 @@
 #'
 #' @references \insertRef{Vihola:2012by}{POUMM}   
 #' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
+#'@useDynLib POUMM
 NULL
 
 #' @describeIn POUMM_PMM Maximum likelihood and Bayesian fit of the POUMM
@@ -108,20 +109,25 @@ POUMM <- function(
   # }
   
   ######## Caching pruneInfo for faster likelihood calculations
+  if(!validateZTree(z, tree)) {
+    stop("Invalid z and/or tree.")
+  }
+  
   pruneInfo <- pruneTree(tree)
   
   tTips <- nodeTimes(tree, tipsOnly = TRUE)
   
+  
   ######## Default POUMM spec ###########
   if(is.function(spec)) {
     spec <- do.call(spec, 
-                    list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                    list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
                          zVar = var(z), zSD = sd(z), 
                          tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
   } else {
     spec <- 
       do.call(specifyPOUMM, 
-              c(list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+              c(list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
                      zVar = var(z), tMin = min(tTips), tMean = mean(tTips),
                      tMax = max(tTips)), spec))
   }
@@ -297,6 +303,10 @@ PMM <- function(
     }
   }
   
+  if(!validateZTree(z, tree)) {
+    stop("Invalid trait-vecto z and/or tree.")
+  }
+  
   tTips <- nodeTimes(tree, tipsOnly = TRUE)
   
   zMin <- min(z); zMean <- mean(z); zMax <- max(z); zVar <- var(z); zSD <- sd(z);
@@ -304,13 +314,13 @@ PMM <- function(
   
   if(is.function(spec)) {
     spec <- do.call(spec, 
-                    list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+                    list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
                          zVar = var(z), zSD = sd(z), 
                          tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
   } else {
     spec <- 
       do.call(specifyPMM, 
-              list(zMin = min(z), zMean = mean(z), zMax = max(z), 
+              list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
                    zVar = var(z), zSD = sd(z), 
                    tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
   }
@@ -368,36 +378,36 @@ coef.POUMM <- function(object, mapped = FALSE) {
   }
 }
 
-#' Extract maximum likelihood expected genotypic values at the tips of a tree, 
-#' to which a POUMM model has been previously fitted
-#' @param object An object of class POUMM.
-#' @param g0 A number specifying the root-genotypic value. It defaults to NA, 
-#'   which would cause the maximum likelihood value .
-#' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
-#' @return If vCov == TRUE, a list with elements g - the genotypic values and 
-#' vCov - the variance-covariance matrix of these values for the specific tree, 
-#' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
-#' @export
-fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCov=FALSE) {
-  if("POUMM" %in% class(object)) {
-    if(is.nan(g0)) {
-      warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
-    }
-    p <- coef(object, mapped = TRUE)
-    gList <- gPOUMM(object$z, object$tree, g0, 
-                    p["alpha"], p["theta"], p["sigma"], p["sigmae"])
-    g = as.vector(gList$mu.g.poumm)
-    names(g) <- object$tree$tip.label
-    if(vCov) {
-      list(g = g, vCov = gList$V.g.poumm)
-    } else {
-      g
-    }
-  } else {
-    stop("fitted.POUMM called on non POUMM-object.")
-  }
-}
-
+# #' Extract maximum likelihood expected genotypic values at the tips of a tree, 
+# #' to which a POUMM model has been previously fitted
+# #' @param object An object of class POUMM.
+# #' @param g0 A number specifying the root-genotypic value. It defaults to NA, 
+# #'   which would cause the maximum likelihood value .
+# #' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
+# #' @return If vCov == TRUE, a list with elements g - the genotypic values and 
+# #' vCov - the variance-covariance matrix of these values for the specific tree, 
+# #' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
+# #' @export
+# fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCov=FALSE) {
+#   if("POUMM" %in% class(object)) {
+#     if(is.nan(g0)) {
+#       warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
+#     }
+#     p <- coef(object, mapped = TRUE)
+#     gList <- gPOUMM(object$z, object$tree, g0, 
+#                     p["alpha"], p["theta"], p["sigma"], p["sigmae"])
+#     g = as.vector(gList$mu.g.poumm)
+#     names(g) <- object$tree$tip.label
+#     if(vCov) {
+#       list(g = g, vCov = gList$V.g.poumm)
+#     } else {
+#       g
+#     }
+#   } else {
+#     stop("fitted.POUMM called on non POUMM-object.")
+#   }
+# }
+# 
 
 #' Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.
 #' @param object An object of class POUMM.
