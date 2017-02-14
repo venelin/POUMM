@@ -27,7 +27,7 @@ summary.POUMM <- function(object, ...,
                           mode = c('short', 'long', 'expert')) {
   mode <- tolower(mode)
   
-  tipTimes <- nodeTimes(object$tree, tipsOnly = TRUE)
+  tipTimes <- nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE)
   tMax <- max(tipTimes)
   tMean <- mean(tipTimes)
   
@@ -257,7 +257,7 @@ statistics.POUMM <- function(object) {
       )
   })
   listOtherStats <- list(
-    H2e = function(par) H2e(z = object$z,
+    H2e = function(par) H2e(z = object$pruneInfo$z,
                             sigmae = object$spec$parMapping(par)[, 'sigmae']),
     
     H2tInf = function(par) H2(alpha = object$spec$parMapping(par)[, 'alpha'],

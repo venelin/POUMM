@@ -32,8 +32,20 @@
 #'   To obtain meaningful estimates MCMC may need 
 #'   to run for several millions of iterations (parameter nSamplesMCMC set to 1e5 by default). 
 #'   See parameters ending at MCMC in ?specifyPOUMM for details.
-#' @param parallelMCMC Logical: should the MCMC chains be run in parallel. 
 #'
+#' @param usempfr integer indicating if and how mpfr should be used for
+#'   small parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the
+#'   mpfr package can be forced by specifying an integer greater or equal to 2.
+#'   Setting usempfr=0 disables high precision likelihood calculation. Requires
+#'   the Rmpfr package. Note that when using mpfr, the time for one likelihood
+#'   calculation can increase more than 100-fold. Default (0). Note that during
+#'   the ML and MCMC fit this flag is temporarily raised by 1 in order to enable 
+#'   mpfr-check on parameters resulting in higher likelihood than the current 
+#'   maximum one.
+#'   
+#' @param useArma Logical indicating if the Armadillo library should be used for 
+#'   faster vector operations. Defaults to TRUE. Since Armadillo doesn't support
+#'   mpfr, it gets disabled when usempfr is bigger than 0.   
 #' @param verbose,debug Logical flags indicating whether to print informative 
 #'  and/or debug information on the standard output (both are set to to FALSE by
 #'  default).
@@ -42,8 +54,25 @@
 #' @details The PMM function fits the PMM model to the tree and data
 #'   by fixing the parameter alpha to 0. 
 #'   
-#' @return For POUMM, an object of S3 class 'POUMM'. For PMM, an object of S3 class 'PMM'.
+#' @return For POUMM, an object of S3 class 'POUMM'. For PMM, an object of S3 
+#' class 'PMM'.
 #'
+#' @examples 
+#' # Please, read the package vignette for more detailed examples.
+#' N <- 100
+#' tr <- ape::rtree(N)
+#' z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
+#' fit <- POUMM::POUMM(z, tr, spec = POUMM::specifyPOUMM(nSamplesMCMC = 5e4))
+#' plot(fit)
+#' summary(fit)
+#' AIC(fit)
+#' BIC(fit)
+#' coef(fit)
+#' logLik(fit)
+#' fitted(fit)
+#' plot(resid(fit))
+#' abline(h=0)
+#' 
 #' @references \insertRef{Vihola:2012by}{POUMM}   
 #' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
 #'@useDynLib POUMM
@@ -54,7 +83,7 @@ NULL
 #' @export
 POUMM <- function(
   z, tree, zName = 'z', treeName = 'tree', 
-  parDigits = 6, usempfr = 0, 
+  parDigits = 6, usempfr = 0, useArma = TRUE,
   ..., 
   spec = NULL, doMCMC = TRUE,
   verbose = FALSE, debug=FALSE) {
@@ -82,38 +111,12 @@ POUMM <- function(
     }
   }
   
-  # ######## tree branch-length transformation ##########
-  # if(divideEdgesBy != 1) {
-  #   tree$edge.length <- tree$edge.length / divideEdgesBy
-  # }
-  # 
-  # 
-  # ######## filtering of tree-tips ########
-  # if(!is.null(removeTips) & length(removeTips) > 0) {
-  #   if(!is.character(removeTips)) {
-  #     stop("Remove tips should be a character vector denoting tips to be ",
-  #          "removed from the tree before the model fit.")
-  #   } else {
-  #     pos <- match(removeTips, tree$tip.label)
-  #     pos <- pos[!is.na(pos)]
-  #     if(verbose) {
-  #       cat('Removing tips', toString(tree$tip.label[pos]), '.')
-  #     }
-  #     if(length(pos)>0) {
-  #       names(z) <- tree$tip.label
-  #       tree <- ape::drop.tip(tree, pos)
-  #       z <- z[tree$tip.label]
-  #       result$N <- length(tree$tip.label)
-  #     }
-  #   }
-  # }
-  
   ######## Caching pruneInfo for faster likelihood calculations
   if(!validateZTree(z, tree)) {
     stop("Invalid z and/or tree.")
   }
   
-  pruneInfo <- pruneTree(tree)
+  pruneInfo <- pruneTree(tree, z)
   
   tTips <- nodeTimes(tree, tipsOnly = TRUE)
   
@@ -121,18 +124,20 @@ POUMM <- function(
   ######## Default POUMM spec ###########
   if(is.function(spec)) {
     spec <- do.call(spec, 
-                    list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
+                    list(z = z, tree = tree, 
+                         zMin = min(z), zMean = mean(z), zMax = max(z), 
                          zVar = var(z), zSD = sd(z), 
                          tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
   } else {
     spec <- 
       do.call(specifyPOUMM, 
-              c(list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
+              c(list(z = z, tree = tree, 
+                     zMin = min(z), zMean = mean(z), zMax = max(z), 
                      zVar = var(z), tMin = min(tTips), tMean = mean(tTips),
                      tMax = max(tTips)), spec))
   }
   
-  result <- list(z = z[1:length(tree$tip.label)], tree = tree, 
+  result <- list(pruneInfo = pruneInfo, 
                  N = length(tree$tip.label), 
                  tMax = max(nodeTimes(tree, tipsOnly = TRUE)),
                  tMean = mean(nodeTimes(tree, tipsOnly = TRUE)), 
@@ -151,17 +156,27 @@ POUMM <- function(
   # normal distribution with mean g0Prior$mean and variance g0Prior$var, 
   # p(z | tree, alpha, theta, sigma, sigmae, g0) x N(g0 | g0Prior$mean,
   # g0Prior$var). 
-  loglik <- function(par, memo = NULL) {
+  loglik <- function(par, pruneInfo, useCpp = useArma, memo = NULL) {
     if(parDigits >= 0) {
       par <- as.vector(round(par, parDigits))
     }
     
     atsseg0 <- spec$parMapping(par)
     
-    val <- 
-      do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(atsseg0), list(
-        g0Prior = spec$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
-        usempfr = usempfr, ...)))
+    if(useCpp & usempfr == 0) {
+      # no use of high-precision floating point ops, so we call the faster C++ 
+      # likelihood implementation
+      val <- likPOUMMGivenTreeVTipsC(
+        pruneInfo$integrator, 
+        alpha = atsseg0[1], theta = atsseg0[2],
+        sigma = atsseg0[3], sigmae = atsseg0[4], g0 = atsseg0[5], 
+        g0Prior = spec$g0Prior, log = TRUE)
+    } else {
+      val <- 
+        do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(atsseg0), list(
+          g0Prior = spec$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
+          usempfr = usempfr, ...)))
+    }
     
     if(is.na(val) | is.infinite(val)) {
       val <- -1e100
@@ -207,9 +222,10 @@ POUMM <- function(
   if(verbose) {
     print('Performing ML-fit...')
   }
-  fitML <- do.call(maxLikPOUMMGivenTreeVTips, 
-                   c(list(loglik = loglik, verbose = verbose, debug = debug), 
-                     spec))
+  fitML <- do.call(
+    maxLikPOUMMGivenTreeVTips, 
+    c(list(loglik = loglik, verbose = verbose, debug = debug, 
+           pruneInfo = pruneInfo), spec))
   
   if(verbose) {
     cat("max loglik from ML: \n")
@@ -227,8 +243,8 @@ POUMM <- function(
     
     fitMCMC <- do.call(
       mcmcPOUMMGivenPriorTreeVTips, 
-      c(list(loglik = loglik, fitML = fitML, verbose = verbose, debug = debug),
-        spec))
+      c(list(loglik = loglik, fitML = fitML, verbose = verbose, debug = debug, 
+             pruneInfo = pruneInfo), spec))
     
     if(verbose) {
       cat("max loglik from MCMCs: \n")
@@ -250,8 +266,10 @@ POUMM <- function(
         }
         
         spec[["parInitML"]] <- parInitML
-        fitML2 <- do.call(maxLikPOUMMGivenTreeVTips, 
-                         c(list(loglik = loglik, verbose = verbose), spec))
+        fitML2 <- do.call(
+          maxLikPOUMMGivenTreeVTips, 
+          c(list(loglik = loglik, verbose = verbose,
+                 debug = debug, pruneInfo = pruneInfo), spec))
         
         result[['fitML']] <- fitML2
         
@@ -276,7 +294,7 @@ POUMM <- function(
 #' @export
 PMM <- function(
   z, tree, zName = 'z', treeName = 'tree', 
-  parDigits = 6, usempfr = 0,
+  parDigits = 6, usempfr = 0, useArma = TRUE,
   ...,
   spec = NULL, doMCMC = TRUE, 
   verbose = FALSE) {
@@ -378,36 +396,36 @@ coef.POUMM <- function(object, mapped = FALSE) {
   }
 }
 
-# #' Extract maximum likelihood expected genotypic values at the tips of a tree, 
-# #' to which a POUMM model has been previously fitted
-# #' @param object An object of class POUMM.
-# #' @param g0 A number specifying the root-genotypic value. It defaults to NA, 
-# #'   which would cause the maximum likelihood value .
-# #' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
-# #' @return If vCov == TRUE, a list with elements g - the genotypic values and 
-# #' vCov - the variance-covariance matrix of these values for the specific tree, 
-# #' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
-# #' @export
-# fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCov=FALSE) {
-#   if("POUMM" %in% class(object)) {
-#     if(is.nan(g0)) {
-#       warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
-#     }
-#     p <- coef(object, mapped = TRUE)
-#     gList <- gPOUMM(object$z, object$tree, g0, 
-#                     p["alpha"], p["theta"], p["sigma"], p["sigmae"])
-#     g = as.vector(gList$mu.g.poumm)
-#     names(g) <- object$tree$tip.label
-#     if(vCov) {
-#       list(g = g, vCov = gList$V.g.poumm)
-#     } else {
-#       g
-#     }
-#   } else {
-#     stop("fitted.POUMM called on non POUMM-object.")
-#   }
-# }
-# 
+#' Extract maximum likelihood expected genotypic values at the tips of a tree,
+#' to which a POUMM model has been previously fitted
+#' @param object An object of class POUMM.
+#' @param g0 A number specifying the root-genotypic value. It defaults to NA,
+#'   which would cause the maximum likelihood value .
+#' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
+#' @return If vCov == TRUE, a list with elements g - the genotypic values and
+#' vCov - the variance-covariance matrix of these values for the specific tree,
+#' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
+#' @export
+fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCov=FALSE) {
+  if("POUMM" %in% class(object)) {
+    if(is.nan(g0)) {
+      warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
+    }
+    p <- coef(object, mapped = TRUE)
+    gList <- gPOUMM(object$pruneInfo$z, object$pruneInfo$tree, g0,
+                    p["alpha"], p["theta"], p["sigma"], p["sigmae"])
+    g = as.vector(gList$mu.g.poumm)
+    names(g) <- object$pruneInfo$tree$tip.label
+    if(vCov) {
+      list(g = g, vCov = gList$V.g.poumm)
+    } else {
+      g
+    }
+  } else {
+    stop("fitted.POUMM called on non POUMM-object.")
+  }
+}
+
 
 #' Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.
 #' @param object An object of class POUMM.
@@ -421,8 +439,8 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
     if(is.nan(g0)) {
       warning("Environmental contributions cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
     }
-    e <- object$z - fitted(object, g0)
-    names(e) <- object$tree$tip.label
+    e <- object$pruneInfo$z - fitted(object, g0)
+    names(e) <- object$pruneInfo$tree$tip.label
     e
   } else {
     stop("residuals.POUMM called on a non POUMM-object.")

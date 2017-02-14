@@ -146,7 +146,7 @@ rTrajectoryOUDef <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #'   at times 0+t, 0+2t, ..., 0+steps*t.
 #'   
 #' @examples 
-#' z0 <- 8
+#' z0 <- 0
 #' nSteps <- 100
 #' t <- 0.01
 #' trajectory <- rTrajectoryOU(z0, t, 2, 2, 1, steps = nSteps)
@@ -199,16 +199,16 @@ rTrajectoryOU <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #'   parameters
 #' @examples 
 #' # At POUMM stationary state (equilibrium, t=Inf)
-#' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = Inf)     # 0.4
-#' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = Inf)    # 0.75
-#' sigma <- sigmaOUH2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
-#' sigmae <- sigmae(H2 = H2, alpha = 0.75, sigma = 1, t = Inf) # 1
+#' H2 <- POUMM::H2(alpha = 0.75, sigma = 1, sigmae = 1, t = Inf)     # 0.4
+#' alpha <- POUMM::alpha(H2 = H2, sigma = 1, sigmae = 1, t = Inf)    # 0.75
+#' sigma <- POUMM::sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
+#' sigmae <- POUMM::sigmae(H2 = H2, alpha = 0.75, sigma = 1, t = Inf) # 1
 #' 
 #' # At finite time t = 0.2
-#' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = 0.2)     # 0.1473309
-#' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = 0.2)    # 0.75
-#' sigma <- sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
-#' sigmae <- sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
+#' H2 <- POUMM::H2(alpha = 0.75, sigma = 1, sigmae = 1, t = 0.2)     # 0.1473309
+#' alpha <- POUMM::alpha(H2 = H2, sigma = 1, sigmae = 1, t = 0.2)    # 0.75
+#' sigma <- POUMM::sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
+#' sigmae <- POUMM::sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
 #' 
 #' # Comparing with the empirical H2e from a simulation
 #' N <- 20 
@@ -457,38 +457,38 @@ covVTipsGivenTreePOUMM <- function(
 
 
 
-# #' Distribution of the genotypic values under a POUMM fit
-# #' 
-# #' @param tree an object of class phylo
-# #' @param z A numeric vector of size length(tree$tip.label) representing the trait
-# #'     values at the tip-nodes.
-# #' @param g0 A numeric value at the root of the tree, genotypic contribution.
-# #' @param alpha,theta,sigma Numeric values, parameters of the OU model.
-# #' @param sigmae Numeric non-negative value (default 0). Specifies the standard 
-# #'   deviation of random environmental contribution (white noise) included in z.
-# gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
-#   N <- length(tree$tip.label)
-#   
-#   #V.g <- cov.poumm(tree, alpha, sigma, sigmae) ###???? shouldn't sigmae be 0 here?
-#   V.g <- covVTipsGivenTreePOUMM(tree, alpha, sigma)
-#   V.g_1 <- chol2inv(chol(V.g))
-#   mu.g <- meanOU(g0, t = nodeTimes(tree, tipsOnly = TRUE), alpha = alpha, theta = theta)
-#   
-#   V.e <- diag(sigmae^2, nrow=N, ncol=N)
-#   V.e_1 <- V.e
-#   diag(V.e_1) <- 1/diag(V.e)
-#   mu.e <- z
-#   
-#   V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
-#   
-#   if(class(V.g.poumm)=='try-error') {
-#     warning(V.g.poumm)
-#     list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1, 
-#          mu.e = mu.e)
-#   } else {
-#     mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)
-#     
-#     list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1, 
-#          mu.e = mu.e, V.g.poumm = V.g.poumm, mu.g.poumm = mu.g.poumm)
-#   }
-# }
+#' Distribution of the genotypic values under a POUMM fit
+#'
+#' @param tree an object of class phylo
+#' @param z A numeric vector of size length(tree$tip.label) representing the trait
+#'     values at the tip-nodes.
+#' @param g0 A numeric value at the root of the tree, genotypic contribution.
+#' @param alpha,theta,sigma Numeric values, parameters of the OU model.
+#' @param sigmae Numeric non-negative value (default 0). Specifies the standard
+#'   deviation of random environmental contribution (white noise) included in z.
+gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
+  N <- length(tree$tip.label)
+
+  #V.g <- cov.poumm(tree, alpha, sigma, sigmae) ###???? shouldn't sigmae be 0 here?
+  V.g <- covVTipsGivenTreePOUMM(tree, alpha, sigma)
+  V.g_1 <- chol2inv(chol(V.g))
+  mu.g <- meanOU(g0, t = nodeTimes(tree, tipsOnly = TRUE), alpha = alpha, theta = theta)
+
+  V.e <- diag(sigmae^2, nrow=N, ncol=N)
+  V.e_1 <- V.e
+  diag(V.e_1) <- 1/diag(V.e)
+  mu.e <- z
+
+  V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
+
+  if(class(V.g.poumm)=='try-error') {
+    warning(V.g.poumm)
+    list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
+         mu.e = mu.e)
+  } else {
+    mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)
+
+    list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
+         mu.e = mu.e, V.g.poumm = V.g.poumm, mu.g.poumm = mu.g.poumm)
+  }
+}
