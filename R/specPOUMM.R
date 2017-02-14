@@ -673,10 +673,10 @@ specifyPMM_SSeG0 <- function(
     
     parMapping = function(par) {
       if(is.matrix(par)) {
-        atsseg0 <- cbind(0, 0, par[, 1:2, drop = FALSE]) 
+        atsseg0 <- cbind(0, 0, par[, 1:3, drop = FALSE]) 
         colnames(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
-        atsseg0 <- c(0, 0, par[1:2]) 
+        atsseg0 <- c(0, 0, par[1:3]) 
         names(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       }
       atsseg0
@@ -998,13 +998,11 @@ specifyPMM_H2tMeanSe <- function(
       if(is.matrix(par)) {
         par <- cbind(0, 0, par[, 1:2, drop = FALSE], NA)
         par[, 3] <- POUMM::sigmaOU(par[, 3], 0, par[, 4], tMean)
-        par <- cbind(par, NA)
         
         colnames(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       } else {
         par <- c(0, 0, par, NA)
-        par[3] <- POUMM::sigmaOU(par[3], par[1], par[4], tMean)
-        par <- c(par, NA)
+        par[3] <- POUMM::sigmaOU(par[3], 0, par[4], tMean)
         
         names(par) <- c("alpha", "theta", "sigma", "sigmae", "g0")
       }

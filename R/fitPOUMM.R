@@ -27,6 +27,7 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #' Find a maximum likelihood fit of the POUMM model
 #'
 #' @param loglik function(par, memo, parFixedNoAlpha) 
+#' @param pruneInfo a list-object returned by the pruneTree(tree, z) function.
 #' @param parFixed A named numeric vector, indicating fixed values for some of 
 #'   the parameters alpha, theta, sigma and sigmae, by default, c().
 #' @param parLower,parUpper Two named numeric vectors indicating the boundaries of 
@@ -51,7 +52,8 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #'   
 #' @importFrom stats optim optimise runif
 maxLikPOUMMGivenTreeVTips <- function(
-  loglik, parLower, parUpper, parInitML = NULL, g0 = NA, g0Prior = NULL,
+  loglik, pruneInfo, 
+  parLower, parUpper, parInitML = NULL, g0 = NA, g0Prior = NULL,
   control=list(factr = 1e8, fnscale = -1), 
   verbose = FALSE, debug = FALSE, ...) {
   if(is.null(parLower) | is.null(parUpper)) {
@@ -73,7 +75,7 @@ maxLikPOUMMGivenTreeVTips <- function(
   memoMaxLoglik <- new.env()
   fnForOptim <- function(par) {
     ll <- memoiseMax(
-      loglik, par = par, memo = memoMaxLoglik, verbose = verbose)
+      loglik, par = par, pruneInfo = pruneInfo,  memo = memoMaxLoglik, verbose = verbose)
     g0LogPrior <- attr(ll, "g0LogPrior")
     
     if(is.finite(g0LogPrior)) {
@@ -117,141 +119,6 @@ maxLikPOUMMGivenTreeVTips <- function(
        g0 = attr(maxValue, which="g0", exact = TRUE), 
        g0LogPrior = attr(maxValue, which="g0LogPrior", exact = TRUE), 
        count = callCount, parLower=parLower, parUpper=parUpper, 
-       control=control)
-}
-
-# Old likelihood optimizer, which used optimize on alpha with optim on the remaining parameters. 
-ml.poumm <- function(
-  loglik, parFixed=c(), 
-  parLower=c(alpha=0, theta=0, sigma=0, sigmae=0), 
-  parUpper=c(alpha=100, theta=10, sigma=20, sigmae=10),
-  parInit = NULL,
-  g0 = NA, g0Prior = NULL, 
-  tol=0.001, control=list(factr = 1e8, fnscale = -1),  
-  verbose=FALSE) {
-  
-  if(is.null(parLower) | is.null(parUpper)) {
-    stop("parLower and/or parUpper are NULL.")
-  }
-  if(is.null(names(parLower))) {
-    names(parLower) <- c('alpha', 'theta', 'sigma', 'sigmae')
-  }
-  if(is.null(names(parUpper))) {
-    names(parUpper) <- c('alpha', 'theta', 'sigma', 'sigmae')
-  }
-
-  
-  if(is.null(parInit)) {
-    parInit <- (parLower + parUpper) / 2
-  }
-  if(is.null(names(parInit))) {
-    names(parInit) <- c('alpha', 'theta', 'sigma', 'sigmae')
-  }
-  
-  if(!(all(parInit >= parLower) & all(parInit <= parUpper))) {
-    stop("All parameters in parInit should be between parLower and parUpper.")
-  }
-  
-  if(is.null(control)) {
-    control <- list()
-  }
-  
-  # ensure that optim does maximization.
-  control$fnscale <- -1
-  
-  parLower <- parLower[setdiff(names(parLower), names(parFixed))]
-  parUpper <- parUpper[setdiff(names(parUpper), names(parFixed))]
-  parInit <- parInit[setdiff(names(parInit), names(parFixed))]
-  
-  parFixedNoAlpha <- parFixed[setdiff(names(parFixed), 'alpha')]
-  
-  memoMaxLoglik <- new.env()
-  fnForOptimOnFixedAlpha <- function(par, alpha) {
-    names(alpha) <- "alpha"
-    parFull <- 
-      c(alpha, par, parFixedNoAlpha)[c("alpha", "theta", "sigma", "sigmae")]
-    
-    ll <- memoiseMax(
-      loglik, par = c(parFull, g0 = g0), memo = memoMaxLoglik, verbose = verbose)
-    g0LogPrior <- attr(ll, "g0LogPrior")
-    
-    if(is.finite(g0LogPrior)) {
-      ll + g0LogPrior
-    } else {
-      ll
-    }
-  }
-  
-  # This is going to be called by optimise or by this code if alpha is fixed by 
-  # the user; this calls optim for fnForOptimOnFixedAlpha defined above.
-  fnForOptimiseOverAlpha <- function(alpha, parFixed, parLower, parUpper, 
-                                     memoParInit) {
-    parInit <- get("parInit", pos = memoParInit)
-    
-    if(length(parInit) > 0) {
-      res <- optim(par = parInit, 
-                   fn = fnForOptimOnFixedAlpha, alpha = alpha, 
-                   method = 'L-BFGS-B', lower = parLower, upper = parUpper, 
-                   control = control)
-      if(res$value == get('val', pos = memoMaxLoglik)) {
-        if(verbose) {
-          cat("++++ Setting parInit to:", toString(res$par), "\n")
-        } 
-        assign("parInit", res$par, pos = memoParInit)
-      } 
-    } else {
-      # all parameters except alpha are fixed, so we only evaluate loglik at
-      # alpha.
-      res <- list(
-        value = fnForOptimOnFixedAlpha(par = c(), alpha = alpha)
-      )
-      res
-    }
-    res$value
-  }
-  
-  memoParInit <- new.env()
-  
-  if('alpha' %in% names(parFixed)) {
-    # alpha is among the fixed parameters, so no need to call optimise
-    alphaFixed=parFixed['alpha']
-    
-    assign("parInit", parInit, pos = memoParInit)
-    
-    # the optimum will be stored in memoMaxLoglik
-    fnForOptimiseOverAlpha(alpha = alphaFixed, parFixed = parFixedNoAlpha, 
-                           parLower = parLower, parUpper = parUpper, 
-                           memoParInit = memoParInit)
-  } else {
-    lowerAlpha <- parLower['alpha']
-    upperAlpha <- parUpper['alpha']
-    
-    parLowerNoAlpha <- parLower[setdiff(names(parLower), 'alpha')]
-    parUpperNoAlpha <- parUpper[setdiff(names(parUpper), 'alpha')]
-    parInitNoAlpha <- parInit[setdiff(names(parInit), 'alpha')]
-    
-    assign("parInit", parInitNoAlpha, pos = memoParInit)
-    
-    for(i in 1:length(lowerAlpha)) {
-      optimise(fnForOptimiseOverAlpha, 
-               interval=c(lowerAlpha[i], upperAlpha[i]), 
-               tol=tol, 
-               maximum = TRUE,
-               parFixed=parFixedNoAlpha, 
-               parLower=parLowerNoAlpha, parUpper=parUpperNoAlpha, 
-               memoParInit = memoParInit)
-    }
-  }
-  maxPar <- get("par", pos = memoMaxLoglik)
-  maxValue <- get("val", pos = memoMaxLoglik)
-  callCount <- get("count", pos = memoMaxLoglik)
-  
-  list(par = c(maxPar, parFixed)[c('alpha', 'theta', 'sigma', 'sigmae')],
-       value = maxValue, 
-       g0 = attr(maxValue, which="g0", exact = TRUE), 
-       g0LogPrior = attr(maxValue, which="g0LogPrior", exact = TRUE), 
-       count = callCount, 
-       parFixed=parFixed, parLower=parLower, parUpper=parUpper, 
        control=control)
 }
 
@@ -441,6 +308,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #' @param samplePriorMCMC logical indicating if only the prior distribution should 
 #'   be sampled. This can be useful to compare with mcmc-runs for an overlap 
 #'   between prior and posterior distributions.
+#' @param pruneInfo a list-object returned from the pruneTree(tree, z) function.
 #' @param ... Additional arguments passed to likPOUMMGivenTreeVTips. If ...
 #'   includes debug = TRUE, some debug messages will be written also outside of
 #'   the call to likPOUMMGivenTreeVTips.
@@ -455,10 +323,10 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #' @importFrom  foreach foreach %dopar% %do%
 #'   
 #' @aliases mcmcPOUMMGivenPriorTreeVTips mcmc.poumm
-mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
+mcmcPOUMMGivenPriorTreeVTips <- function(
   loglik, fitML = NULL,
   parMapping, parInitMCMC, parPriorMCMC, parScaleMCMC, nSamplesMCMC, nAdaptMCMC, thinMCMC, accRateMCMC, 
-  gammaMCMC, nChainsMCMC, samplePriorMCMC, ..., 
+  gammaMCMC, nChainsMCMC, samplePriorMCMC, pruneInfo, ..., 
   verbose = FALSE, parallelMCMC = FALSE, zName = 'z', treeName = 'tree') {
   
   samplePriorMCMC <- c(samplePriorMCMC, rep(FALSE, nChainsMCMC - 1))
@@ -475,7 +343,7 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   }
   
   
-  post <- function(par, memoMaxLoglik, chainNo) {
+  post <- function(par, memoMaxLoglik, chainNo, pruneInfo) {
     pr <- parPriorMCMC(par)
     if(debug) {
       cat("par:", toString(round(par, 6)), 'prior:', pr, ";")
@@ -492,7 +360,7 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
         attr(ll, "g0LogPrior") <- NA
       } else {
         ll <- memoiseMax(
-          loglik, par = par, memo = memoMaxLoglik, verbose = verbose)
+          loglik, par = par, pruneInfo = pruneInfo, memo = memoMaxLoglik, verbose = verbose)
         
         if(debug) {
           cat("par: ", toString(round(par, 6)), ";", "ll:", ll)
@@ -505,7 +373,7 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
     }
   }
   
-  doMCMC <- function(i) {
+  doMCMC <- function(i, pruneInfo) {
     memoMaxLoglik <- new.env()
     
     if(verbose) {
@@ -522,7 +390,7 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
       MCMC(
         post, n = nSamplesMCMC, init = init, scale = parScaleMCMC, adapt = nAdaptMCMC, 
         acc.rate = accRateMCMC, gamma = gammaMCMC, 
-        memoMaxLoglik = memoMaxLoglik, chainNo = i), 
+        memoMaxLoglik = memoMaxLoglik, chainNo = i, pruneInfo = pruneInfo), 
       thinMCMC = thinMCMC)
     
     print(paste("Finished chain no:", i))
@@ -540,12 +408,23 @@ mcmcPOUMMGivenPriorTreeVTips <- mcmc.poumm <- function(
   if(parallelMCMC) {
     chains <- foreach::foreach(
       i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %dopar% {
-        chain <- try(doMCMC(i), silent = TRUE)
+        
+        # need to reinitialize the integrator since it is a C++ object
+        pruneInfo$integrator <- Integrator$new()
+      
+        pruneInfo$integrator$setPruningInfo(
+          pruneInfo$z, pruneInfo$tree$edge, pruneInfo$tree$edge.length, 
+          pruneInfo$M, pruneInfo$N, 
+          pruneInfo$endingAt, 
+          pruneInfo$nodesVector, pruneInfo$nodesIndex, 
+          pruneInfo$unVector, pruneInfo$unIndex)
+        
+        chain <- try(doMCMC(i, pruneInfo = pruneInfo), silent = TRUE)
       }
   } else {
     chains <- foreach::foreach(
       i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %do% {
-        chain <- try(doMCMC(i), silent = TRUE)
+        chain <- try(doMCMC(i, pruneInfo = pruneInfo), silent = TRUE)
       }
   }
   

@@ -160,6 +160,7 @@ phytools::plotBranchbyTrait(tree, z, mode = "nodes",
 ## Fitting the POUMM
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function. Before that, we create a parallel cluster on the local computer and register it as a parallel back-end. This enbales parallel execution of more than one MCMC fits (explained below). 
 
+
 ```{r fitPOUMM-1, eval=TRUE}
 # set up a parallel cluster on the local computer for parallel MCMC:
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
@@ -245,6 +246,28 @@ summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 TODO
 
 
+```{r}
+spec <- POUMM::specifyPOUMM_ATH2tMeanSe(
+  z[1:N], tree,                       
+  parLower = c(alpha=0, theta=0, H2tMean=0, sigmae=0),
+  parUpper = c(alpha=100, theta=8, H2tMean=1, sigmae=10),
+  parallelMCMC = TRUE, nSamplesMCMC=4e5)
 
+cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+doParallel::registerDoParallel(cluster)
+
+fitPOUMM3 <- POUMM::POUMM(z[1:N], tree, spec = spec)
+
+parallel::stopCluster(cluster)
+```
+
+
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitPOUMM3, interactive = FALSE)
+```
+
+```{r, warning=FALSE}
+summary(fitPOUMM3)
+```
 
 # References
