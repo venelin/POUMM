@@ -556,8 +556,6 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
           # edges pointing to internal nodes, for which all children nodes have been visited
           gutalphasigma2[es] <- e2talpha[es] + (pif[edgeEnds, 1] * sigma2) / fe2talpha[es]
           
-          
-          
           pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2[es]) -
             # use the formula log(a+c) = log(a) + log(1+c/a), where 
             # a=e2talpha, c = (pif[edgeEnds, 1] * sigma2) / fe2talpha[es], b = e.

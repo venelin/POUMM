@@ -455,8 +455,6 @@ covVTipsGivenTreePOUMM <- function(
   }  
 }
 
-
-
 #' Distribution of the genotypic values under a POUMM fit
 #'
 #' @param tree an object of class phylo
@@ -468,27 +466,40 @@ covVTipsGivenTreePOUMM <- function(
 #'   deviation of random environmental contribution (white noise) included in z.
 gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
   N <- length(tree$tip.label)
-
-  #V.g <- cov.poumm(tree, alpha, sigma, sigmae) ###???? shouldn't sigmae be 0 here?
-  V.g <- covVTipsGivenTreePOUMM(tree, alpha, sigma)
-  V.g_1 <- chol2inv(chol(V.g))
+  
   mu.g <- meanOU(g0, t = nodeTimes(tree, tipsOnly = TRUE), alpha = alpha, theta = theta)
 
   V.e <- diag(sigmae^2, nrow=N, ncol=N)
   V.e_1 <- V.e
   diag(V.e_1) <- 1/diag(V.e)
   mu.e <- z
-
-  V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
+  
+  #V.g <- cov.poumm(tree, alpha, sigma, sigmae) ###???? shouldn't sigmae be 0 here?
+  V.g <- covVTipsGivenTreePOUMM(tree, alpha, sigma)
+  if(sigma > 0) {
+    V.g_1 <- chol2inv(chol(V.g))
+    V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
+    mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)
+  } else {
+    # sigma = 0
+    warning("V.g.poumm is not defined for sigma == 0.")
+    V.g.poumm <- V.g_1 <- matrix(as.double(NA), N, N)
+    mu.g.poumm <- mu.g
+  }
 
   if(class(V.g.poumm)=='try-error') {
     warning(V.g.poumm)
-    list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
-         mu.e = mu.e)
-  } else {
-    mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)
+  } 
+  list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
+       mu.e = mu.e, V.g.poumm = V.g.poumm, mu.g.poumm = mu.g.poumm)
+}
 
-    list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
-         mu.e = mu.e, V.g.poumm = V.g.poumm, mu.g.poumm = mu.g.poumm)
-  }
+r.squared <- function(obj) {
+  fittedValues <- fitted(obj)
+  grandMean <- mean(obj$pruneInfo$z)
+  sum((fittedValues-grandMean)^2)/sum((obj$pruneInfo$z-grandMean)^2)
+}
+
+adj.r.squared <- function(obj, r.sq = r.squared(obj)) {
+  1 - (1 - r.sq) * ((nobs(obj) - 1)/(nobs(obj) - attr(logLik(obj), 'df')))
 }

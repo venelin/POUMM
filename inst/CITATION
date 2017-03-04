@@ -1,0 +1,19 @@
+citHeader("To cite POUMM in publications use:")
+
+citEntry(entry = "Article",
+  title        = "The Heritability of Pathogen Traits - Definitions and Estimators",
+  author       = personList(as.person("Venelin Mitov"),
+                   as.person("Tanja Stadler")),
+  journal      = "BiorXiv",
+  year         = "2016",
+  volume       = "",
+  number       = "",
+  pages        = "",
+  url          = "http://www.biorxiv.org/content/early/2016/06/12/058503",
+
+  textVersion  =
+  paste("Venelin Mitov, Tanja Stadler (2017).",
+        "The Heritability of Pathogen Traits - Definitions and Estimators",
+        "BiorXiv",
+        "URL http://www.biorxiv.org/content/early/2016/06/12/058503")
+)

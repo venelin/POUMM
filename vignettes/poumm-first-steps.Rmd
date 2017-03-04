@@ -5,6 +5,8 @@ date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
     fig_caption: yes
+    toc: true
+    toc_depth: 2
 vignette: >
   %\VignetteIndexEntry{First Steps with the Phylogenetic Ornstein-Uhlenbeck Mixed Model}
   %\VignetteEngine{knitr::rmarkdown}
@@ -33,6 +35,23 @@ references:
   URL: 'https://CRAN.R-project.org/package=TreeSim'
   issued:
     year: 2015
+- id: Housworth2004gj
+  tigle: 'The phylogenetic mixed model.'
+  author: 
+  - family: Housworth
+    given: Elizabeth
+  - family: Martins
+    given: Emilia
+  - family: Lynch
+    given: Michael
+  type: article-journal
+  journal: 'The American Naturalist'
+  issued: 
+    year: 2004
+    month: 1
+  URL: 'http://www.jstor.org/stable/10.1086/380570'
+  DOI: 10.1086/380570
+  
 ---
 
 ```{r setup, include = FALSE}
@@ -46,11 +65,14 @@ options(digits = 4)
 Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@mitov2016]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
 
 * Is the POUMM an appropriate model for the data?
-* Does the trait evolve under stabilizing selection?
-* Given the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
+* Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
 * To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+
+<!--
+TODO
 * What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
 * What are the maximum-likelihood genotypic values of the root and tips of the tree?
+-->
 
 In the first section, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation.
 
@@ -59,10 +81,11 @@ In the second section we use variants of the toy-simulation to show how the  POU
 But before we start, quickly install the needed packages:
 
 ```{r install, eval=FALSE}
-install.packages('POUMM_1.1.0.tgz', type='binary', repos=NULL)
+install.packages('POUMM_1.1.1.tar.gz', type='binary', repos=NULL)
 install.packages("TreeSim")
 install.packages("data.table")
 install.packages("ggplot2")
+install.packages("lmtest")
 ```
 
 
@@ -138,7 +161,7 @@ z <- g + e
 ## Visualizing the data
 In reality, only the phenotypic value, at the tips, i.e. \code{z[1:N]} will be observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values - an important prerequisite for the POUMM. 
 
-```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7}
+```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7, fig.cap="Distributions of the trait-values grouped according to their root-tip distances."}
 # This is easily done using the nodeTimes utility function in combination with
 # the cut-function from the base package.
 data <- data.table(z = z[1:N], t = POUMM::nodeTimes(tree, tipsOnly = TRUE))
@@ -150,7 +173,7 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
 
 A somewhat fancier but not always useful way to visualize data is to plot the phylogeny with colored branches, scaling the intensity of the color by the trait value at the end of each branch:
 
-```{r colored-tree-plots, fig.show = "hold", fig.height=4, fig.width=7}
+```{r colored-tree-plots, fig.show = "hold", fig.height=4, fig.width=7, fig.cap="A phylogenetic tree with colored branches according to the trait-values at the branch ends."}
 # This is easily done using the nodeTimes utility function in combination with
 # the cut-function from the base package.
 phytools::plotBranchbyTrait(tree, z, mode = "nodes", 
@@ -181,7 +204,7 @@ The strategy of executing three MCMC chains instead of one allows to assess:
 
 We plot traces and posterior sample densities from the MCMC fit:
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE, fig.cap="MCMC traces and posterior density plots from a POUMM MCMC-fit. Black dots on the x-axis indicate the ML-fit."}
 plot(fitPOUMM, interactive = FALSE)
 ```
 
@@ -243,31 +266,56 @@ summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 ```
 
 # Using the POUMM fit to answer biological questions
-TODO
 
+## Is the POUMM an appropriate model for the data?
+The first step to answering that question is to visualize the data and check for obvious violations of the POUMM assumptions. The POUMM method expects that the trait-values at the tips are a sample from a multivariate normal distribution. With an ultrametric species tree, where all tips are equally distant from the root, this assumption translates in having all trait-values be realizations of identically distributed normal random variables. In the case of a non-ultrametric tree, it is far more useful to look at a sequence of box-whisker or violin plots of the trait-values, gouped by their root-tip distance. 
+
+Once visualizing the data has confirmed its normality, we recommend comaparing the POUMM-fit with a fit from a NULL-model such as the phylogenetic mixed model (PMM) [@Housworth2004gj]. Since the PMM is nested in the POUMM, i.e. in the limit $\alpha\to0$, the POUMM model is equivalent to a PMM model with the same initial genotypic value $g_0$ and unit-time variance $\sigma$, it is easy to fit a PMM model to the data by fixing the value of the parameter $\alpha$ to 0:
 
 ```{r}
-spec <- POUMM::specifyPOUMM_ATH2tMeanSe(
-  z[1:N], tree,                       
-  parLower = c(alpha=0, theta=0, H2tMean=0, sigmae=0),
-  parUpper = c(alpha=100, theta=8, H2tMean=1, sigmae=10),
-  parallelMCMC = TRUE, nSamplesMCMC=4e5)
-
-cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
-doParallel::registerDoParallel(cluster)
-
-fitPOUMM3 <- POUMM::POUMM(z[1:N], tree, spec = spec)
-
-parallel::stopCluster(cluster)
+specPMM <- POUMM::specifyPMM(z[1:N], tree)
+fitPMM <- POUMM::POUMM(z[1:N], tree, spec = specPMM, doMCMC=FALSE)
 ```
 
+Now a likelihood-ratio test between the maximum likelihood fits clearly shows that the POUMM fits significantly better to the data:
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
-plot(fitPOUMM3, interactive = FALSE)
+```{r}
+lmtest::lrtest(fitPMM, fitPOUMM2)
 ```
 
-```{r, warning=FALSE}
-summary(fitPOUMM3)
+As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:
+
+```{r}
+gBM <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha = 0, theta = 0, sigma = sigma)
+zBM <- gBM + e
+
+fitPMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, spec=specPMM, doMCMC = FALSE)
+fitPOUMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, doMCMC = FALSE)
+
+lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM)
 ```
+
+## Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
+To answer this question, consider the estimated values of the POUMM-parameters $\theta$ and
+$\alpha$. Note that the parameter $\theta$ is relevant only if the value of the parameter $\alpha$ is 
+significantly positive. One could accept that the ML-estimate for $\alpha$ is significantly positive
+if a likelihood ratio test between a ML PMM and POUMM fits gives a p-value below a critical level 
+(see the question above for an example). An inisignificant value of $\alpha$ reveals that the hypothesis
+of neutral drift (Brownian motion) cannot be rejected.
+
+## To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+In other words, what is the proportion of observable phenotypic variance attributed to the phylogeny? To answer this question one needs to estimate the phylogenetic heritability of the trait. Assuming that the tree represents the genetic relationship between individuals in a population, $H_\bar{t}^2$ provides an estimate for the broad-sense heritability $H^2$ of the trait in the population. The POUMM package reports the following three types of phylogenetic heritability (see table \ref{tab:table1} for simplified expressions):
+
+* Expectation at the mean root-tip distance : $H_{\bar{t}}^2:=\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}\right]/\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}+\sigma_e^2\right]$;
+* Expectation at equilibrium of the OU-process: $H_{\infty}^2:=\lim_{\bar{t}\to\infty}H_{\bar{t}}^2$;
+* Empirical (time-independent) version of the heritability based on the sample phenotypic variance $s^2(\textbf{z})$ : $H_e^2:=1-\sigma_e^2/s^2(\textbf{z})$.
+
+<!--
+TODO
+## What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
+
+
+## What are the maximum-likelihood genotypic values of the root and tips of the tree?
+-->
 
 # References

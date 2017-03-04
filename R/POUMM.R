@@ -73,6 +73,10 @@
 #' plot(resid(fit))
 #' abline(h=0)
 #' 
+#' # fit PMM to the same data and do a likelihood ratio test
+#' fitPMM <- POUMM::POUMM(z, tr, spec = POUMM::specifyPMM(nSamplesMCMC = 5e4))
+#' lmtest::lrtest(fitPMM, fit)
+#' 
 #' @references \insertRef{Vihola:2012by}{POUMM}   
 #' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
 #'@useDynLib POUMM
@@ -286,72 +290,6 @@ POUMM <- function(
   result
 }
 
-#' @describeIn POUMM_PMM Maximum likelihood and Bayesian fit of the PMM
-#'   
-#' @details The PMM function is a shortcut to calling the POUMM function after 
-#'   fixing the parameters alpha and theta to 0. Note that, with alpha == 0, the
-#'   value of the parameter theta is irrelevant for the POUMM fit.
-#' @export
-PMM <- function(
-  z, tree, zName = 'z', treeName = 'tree', 
-  parDigits = 6, usempfr = 0, useArma = TRUE,
-  ...,
-  spec = NULL, doMCMC = TRUE, 
-  verbose = FALSE) {
-  
-  if(is.list(z)) {
-    p <- z
-    z <- p[[zName]]
-    if(is.null(z)) {
-      z <- p[['v']]
-    }
-    tree <- p[[treeName]]
-    
-    if(is.null(z) | is.null(tree)) {
-      stop('If a list is supplied as argument z, this list should contain a ',
-           'vector of trait values named "z" or zName and a phylo-object named ',
-           '"tree" or treeName')
-    }
-    if(any(is.na(z)) | any(is.infinite(z))) {
-      stop('Check z for infinite or NA values!')
-    }
-    if(any(tree$edge.length <= 0) | any(is.infinite(tree$edge.length)) | 
-       any(is.na(tree$edge.length))) {
-      stop('Check the tree for non-finite or non-positive edge-lengths!')
-    }
-  }
-  
-  if(!validateZTree(z, tree)) {
-    stop("Invalid trait-vecto z and/or tree.")
-  }
-  
-  tTips <- nodeTimes(tree, tipsOnly = TRUE)
-  
-  zMin <- min(z); zMean <- mean(z); zMax <- max(z); zVar <- var(z); zSD <- sd(z);
-  tMin <- min(tTips); tMean <- mean(tTips); tMax <- max(tTips);
-  
-  if(is.function(spec)) {
-    spec <- do.call(spec, 
-                    list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
-                         zVar = var(z), zSD = sd(z), 
-                         tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
-  } else {
-    spec <- 
-      do.call(specifyPMM, 
-              list(z = z, tree = tree, zMin = min(z), zMean = mean(z), zMax = max(z), 
-                   zVar = var(z), zSD = sd(z), 
-                   tMin = min(tTips), tMean = mean(tTips), tMax = max(tTips)))
-  }
-  
-  
-  res <- POUMM(
-    z = z, tree = tree, zName = zName, treeName = treeName, 
-    parDigits = parDigits, usempfr = usempfr, ..., 
-    spec = spec, doMCMC = doMCMC, 
-    verbose = verbose)
-  class(res) <- c('PMM', class(res))
-  res
-}
 
 #' Extract maximum likelihood and degrees of freedom from a fitted POUMM model
 #' @param object An object of class POUMM.
@@ -426,6 +364,17 @@ fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCo
   }
 }
 
+#' Number of tips in a phylogenetic tree, POUMM has been fit on.
+#' @param object An object of class POUMM.
+#' @return The number of tips in the tree, POUMM has been called on
+#' @export
+nobs.POUMM <- function(object) {
+  if("POUMM" %in% class(object)) {
+    object$N
+  } else {
+    stop("nobs.POUMM called on a non POUMM-object.")
+  }  
+}
 
 #' Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.
 #' @param object An object of class POUMM.
@@ -466,6 +415,17 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
 #' @param startMCMC,endMCMC,thinMCMC Integers used to extract a sample from the 
 #'   MCMC-chain; passed to summary().
 #' @param statFunctions Named list of statistics functions; passed to summary().
+#' @param doZoomIn (type MCMC only) A logical value indicating whether the 
+#'   produced plots should have a limitation on the x-axis according to an 
+#'   expression set in zoomInFilter (see below). Default value is FALSE.
+#' @param zoomInFilter A character string which evaluates as logical value. If 
+#'   doZoomIn is set to TRUE, this filter is applied to each point in each MCMC
+#'   chain and the data-point is filtered out if it evaluates to FALSE. This 
+#'   allows to zoomIn the x-axis of density plots but should be use with caution,
+#'   since filtering out points from the MCMC-sample can affect the kernel 
+#'   densities. Default value is "(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)". The identifiers in this expression can be any
+#'   column names found in a summary of a POUMM object.
+#'   
 #' 
 #' @return If doPlot==FALSE, a named list containing a member called data of
 #'   class data.table and several members of class ggplot.
@@ -476,13 +436,16 @@ plot.POUMM <-
            stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
            chain=NULL,
            startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
-           statFunctions = statistics(object)) {
+           statFunctions = statistics(object),
+           doZoomIn = FALSE,
+           zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)") {
   
   if("POUMM" %in% class(object)) {
     summ <- summary(object, mode = "expert", 
                     startMCMC = startMCMC, endMCMC = endMCMC, 
                     thinMCMC = thinMCMC, stats = statFunctions)
-    plot(summ)
+    plot(summ, doPlot = doPlot, interactive = interactive, 
+         stat = stat, chain = chain, doZoomIn = doZoomIn, zoomInFilter = zoomInFilter)
   } else {
     stop("plot.POUMM called on a non POUMM-object.")
   }
