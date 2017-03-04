@@ -76,3 +76,25 @@ test_that("default calls no error", {
   expect_silent(specifyPMM_H2tMeanSeG0())
   expect_silent(specifyPMM_SSeG0())
 })
+
+
+context("POUMM fit")
+
+for(i in 1:10) {
+  zOU <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sigmae)
+  zBM <- POUMM::rVNodesGivenTreePOUMM(tree, g0, 0, 0, sigma, sigmae)
+  
+  test_that("fitPOUMM_on_zBM calls no error:", {
+    expect_silent(fitPMM_on_zBM <<- POUMM::POUMM(zBM[1:N], tree, spec = POUMM::specifyPMM(zBM[1:N], tree), doMCMC = FALSE))
+    expect_output(fitPOUMM_on_zBM <<- POUMM::POUMM(zBM[1:N], tree, doMCMC = TRUE, spec = specifyPOUMM(zBM[1:N], tree, nSamplesMCMC = 2e4)))
+    expect_silent(fitPMM_on_zOU <<- POUMM::POUMM(zOU[1:N], tree, spec = POUMM::specifyPMM(zOU[1:N], tree), doMCMC = FALSE))
+    expect_output(fitPOUMM_on_zOU <<- POUMM::POUMM(zOU[1:N], tree, doMCMC = TRUE, spec = specifyPOUMM(zBM[1:N], tree, nSamplesMCMC = 2e4)))
+  })
+  print("==============================================")
+  print(paste("Test", i))
+  print(lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM))
+  print("----------------------------------------------")
+  print(lmtest::lrtest(fitPMM_on_zOU, fitPOUMM_on_zOU))
+  
+}
+

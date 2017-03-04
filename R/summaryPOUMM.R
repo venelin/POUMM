@@ -146,6 +146,9 @@ summary.POUMM <- function(object, ...,
                 ML = an.ML, MCMC = an.MCMC)
   }
   
+  #r.sq <- r.squared(object)
+  #attr(res, 'r.squared') <- r.sq
+  #attr(res, 'adj.r.squared') <- adj.r.squared(object, r.sq = r.sq)
   class(res) <- c('summary.POUMM', class(res))
   res
 }
@@ -154,7 +157,7 @@ summary.POUMM <- function(object, ...,
 #' @param object An object of class POUMM.
 #' @param type A character indicating the type of plot(s) to be generated.
 #'   Defaults to "MCMC", resulting in a trace and density plot for the selected
-#'   statistics (see argument stat).
+#'   statistics (see argument stat). Currently, only 'MCMC' type is supported.
 #' @param doPlot Logical indicating whether a plot should be printed on the 
 #'   currently active graphics device or whether to return a list of ggplot 
 #'   objects for further processing. Defaults to TRUE.
@@ -166,14 +169,28 @@ summary.POUMM <- function(object, ...,
 #'   These should be names from the stats-list (see argument statFunctions).
 #'   Defaults to c("alpha", "theta", "sigma", "sigmae", "H2tMean", "H2tInf").
 #' @param chain A vector of integers indicating the chains to be plotted. 
+#' @param doZoomIn (type MCMC only) A logical value indicating whether the 
+#'   produced plots should have a limitation on the x-axis according to an 
+#'   expression set in zoomInFilter (see below). Default value is FALSE.
+#' @param zoomInFilter A character string which evaluates as logical value. If 
+#'   doZoomIn is set to TRUE, this filter is applied to each point in each MCMC
+#'   chain and the data-point is filtered out if it evaluates to FALSE. This 
+#'   allows to zoomIn the x-axis of density plots but should be use with caution,
+#'   since filtering out points from the MCMC-sample can affect the kernel densities.
 #' 
+#' @return The function returns nothing if doPlot=TRUE; Otherwise, it returns a
+#'  list with a data.table corresponding to the data passed to ggplot and two
+#'  ggplot objects corresponding to an MCMC-trace and a posterior density plot.
+#'  
 #' @import ggplot2
-#'    
+#'  
 #' @export
 plot.summary.POUMM <- function(
   object, type=c("MCMC"), 
   doPlot = TRUE, interactive = TRUE,
   stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
+  doZoomIn = FALSE,
+  zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)",
   chain=NULL) {
   
   if(class(object) == "summary.POUMM" & !is.null(object$MCMC)) {
@@ -209,6 +226,14 @@ plot.summary.POUMM <- function(
       it = seq(object$startMCMC, by = object$thinMCMC, along.with = mcmc[[1]])), 
     by = list(stat = factor(stat), chain = factor(chain))]
     
+    data <- data[!doZoomIn | eval(parse(text=zoomInFilter))]
+    
+    data[, HPDUpperFiltered:=min(max(value), unique(HPDUpper)), 
+         list(stat = factor(stat), chain = factor(chain))]
+    
+    data[, HPDLowerFiltered:=max(min(value), unique(HPDLower)), 
+         list(stat = factor(stat), chain = factor(chain))]
+    
     if(type == "MCMC") {
       traceplot <- ggplot(data) + 
         geom_line(aes(x=it, y=value, col = chain)) + 
@@ -216,7 +241,8 @@ plot.summary.POUMM <- function(
       
       densplot <- ggplot(data) + 
         geom_density(aes(x=value, col = chain)) + 
-        geom_segment(aes(x=HPDLower, xend=HPDUpper, y=0, yend=0, col = chain)) +
+        geom_segment(aes(x=HPDLowerFiltered, xend=HPDUpperFiltered, 
+                         y=0, yend=0, col = chain)) +
         geom_point(aes(x=estML, y=0)) +
         facet_wrap(~stat, scales = "free")
       

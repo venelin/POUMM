@@ -1,8 +1,8 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 1.1.1
-Date: 2016-01-28
+Version: 1.2.0
+Date: 2017-03-04
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre"))
 Description: Combined maximum likelihood and Bayesian inference of the 
