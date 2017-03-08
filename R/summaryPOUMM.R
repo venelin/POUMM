@@ -1,6 +1,6 @@
-#' Summarize the results of a P(OU)MM-fit
+#' Summarize the results of a POUMM-fit
 #' 
-#' @param object a POUMM object returned by POUMM or PMM functions.
+#' @param object a POUMM object returned by POUMM-function (see ?POUMM).
 #' @param ... Not used, but declared for consistency with the generic method summary.
 #' @param startMCMC,endMCMC integers indicating the range of the MCMC chains
 #' to be used for the analysis (excluding the initial warm-up phase)
@@ -9,7 +9,7 @@
 #' @param stats a named list of functions of the form function(par) { number },
 #' which are called for each sample of each mcmc chain in object. Defaults to 
 #' a call of statistics(object) returning a list of statistics functions relevant for 
-#' the type of object (either a POUMM or a PMM). See also statistics.
+#' the object. See also statistics.
 #' @param mode a character indicating the desired format of the returned summary 
 #' as follows:
 #' 'short' - a data.table with the ML and MCMC estimates of heritability, 
@@ -59,27 +59,27 @@ summary.POUMM <- function(object, ...,
     
     anlist <- lapply(1:length(stats), function(i) {
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat=stats[[i]], statName=names(stats)[i],
-                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
-                   as.dt=TRUE)
+                   stat = stats[[i]], statName = names(stats)[i],
+                   start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
+                   as.dt = TRUE)
     })
     
     anlist <- c(anlist, list(
       analyseMCMCs(object$fitMCMC$chains, 
                    stat=NULL, statName='logpost',
-                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
-                   as.dt=TRUE),
+                   start = startMCMC, end=endMCMC, thinMCMC = thinMCMC, 
+                   as.dt = TRUE),
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat=NULL, statName='loglik', logprior=object$spec$parPrior,
-                   start=startMCMC, end=endMCMC, thin=thinMCMC, 
-                   as.dt=TRUE)
+                   stat = NULL, statName='loglik', logprior=object$spec$parPrior,
+                   start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
+                   as.dt = TRUE)
     ))
     
     if( !("g0" %in% names(stats)) ) {
       anlist <- c(anlist, list(
         analyseMCMCs(object$fitMCMC$chains, 
                      stat=NULL, statName='g0', logprior=object$spec$parPrior,
-                     start=startMCMC, end=endMCMC, thin=thinMCMC, 
+                     start=startMCMC, end=endMCMC, thinMCMC=thinMCMC, 
                      as.dt=TRUE))
       )
     }
@@ -154,7 +154,7 @@ summary.POUMM <- function(object, ...,
 }
 
 #' Plot a summary of a POUMM fit
-#' @param object An object of class POUMM.
+#' @param x An object of class POUMM.
 #' @param type A character indicating the type of plot(s) to be generated.
 #'   Defaults to "MCMC", resulting in a trace and density plot for the selected
 #'   statistics (see argument stat). Currently, only 'MCMC' type is supported.
@@ -177,6 +177,7 @@ summary.POUMM <- function(object, ...,
 #'   chain and the data-point is filtered out if it evaluates to FALSE. This 
 #'   allows to zoomIn the x-axis of density plots but should be use with caution,
 #'   since filtering out points from the MCMC-sample can affect the kernel densities.
+#' @param ... Not used; included for compatibility with the generic function plot.
 #' 
 #' @return The function returns nothing if doPlot=TRUE; Otherwise, it returns a
 #'  list with a data.table corresponding to the data passed to ggplot and two
@@ -186,18 +187,18 @@ summary.POUMM <- function(object, ...,
 #'  
 #' @export
 plot.summary.POUMM <- function(
-  object, type=c("MCMC"), 
+  x, type=c("MCMC"), 
   doPlot = TRUE, interactive = TRUE,
   stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
+  chain=NULL,
   doZoomIn = FALSE,
-  zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)",
-  chain=NULL) {
+  zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)", ...) {
   
-  if(class(object) == "summary.POUMM" & !is.null(object$MCMC)) {
+  if(class(x) == "summary.POUMM" & !is.null(x$MCMC)) {
     .stat <- stat
     .chain <- chain
     
-    data <- merge(object$ML, object$MCMC, by = "stat")
+    data <- merge(x$ML, x$MCMC, by = "stat")
     
     data <- data[
       { 
@@ -223,7 +224,7 @@ plot.summary.POUMM <- function(
       HPD50Upper = sapply(HPD50, function(.) .[2]), 
       ESS,
       value = unlist(mcmc), 
-      it = seq(object$startMCMC, by = object$thinMCMC, along.with = mcmc[[1]])), 
+      it = seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]])), 
     by = list(stat = factor(stat), chain = factor(chain))]
     
     data <- data[!doZoomIn | eval(parse(text=zoomInFilter))]
@@ -263,8 +264,8 @@ plot.summary.POUMM <- function(
 }
 
 #' Extract statistics from sampled or inferred parameters of a 
-#' POUMM/PMM fit
-#' @param object An object of class "POUMM" or "PMM".
+#' POUMM fit
+#' @param object An object of class "POUMM".
 #'
 #' @details This is a generic method.
 #' @export
@@ -274,6 +275,7 @@ statistics <- function(object) {
 
 #' @describeIn statistics Relevant statistics from the sampled parameters of a
 #'   POUMM fit
+#'  
 #' @export
 statistics.POUMM <- function(object) {
   listPar <- sapply(1:length(object$spec$parLower), function(i) {

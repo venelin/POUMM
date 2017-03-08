@@ -4,7 +4,7 @@ NULL
 
 
 printPOUMMLikelihoodMainLoop <- function(tree) {
-  pruneInfo <- POUMM:::pruneTree(tree)
+  pruneInfo <- pruneTree(tree)
   M <- pruneInfo$M
   endingAt <- pruneInfo$endingAt
   nodesVector <- pruneInfo$nodesVector
@@ -50,8 +50,9 @@ printPOUMMLikelihoodMainLoop <- function(tree) {
     
   }
 }
+
 plotPOUMMLikelihoodMainLoop <- function(tree, x.lim=c(-2,16.4)) {
-  pruneInfo <- POUMM:::pruneTree(tree)
+  pruneInfo <- pruneTree(tree)
   M <- pruneInfo$M
   endingAt <- pruneInfo$endingAt
   nodesVector <- pruneInfo$nodesVector

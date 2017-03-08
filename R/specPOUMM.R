@@ -1,16 +1,14 @@
-#' @name specifyPOUMM_PMM
+#' @name specifyPOUMM
 #' 
 #' @title Specifying a POUMM fit
 #' 
 #' @description Specification and validation of POUMM/PMM settings.
 #' specifyPOUMM sets default POUMM settings. 
-#' Read the "Specification"-section in \code{vignette("poumm-first-steps")} for 
-#' guidelines and examples on how to use these functions. 
-#'
+#' 
 #' @param z,tree a numeric vector and a phylo object on which the fit is to be done. 
 #'    These arguments are used in order to guess meaningful values for the parLower,
 #'    parUpper and parPriorMCMC arguments. See also, zMin,zMean,...,tMax below.
-#' @param zMin,zMean,zMax,zVar,zSDtMin,tMean,tMax summary statistics of the
+#' @param zMin,zMean,zMax,zVar,zSD,tMin,tMean,tMax summary statistics of the
 #'   observed tip-values (z) and root-tip distances (t). Some of these values
 #'    are used for constructing default parameter values and limits; These 
 #'    arguments are given default values which will most likely be meaningless
@@ -61,19 +59,6 @@
 #'    }
 #'    atsseg0
 #'  }
-#'
-#'  # Default for PMM: fixed values for alpha and theta; identity for 
-#'  # sigma and sigmae, NA for g0.
-#'  parMapping = function(par) {
-#'    if(is.matrix(par)) {
-#'      atsseg0 <- cbind(0, 0, par[, 1:2, drop = FALSE], NA) 
-#'      colnames(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
-#'    } else {
-#'      atsseg0 <- c(0, 0, par[1:2], NA) 
-#'      names(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
-#'    }
-#'    atsseg0
-#'  }
 #' }
 #' @param parLower,parUpper two named numeric vectors of the same length
 #'   indicating the boundaries of the search region for the ML-fit. Calling
@@ -83,16 +68,12 @@
 #' # Default for POUMM:
 #' parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), sigma = 0, sigmae = 0)
 #' parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-#'              sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
-#'              sigmae = 2 * zSD)
-#'
-#' # Default for PMM:
-#' parLower = c(sigma = 0, sigmae = 0)
-#' parUpper = c(sigma = POUMM::sigmaOU(H2 = .99, alpha = 0, sigmae = 2 * zSD, t = tMean), 
+#'              sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD,
+#'                                     t = tMean), 
 #'              sigmae = 2 * zSD)
 #' }
 #' 
-#'  @param g0Prior Either NULL or a list with named numeric or character 
+#' @param g0Prior Either NULL or a list with named numeric or character 
 #'    members "mean" and "var". Specifies a prior normal distribution for the
 #'    parameter g0. If characters, the members "mean" and "var" are evaluated as
 #'    R-expressions - useful if these are functions of some of other parameters.
@@ -102,7 +83,9 @@
 #'    p(g0) x lik(data|g0, other parameters and tree). This can be helpful to 
 #'    prevent extremely big or low estimates of g0. To avoid this behavior and
 #'    always maximize the likelihood, use g0Prior = NULL. 
-#'  
+#' @param sigmaeFixed fixed value for the sigmae parameter (used in specifyPOUMM_ATS).
+#' @param parInitML A named vector (like parLower and parUpper) or a list of such
+#'   vectors - starting points for optim.
 #' @param control List of parameters passed on to optim in the ML-fit, default 
 #'   list(factr=1e9), see ?optim.
 #'
@@ -126,23 +109,6 @@
 #'    
 #'    init[(chainNo - 1) \%\% nrow(init) + 1, ]
 #'  }
-#'
-#'  # Default for PMM:
-#'  parInitMCMC = function(chainNo, fitML = NULL) {
-#'    if(!is.null(fitML)) {
-#'      parML <- fitML$par
-#'    } else {
-#'      parML <- NULL
-#'    }
-#'    
-#'    init <- rbind(
-#'      c(sigma = 1, sigmae = 0),
-#'      parML,
-#'      c(sigma = 1, sigmae = 1)
-#'    )
-#'    
-#'    init[(chainNo - 1) \%\% nrow(init) + 1, ]
-#'  }
 #' }
 #' 
 #' @param parPriorMCMC A function of a numeric parameter-vector returning the 
@@ -156,17 +122,12 @@
 #'      dexp(par[3],  rate = .0001, TRUE) + 
 #'      dexp(par[4], rate = .01, TRUE)
 #'  }
-#'  
-#'  # Default for PMM:
-#'  parPriorMCMC = function(par) {
-#'    dexp(par[1],  rate = .0001, TRUE) + 
-#'    dexp(par[2], rate = .01, TRUE)
-#'  }
 #' }
 #' 
 #' @param parScaleMCMC Numeric matrix indicating the initial jump-distribution 
-#'   matrix for the MCMC fit. Default for POUMM is diag(4); for PMM - diag(2)
-#' @param nSamplesMCMC Integer indicating the length of each MCMC chain. Defaults to 1e5.
+#'   matrix for the MCMC fit. Default for POUMM is diag(4); 
+#' @param nSamplesMCMC Integer indicating the length of each MCMC chain. 
+#' Defaults to 1e5.
 #' @param nAdaptMCMC Integer indicating how many initial MCMC iterations should 
 #'   be used for adaptation of the jump-distribution matrix (see details in 
 #'   ?POUMM). Defaults to nSamplesMCMC meaning continuous adaptation throughout
@@ -192,10 +153,10 @@
 #'   web-page https://github.com/tobigithub/R-parallel/wiki/R-parallel-Setups).
 #' @param validateSpec Logical indicating whether the passed parameters should 
 #'   be validated. This parameter is used internally and should always be TRUE.
-#' @return A named list to be passed as a spec argument to POUMM or PMM. 
+#' @return A named list to be passed as a spec argument to POUMM.
 NULL
 
-#' @describeIn specifyPOUMM_PMM Specify parameters for fitting a POUMM model. 
+#' @describeIn specifyPOUMM Specify parameters for fitting a POUMM model. 
 #'   Parameter vector is c(alpha, theta, sigma, sigmae) 
 #' 
 #' @export
@@ -315,7 +276,7 @@ specifyPOUMM <- function(
   spec
 }
 
-#' @describeIn specifyPOUMM_PMM Fitting a POU model with fixed sigmae.
+#' @describeIn specifyPOUMM Fitting a POU model with fixed sigmae.
 #'  Parameter vector is c(alpha, theta, sigma).
 #' @export
 specifyPOUMM_ATS <- function(
@@ -420,7 +381,7 @@ specifyPOUMM_ATS <- function(
 }
 
 
-#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with sampling of g0.
+#' @describeIn specifyPOUMM Fitting a POUMM model with sampling of g0.
 #'  Parameter vector is c(alpha, theta, sigma, sigmae, g0).
 #' @export
 specifyPOUMM_ATSSeG0 <- function(
@@ -525,7 +486,7 @@ specifyPOUMM_ATSSeG0 <- function(
 }
 
 
-#' @describeIn specifyPOUMM_PMM Specify parameter for fitting a PMM model. 
+#' @describeIn specifyPOUMM Specify parameter for fitting a PMM model. 
 #'   Parameter vector is c(sigma, sigmae)
 #' @export
 specifyPMM <- function(
@@ -626,7 +587,7 @@ specifyPMM <- function(
   spec
 }
 
-#' @describeIn specifyPOUMM_PMM Specify parameter for fitting a PMM model with
+#' @describeIn specifyPOUMM Specify parameter for fitting a PMM model with
 #'  sampling of g0. Parameter vector is c(sigma, sigmae, g0).
 #' @export
 specifyPMM_SSeG0 <- function(
@@ -727,7 +688,7 @@ specifyPMM_SSeG0 <- function(
   spec
 }
 
-#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with a uniform prior for
+#' @describeIn specifyPOUMM Fitting a POUMM model with a uniform prior for
 #'  the phylogenetic heritability at mean root-tip distance. Parameter vector is
 #'  c(alpha, theta, H2tMean, sigmae).
 #' @export
@@ -838,7 +799,7 @@ specifyPOUMM_ATH2tMeanSe <- function(
 
 
 
-#' @describeIn specifyPOUMM_PMM Fitting a POUMM model with a uniform prior for
+#' @describeIn specifyPOUMM Fitting a POUMM model with a uniform prior for
 #'  the phylogenetic heritability at mean root-tip with sampling of g0.
 #'  Parameter vector is c(alpha, theta, H2tMean, sigmae, g0).
 #' @export
@@ -948,7 +909,7 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
 
 
 
-#' @describeIn specifyPOUMM_PMM Fitting a PMM model with a uniform prior for
+#' @describeIn specifyPOUMM Fitting a PMM model with a uniform prior for
 #'  the phylogenetic heritability at mean root-tip distance. Parameter vector is
 #'  c(H2tMean, sigmae).
 #' @export
@@ -1054,7 +1015,7 @@ specifyPMM_H2tMeanSe <- function(
 }
 
 
-#' @describeIn specifyPOUMM_PMM Fitting a PMM model with a uniform prior for
+#' @describeIn specifyPOUMM Fitting a PMM model with a uniform prior for
 #'  the phylogenetic heritability at mean root-tip distance with sampling of G0.
 #'  Parameter vector is c(H2tMean, sigmae, g0).
 #' @export

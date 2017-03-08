@@ -1,4 +1,5 @@
 #include <RcppArmadillo.h>
+#include <algorithm>
 // [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
@@ -12,16 +13,23 @@ class Integrator {
   uint nLevels;
   uint M;
   uint N;
+  
   arma::vec z;
   arma::vec t;
   arma::umat edge;
+  
+  arma::vec zReord;
+  arma::vec tReord;
+  arma::uvec eReord;
+  
   arma::uvec endingAt;
   arma::uvec nodesVector;
   arma::uvec nodesIndex;
   arma::uvec unVector;
   arma::uvec unIndex;
   
-  arma::mat pif;
+  arma::mat abcMat;
+  arma::vec a, b, c;
   
   uint count_abc_calls;
   
@@ -52,7 +60,8 @@ public:
     
     edge = umat(edge_ - 1);
       
-    pif = mat(M, 3);
+    abcMat = mat(M, 3);
+    a = b = c = vec(M);
     
     
     // values corrected for 0-based indexing
@@ -61,9 +70,11 @@ public:
     nodesIndex = nodesIndex_ - 1; 
     unIndex = unIndex_ - 1; 
     unVector = unVector_ - 1;
+    
+    reorderEdges();
   };
   
-  arma::rowvec abc(double alpha, double theta, double sigma, double sigmae) {
+  arma::rowvec abc_old(double alpha, double theta, double sigma, double sigmae) {
     
     ++count_abc_calls;
     
@@ -84,8 +95,8 @@ public:
     }
     
     
-    // needed to re-initialize pif;
-    pif.fill(0);
+    // needed to re-initialize abcMat;
+    abcMat.fill(0);
     
     // edges pointing to tips
     uvec es = endingAt.elem(nodesVector(span(nodesIndex(0) + 1, nodesIndex(1))));
@@ -100,34 +111,34 @@ public:
     
     if(sigmae != 0) {
       // integration over g1 including e1 = z1 - g1
-      pif(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
+      abcMat(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
         0.25 * sigma2 * pow(z1 / sigmae2, 2) /
           (fe2talpha.elem(es) - alpha + (-0.5 / sigmae2) * sigma2) +
             talpha.elem(es) + (-0.5 * (M_LN_2PI  + z1 % (z1 / sigmae2)) - logsigmae) ;
       
-      pif(edgeEnds, ONE) = (etalpha.elem(es) % (z1 / sigmae2)) / gutalphasigma2.elem(es) ;
+      abcMat(edgeEnds, ONE) = (etalpha.elem(es) % (z1 / sigmae2)) / gutalphasigma2.elem(es) ;
       
-      pif(edgeEnds, ZERO) = (-0.5 / sigmae2) / gutalphasigma2.elem(es);
+      abcMat(edgeEnds, ZERO) = (-0.5 / sigmae2) / gutalphasigma2.elem(es);
     } else {
       // integration over g1 with e1 = 0
-      pif(edgeEnds, ZERO) = fe2talpha.elem(es) / sigma2;
+      abcMat(edgeEnds, ZERO) = fe2talpha.elem(es) / sigma2;
       
-      pif(edgeEnds, ONE) = -2 * etalpha.elem(es) % z1 % pif(edgeEnds, ZERO);
+      abcMat(edgeEnds, ONE) = -2 * etalpha.elem(es) % z1 % abcMat(edgeEnds, ZERO);
       
-      pif(edgeEnds, TWO) = talpha.elem(es) + 0.5 * log(-fe2talpha.elem(es)) -
-        M_LN_SQRT_PI - logsigma + pow(etalpha.elem(es) % z1, 2) % pif(edgeEnds, ZERO);
+      abcMat(edgeEnds, TWO) = talpha.elem(es) + 0.5 * log(-fe2talpha.elem(es)) -
+        M_LN_SQRT_PI - logsigma + pow(etalpha.elem(es) % z1, 2) % abcMat(edgeEnds, ZERO);
     }
     
     uint unJ = 0;
     
-    //update parent pifs
+    //update parent abcs
     uint lenUnAll = 0;
     while(lenUnAll != es.n_elem) {
       uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
       ++unJ;
       lenUnAll += un.n_elem;
       
-      pif.rows(edge(es(un), ZERO)) += pif.rows(edge(es(un), ONE)) ;
+      abcMat.rows(edge(es(un), ZERO)) += abcMat.rows(edge(es(un), ONE)) ;
     }
     
     // edges pointing to internal nodes
@@ -136,44 +147,334 @@ public:
       edgeEnds = edge(es, ONE);
       
       // edges pointing to internal nodes, for which all children nodes have been visited
-      gutalphasigma2.elem(es) = e2talpha.elem(es) + (pif(edgeEnds, ZERO) * sigma2) / fe2talpha.elem(es);
+      gutalphasigma2.elem(es) = e2talpha.elem(es) + (abcMat(edgeEnds, ZERO) * sigma2) / fe2talpha.elem(es);
       
-      pif(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
+      abcMat(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
         // use the formula log(a+c) = log(a) + log(1+c/a), where
-        // a=e2talpha, c = (pif[edgeEnds, 0] * sigma2) / fe2talpha.elem(es), b = e.
-        0.25 * sigma2 * pow(pif(edgeEnds, ONE), 2) /
-          (fe2talpha.elem(es) - alpha + pif(edgeEnds, ZERO) * sigma2) +
-            talpha.elem(es) + pif(edgeEnds, TWO);
+        // a=e2talpha, c = (abcMat[edgeEnds, 0] * sigma2) / fe2talpha.elem(es), b = e.
+        0.25 * sigma2 * pow(abcMat(edgeEnds, ONE), 2) /
+          (fe2talpha.elem(es) - alpha + abcMat(edgeEnds, ZERO) * sigma2) +
+            talpha.elem(es) + abcMat(edgeEnds, TWO);
       
-      pif(edgeEnds, ONE) = (etalpha.elem(es) % pif(edgeEnds, ONE)) / gutalphasigma2.elem(es);
+      abcMat(edgeEnds, ONE) = (etalpha.elem(es) % abcMat(edgeEnds, ONE)) / gutalphasigma2.elem(es);
       
-      pif(edgeEnds, ZERO) = pif(edgeEnds, ZERO) / gutalphasigma2.elem(es);
+      abcMat(edgeEnds, ZERO) = abcMat(edgeEnds, ZERO) / gutalphasigma2.elem(es);
       
-      //update parent pifs
+      //update parent abcs
       lenUnAll = 0;
       while(lenUnAll != es.n_elem) {
         uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
         ++unJ;
         lenUnAll += un.n_elem;
         
-        pif.rows(edge(es(un), ZERO)) += pif.rows(edge(es(un), ONE)) ;
+        abcMat.rows(edge(es(un), ZERO)) += abcMat.rows(edge(es(un), ONE)) ;
       }
     }
     
     
     //auto elapsed = std::chrono::high_resolution_clock::now() - start;
-
     //long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-
     //cout<<microseconds<<endl;
 
-
-    
-    return pif.row(N);
+    return abcMat.row(N);
   };
   
-  arma::mat get_pif() const {
-    return pif;
+  void multiReplace(arma::uvec &x, arma::uvec const& a, arma::uvec const& b) {
+    arma::uvec ind = sort_index(x);
+    arma::uvec xInd = x(ind);
+    std::pair<arma::uvec::iterator, arma::uvec::iterator> bounds;
+    for(int i = 0; i < a.n_elem; ++i) {
+      bounds = std::equal_range(xInd.begin(), xInd.end(), a.at(i));
+      if(bounds.first != bounds.second) {
+        uint first = bounds.first - xInd.begin();
+        uint last = bounds.second - xInd.begin() - 1;
+        x.elem(ind.subvec(first, last)).fill(b.at(i));
+      }
+    }
+  }
+  
+  void reorderEdges() {
+    arma::uvec parents = edge.col(0);
+    parents.replace(N, 2*M-1);
+    
+    eReord = parents;
+    tReord = t;
+    zReord = z;
+    
+    // edges pointing to tips
+    uvec es = endingAt.elem(nodesVector(span(nodesIndex(0) + 1, nodesIndex(1))));
+    
+    uint unJ = 0;
+    
+    uint lenUnAll = 0;
+    while(lenUnAll != es.n_elem) {
+      uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+
+      uvec edgeEnds = edge(es(un), ONE);
+      uvec edgeEndsNew = arma::regspace<uvec>(unIndex(unJ) + 1, unIndex(unJ + 1));
+      multiReplace(parents, edgeEnds, M+edgeEndsNew);
+      
+      eReord.subvec(unIndex(unJ) + 1, unIndex(unJ + 1)) = parents(es(un));
+      multiReplace(eReord, edgeEnds, M+edgeEndsNew);
+      
+      tReord.subvec(unIndex(unJ) + 1, unIndex(unJ + 1)) = t.elem(es(un));
+      zReord.subvec(unIndex(unJ) + 1, unIndex(unJ + 1)) = z.elem(edgeEnds);
+      
+      ++unJ;
+      lenUnAll += un.n_elem;
+    }
+
+    // edges pointing to internal nodes
+    for(int i = 1; i < nLevels; ++i) {
+      es = endingAt.elem(nodesVector(span(nodesIndex(i) + 1, nodesIndex(i + 1))));
+      
+      uint lenUnAll = 0;
+      while(lenUnAll != es.n_elem) {
+        uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+
+        uvec edgeEnds = edge(es(un), ONE);
+        uvec edgeEndsNew = arma::regspace<uvec>(unIndex(unJ) + 1, unIndex(unJ + 1));
+        multiReplace(parents, edgeEnds, M+edgeEndsNew);
+        
+        eReord.subvec(unIndex(unJ) + 1, unIndex(unJ + 1)) = parents(es(un));
+        multiReplace(eReord, edgeEnds, M+edgeEndsNew);
+        
+        tReord.subvec(unIndex(unJ) + 1, unIndex(unJ + 1)) = t.elem(es(un));
+        
+        ++unJ;
+        lenUnAll += un.n_elem;
+      }
+    }
+    
+    eReord = eReord - M;
+  };
+  
+  arma::rowvec abc2(double alpha, double theta, double sigma, double sigmae) {
+    
+    ++count_abc_calls;
+    
+    // time for main-loop
+    //auto start = std::chrono::high_resolution_clock::now();
+    
+    double sigma2 = sigma*sigma, logsigma = log(sigma), 
+      logsigmae = log(sigmae), sigmae2 = sigmae*sigmae;
+    
+    arma::vec talpha = tReord * alpha;
+    arma::vec etalpha = exp(talpha);
+    arma::vec e2talpha = etalpha % etalpha;
+    arma::vec fe2talpha(M);
+    if(alpha != 0) {
+      fe2talpha = alpha / (1 - e2talpha);
+    } else {
+      fe2talpha = -0.5 / tReord;
+    }
+    
+    // needed to re-initialize abcMat;
+    abcMat.fill(0);
+    
+    // edges pointing to tips
+    uint eFirst = nodesIndex(0) + 1, eLast = nodesIndex(1);
+    uvec es = arma::regspace<uvec>(eFirst, eLast);
+    
+    vec gutalphasigma2(M);
+    
+    gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + 
+      ((-0.5 / sigmae2) * sigma2) / fe2talpha(span(eFirst, eLast));
+    
+    // (possibly reordered) shifted tip values
+    vec z1 = zReord(span(eFirst, eLast)) - theta ;
+    
+    if(sigmae != 0) {
+      // integration over g1 including e1 = z1 - g1
+      abcMat(span(eFirst, eLast), 2) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
+        0.25 * sigma2 * pow(z1 / sigmae2, 2) /
+          (fe2talpha(span(eFirst, eLast)) - alpha + (-0.5 / sigmae2) * sigma2) +
+            talpha(span(eFirst, eLast)) + (-0.5 * (M_LN_2PI  + z1 % (z1 / sigmae2)) - logsigmae) ;
+      
+      abcMat(span(eFirst, eLast), 1) = (etalpha(span(eFirst, eLast)) % (z1 / sigmae2)) / 
+        gutalphasigma2(span(eFirst, eLast)) ;
+      
+      abcMat(span(eFirst, eLast), 0) = (-0.5 / sigmae2) / gutalphasigma2(span(eFirst, eLast));
+    } else {
+      // integration over g1 with e1 = 0
+      abcMat(span(eFirst, eLast), 0) = fe2talpha(span(eFirst, eLast)) / sigma2;
+      
+      abcMat(span(eFirst, eLast), 1) = -2 * etalpha(span(eFirst, eLast)) % z1 % abcMat(span(eFirst, eLast), 0);
+      
+      abcMat(span(eFirst, eLast), 2) = talpha(span(eFirst, eLast)) + 0.5 * log(-fe2talpha(span(eFirst, eLast))) -
+        M_LN_SQRT_PI - logsigma + pow(etalpha(span(eFirst, eLast)) % z1, 2) % abcMat(span(eFirst, eLast), 0);
+    }
+    
+    uint unJ = 0;
+    //update parent abcs
+    uint lenUnAll = 0;
+    while(lenUnAll != es.n_elem) {
+      abcMat.rows(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+        abcMat.rows(span(unIndex(unJ) + 1, unIndex(unJ + 1))) ;
+      
+      lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
+      ++unJ;
+    }
+    
+    // edges pointing to internal nodes
+    for(int i = 1; i < nLevels; ++i) {
+      uint eFirst = nodesIndex(i) + 1, eLast = nodesIndex(i+1);
+      es = arma::regspace<uvec>(eFirst, eLast);
+
+      
+      // edges pointing to internal nodes, for which all children nodes have been visited
+      gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + (abcMat(span(eFirst, eLast), 0) * sigma2) / fe2talpha(span(eFirst, eLast));
+      
+      abcMat(span(eFirst, eLast), 2) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
+        0.25 * sigma2 * pow(abcMat(span(eFirst, eLast), 1), 2) /
+          (fe2talpha(span(eFirst, eLast)) - alpha + abcMat(span(eFirst, eLast), 0) * sigma2) +
+            talpha(span(eFirst, eLast)) + abcMat(span(eFirst, eLast), 2);
+      
+      abcMat(span(eFirst, eLast), 1) = (etalpha(span(eFirst, eLast)) % abcMat(span(eFirst, eLast), 1)) / 
+        gutalphasigma2(span(eFirst, eLast));
+      
+      abcMat(span(eFirst, eLast), 0) = abcMat(span(eFirst, eLast), 0) / gutalphasigma2(span(eFirst, eLast));
+      
+      lenUnAll = 0;
+      while(lenUnAll != es.n_elem) {
+        abcMat.rows(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+          abcMat.rows(span(unIndex(unJ) + 1, unIndex(unJ + 1))) ;
+        
+        lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
+        ++unJ;
+      }
+      
+    }
+    
+    //auto elapsed = std::chrono::high_resolution_clock::now() - start;
+    
+    //long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
+    
+    //cout<<microseconds<<endl;
+    
+    return abcMat.row(M-1);
+  };
+  
+  arma::vec abc(double alpha, double theta, double sigma, double sigmae) {
+    
+    ++count_abc_calls;
+    
+    // time for main-loop
+    //auto start = std::chrono::high_resolution_clock::now();
+    
+    double sigma2 = sigma*sigma, logsigma = log(sigma), 
+      logsigmae = log(sigmae), sigmae2 = sigmae*sigmae;
+    
+    arma::vec talpha = tReord * alpha;
+    arma::vec etalpha = exp(talpha);
+    arma::vec e2talpha = etalpha % etalpha;
+    arma::vec fe2talpha(M);
+    if(alpha != 0) {
+      fe2talpha = alpha / (1 - e2talpha);
+    } else {
+      fe2talpha = -0.5 / tReord;
+    }
+    
+    // needed to re-initialize abcMat;
+    a.fill(0); b.fill(0); c.fill(0);
+    
+    // edges pointing to tips
+    uint eFirst = nodesIndex(0) + 1, eLast = nodesIndex(1);
+    
+    vec gutalphasigma2(M);
+    
+    gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + 
+      ((-0.5 / sigmae2) * sigma2) / fe2talpha(span(eFirst, eLast));
+    
+    // (possibly reordered) shifted tip values
+    vec z1 = zReord(span(eFirst, eLast)) - theta ;
+    
+    vec z1z1 = z1 % z1;
+    
+    if(sigmae != 0) {
+      // integration over g1 including e1 = z1 - g1
+      c(span(eFirst, eLast)) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
+        //0.25 * sigma2 * pow(z1 / sigmae2, 2) /
+        0.25 * sigma2 * z1z1 / (sigmae2*sigmae2) /
+          (fe2talpha(span(eFirst, eLast)) - alpha + (-0.5 / sigmae2) * sigma2) +
+            //talpha(span(eFirst, eLast)) + (-0.5 * (M_LN_2PI  + z1 % (z1 / sigmae2)) - logsigmae) ;
+      talpha(span(eFirst, eLast)) + (-0.5 * (M_LN_2PI  + z1z1 / sigmae2) - logsigmae) ;
+      
+      b(span(eFirst, eLast)) = (etalpha(span(eFirst, eLast)) % (z1 / sigmae2)) / 
+        gutalphasigma2(span(eFirst, eLast)) ;
+      
+      a(span(eFirst, eLast)) = (-0.5 / sigmae2) / gutalphasigma2(span(eFirst, eLast));
+    } else {
+      // integration over g1 with e1 = 0
+      a(span(eFirst, eLast)) = fe2talpha(span(eFirst, eLast)) / sigma2;
+      
+      b(span(eFirst, eLast)) = -2 * etalpha(span(eFirst, eLast)) % z1 % a(span(eFirst, eLast));
+      
+      c(span(eFirst, eLast)) = talpha(span(eFirst, eLast)) + 0.5 * log(-fe2talpha(span(eFirst, eLast))) -
+        M_LN_SQRT_PI - logsigma + pow(etalpha(span(eFirst, eLast)) % z1, 2) % a(span(eFirst, eLast));
+    }
+    
+    uint unJ = 0;
+    //update parent abcs
+    uint lenUnAll = 0;
+    while(lenUnAll != eLast - eFirst + 1) {
+      a(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+        a(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+      b(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+        b(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+      c(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+        c(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+      
+      lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
+      ++unJ;
+    }
+    
+    // edges pointing to internal nodes
+    for(int i = 1; i < nLevels; ++i) {
+      uint eFirst = nodesIndex(i) + 1, eLast = nodesIndex(i+1);
+      
+      // edges pointing to internal nodes, for which all children nodes have been visited
+      gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + (a(span(eFirst, eLast)) * sigma2) / fe2talpha(span(eFirst, eLast));
+      
+      c(span(eFirst, eLast)) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
+        0.25 * sigma2 * pow(b(span(eFirst, eLast)), 2) /
+          (fe2talpha(span(eFirst, eLast)) - alpha + a(span(eFirst, eLast)) * sigma2) +
+            talpha(span(eFirst, eLast)) + c(span(eFirst, eLast));
+      
+      b(span(eFirst, eLast)) = (etalpha(span(eFirst, eLast)) % b(span(eFirst, eLast))) / 
+        gutalphasigma2(span(eFirst, eLast));
+      
+      a(span(eFirst, eLast)) = a(span(eFirst, eLast)) / gutalphasigma2(span(eFirst, eLast));
+      
+      lenUnAll = 0;
+      while(lenUnAll != eLast - eFirst + 1) {
+        a(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+          a(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+        b(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+          b(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+        c(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
+          c(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
+        
+        lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
+        ++unJ;
+      }
+      
+    }
+    
+    arma::vec res(3);
+    res.at(0) = a.at(M-1);
+    res.at(1) = b.at(M-1);
+    res.at(2) = c.at(M-1);
+    return res;
+  };
+  
+  
+  arma::mat get_abcMat() const {
+    return abcMat;
+  };
+  
+  arma::umat get_edge() const {
+    return edge;
   };
   
   uint get_count_abc_calls() const {
@@ -185,8 +486,12 @@ RCPP_MODULE(IntegratorPOUMM) {
   class_<Integrator>( "Integrator" )
   .constructor()
   .method( "setPruningInfo", &Integrator::setPruningInfo )
+  .method( "reorderEdges", &Integrator::reorderEdges )
   .method( "abc", &Integrator::abc )
-  .property( "pif", &Integrator::get_pif )
+  .method( "abc2", &Integrator::abc2 )
+  .method( "abc_old", &Integrator::abc_old )
+  .property( "abcMat", &Integrator::get_abcMat )
+  .property( "edge", &Integrator::get_edge )
   .property("count_abc_calls", &Integrator::get_count_abc_calls )
   ;
 }

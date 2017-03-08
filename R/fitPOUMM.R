@@ -28,18 +28,19 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #'
 #' @param loglik function(par, memo, parFixedNoAlpha) 
 #' @param pruneInfo a list-object returned by the pruneTree(tree, z) function.
-#' @param parFixed A named numeric vector, indicating fixed values for some of 
-#'   the parameters alpha, theta, sigma and sigmae, by default, c().
 #' @param parLower,parUpper Two named numeric vectors indicating the boundaries of 
 #'   the search region. Default values are parLower = c(alpha = 0, theta = 0, 
 #'   sigma = 0, sigmae = 0) and parUpper = c(alpha = 100, theta = 10, sigma = 20, 
 #'   sigmae = 10).
-#' @param tol Numeric accuracy parameter passed to optimize, defaults to 0.001. 
-#'   (see Details)
+#' @param parInitML A named vector (like parLower and parUpper) or a list of such
+#'   vectors - starting points for optim.
 #' @param control List of parameters passed on to optim, default 
 #'   list(factr = 1e8, fnscale = -1), see ?optim. 
 #' @param verbose A logical indicating whether to print informative messages on 
 #'   the standard output.
+#' @param debug A logical indicating whether to print debug messages 
+#' (currently not implemented).
+#' @param ... currently not used.
 #'   
 #' @details If alpha is not fixed, then the optimization is done via calls to 
 #'   optimize over alpha, calling optim on the remaining variable parameters for
@@ -50,10 +51,10 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #' @return a list containing an element par and an element value as well as the 
 #'   parameters passed
 #'   
-#' @importFrom stats optim optimise runif
+#' @importFrom stats optim runif
 maxLikPOUMMGivenTreeVTips <- function(
   loglik, pruneInfo, 
-  parLower, parUpper, parInitML = NULL, g0 = NA, g0Prior = NULL,
+  parLower, parUpper, parInitML = NULL, 
   control=list(factr = 1e8, fnscale = -1), 
   verbose = FALSE, debug = FALSE, ...) {
   if(is.null(parLower) | is.null(parUpper)) {
@@ -275,46 +276,38 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #' MCMC-sampling from a posterior distribution of a P(OU)MM model given tree, 
 #' values at the tips and a prior distribution
 #' 
-#' @param z Either a numeric vector containing the phenotypic values at the tips
-#'   of tree or a named list containing named elements z - a numeric vector and 
-#'   tree - a phylo object.
-#' @param tree a phylo object
-#' @param distgr character vector, see parameter distgr of the
-#'   likPOUMMGivenTreeVTips function
-#' @param divideEdgesBy numeric, by which all branch lengths in the tree are to 
-#'   be divided prior to likelihood calculation. Only the branch lengths in the 
-#'   tree are changed and appropriate rescaling of the OU parameters alpha and 
-#'   sigma is not made. For example, if this parameter is set to 100, the 
-#'   resulting parameter alpha should be divided by 100 and the parameter sigma 
-#'   should be divided by 10.
-#' @param parInit a function(chainNumber) returning the starting point of the 
-#'   MCMC as a vector.
-#' @param parPriorMCMC a function(numeric-vector) returning the log-prior of the 
-#'   supplied vector
+#' @param loglik a log-likelihood function.
+#' @param fitML an object returned by the maxLikPOUMMGivenTreeVTips
 #' @param parMapping a function(numeric-vector) transforming a sampled vector on
-#'   the scale of the parameters alpha, theta, sigma, sigmae
-#' @param parScaleMCMC numeric matrix indicating the initial jump-distribution matrix
-#' @param nSamplesMCMC integer indicating how many iterations should the mcmc-chain 
-#'   contain
-#' @param nAdaptMCMC integer indicating how many initial iterations should be used 
-#'   for adaptation of the jump-distribution matrix
+#'   the scale of the parameters alpha, theta, sigma, sigmae and g0.
+#' @param parInitMCMC a function(chainNumber) returning the starting point of 
+#'   the MCMC as a vector.
+#' @param parPriorMCMC a function(numeric-vector) returning the log-prior of the
+#'   supplied vector
+#' @param parScaleMCMC numeric matrix indicating the initial jump-distribution 
+#'   matrix
+#' @param nSamplesMCMC integer indicating how many iterations should the 
+#'   mcmc-chain contain
+#' @param nAdaptMCMC integer indicating how many initial iterations should be 
+#'   used for adaptation of the jump-distribution matrix
 #' @param thinMCMC integer indicating the thinning interval of the mcmc-chain
 #' @param accRateMCMC (MCMC) numeric between 0 and 1 indicating the target 
 #'   acceptance rate Passed on to adaptMCMC::MCMC.
-#' @param gammaMCMC (MCMC) controls the speed of adaption. Should be between 0.5 and
-#'   1. A lower gammaMCMC leads to faster adaption. Passed on to adaptMCMC::MCMC.
-#' @param nChainsMCMC integer indicating the number of chains to run. Defaults to 
-#'   1.
-#' @param samplePriorMCMC logical indicating if only the prior distribution should 
-#'   be sampled. This can be useful to compare with mcmc-runs for an overlap 
-#'   between prior and posterior distributions.
+#' @param gammaMCMC (MCMC) controls the speed of adaption. Should be between 0.5
+#'   and 1. A lower gammaMCMC leads to faster adaption. Passed on to 
+#'   adaptMCMC::MCMC.
+#' @param nChainsMCMC integer indicating the number of chains to run. Defaults 
+#'   to 1.
+#' @param samplePriorMCMC logical indicating if only the prior distribution 
+#'   should be sampled. This can be useful to compare with mcmc-runs for an 
+#'   overlap between prior and posterior distributions.
 #' @param pruneInfo a list-object returned from the pruneTree(tree, z) function.
-#' @param ... Additional arguments passed to likPOUMMGivenTreeVTips. If ...
-#'   includes debug = TRUE, some debug messages will be written also outside of
-#'   the call to likPOUMMGivenTreeVTips.
-#' @param zName,treeName characters used when the parameter z is a list; 
-#'   indicate the names in the list of the values-vector and the tree. Default: 
-#'   'z' and 'tree'.
+#' @param ... Additional arguments. Currently not used except for the following:
+#'   If ... includes debug = TRUE, some debug messages will be written also
+#'   outside of the call to loglik.
+#' @param parallelMCMC Logical indicating if chains should be run in parallel.
+#' @param verbose Logical indicating if some informal messages should be written
+#'   during run. This parameter is passed to loglik.
 #'   
 #' @details Currently, this function calls the MCMC function from the adaptMCMC 
 #'   package.
@@ -327,7 +320,7 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
   loglik, fitML = NULL,
   parMapping, parInitMCMC, parPriorMCMC, parScaleMCMC, nSamplesMCMC, nAdaptMCMC, thinMCMC, accRateMCMC, 
   gammaMCMC, nChainsMCMC, samplePriorMCMC, pruneInfo, ..., 
-  verbose = FALSE, parallelMCMC = FALSE, zName = 'z', treeName = 'tree') {
+  verbose = FALSE, parallelMCMC = FALSE) {
   
   samplePriorMCMC <- c(samplePriorMCMC, rep(FALSE, nChainsMCMC - 1))
   
@@ -445,15 +438,32 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
 }
 
 #' (Adaptive) Metropolis Sampler
-#' 
-#' @description Copied and modified from Andreas Scheidegger's adaptMCMC
-#'   package. The only difference is that the function p can return a vector
+#' @param p function that returns the log probability density to sample from. 
+#'   Must have two or more dimensions. In this changed version the function can 
+#'   return a vector, the first element of which is the log-propbability.
+#' @param n number of samples.
+#' @param init vector with initial values.
+#' @param scale vector with the variances or covariance matrix of the jump
+#'   distribution.
+#' @param adapt if TRUE, adaptive sampling is used, if FALSE classic metropolis
+#'   sampling, if a positive integer the adaption stops after adapt iterations.
+#' @param acc.rate desired acceptance rate (ignored if adapt=FALSE)
+#' @param gamma controls the speed of adaption. Should be between 0.5 and 1. A
+#'   lower gamma leads to faster adaption.
+#' @param list logical. If TRUE a list is returned otherwise only a matrix with 
+#'   the samples.
+#' @param n.start teration where the adaption starts. Only internally used.
+#' @param ... further arguments passed to p.
+#' @description Copied and modified from Andreas Scheidegger's adaptMCMC 
+#'   package. The only difference is that the function p can return a vector 
 #'   instead of a single numeric. The first element of this vector is the 
-#'   log-posterior, while the other elements can be any additional information
+#'   log-posterior, while the other elements can be any additional information 
 #'   such as the log-likelihood, or the root-value for that log-likelihood in 
 #'   the case of POUMM.
 #' @return Same list as the one returned from adaptMCMC::MCMC but the member 
-#' log.p is a matrix instead of a vector.
+#'   log.p is a matrix instead of a vector.
+#' @importFrom utils setTxtProgressBar txtProgressBar   
+#' @importFrom Matrix nearPD
 MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc.rate), 
           acc.rate = NULL, gamma = 0.5, list = TRUE, n.start = 0,  ...) 
 {
