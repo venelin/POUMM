@@ -216,11 +216,14 @@ rTrajectoryOU <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #' FALSE)[[1]] 
 #' tMean <- mean(nodeTimes(tree, tipsOnly = TRUE))
 #' z <- rVNodesGivenTreePOUMM(tree, 8, 2, 2, 1)
-#'   
+#'
+#' \dontrun{
 #' phytools::plotBranchbyTrait(tree, z, mode = "nodes", show.tip.label =
 #'   FALSE, show.node.label = FALSE) 
 #' ape::nodelabels(round(z[-(1:N)], 2)) 
 #' ape::tiplabels(round(z[(1:N)], 2))
+#' 
+#' }      
 #'    
 #' @name PhylogeneticH2
 #' @seealso OU
@@ -376,7 +379,7 @@ covPOUMM <- function(alpha, sigma, sigmae, t, tau, corr = FALSE, as.matrix = FAL
     covMat <- covVTipsGivenTreePOUMM(
       tree = NULL, alpha = alpha, sigma = sigma, sigmae = sigmae,
       tanc = rbind(c(t, t-tau/2), c(t-tau/2, t)), 
-      tau = rbind(c(0, tau), c(tau, 0)), corr = corr)
+      tauij = rbind(c(0, tau), c(tau, 0)), corr = corr)
     if(as.matrix) {
       covMat
     } else {
@@ -390,7 +393,7 @@ covPOUMM <- function(alpha, sigma, sigmae, t, tau, corr = FALSE, as.matrix = FAL
       covMat <- covVTipsGivenTreePOUMM(
         tree = NULL, alpha = alpha, sigma = sigma, sigmae = sigmae,
         tanc = rbind(c(t, t-tau/2), c(t-tau/2, t)), 
-        tau = rbind(c(0, tau), c(tau, 0)), corr = corr)
+        tauij = rbind(c(0, tau), c(tau, 0)), corr = corr)
       if(as.matrix) {
         covMat
       } else {
@@ -406,12 +409,12 @@ covPOUMM <- function(alpha, sigma, sigmae, t, tau, corr = FALSE, as.matrix = FAL
 #' @param tree A phylo object.
 #' @param alpha,sigma Non-negative numeric values, parameters of the OU process.
 #' @param sigmae Non-negative numeric value, environmental standard deviation at
-#'   the tips. 
+#'   the tips.
 #' @param corr Logical indicating if a correlation matrix shall be returned.
 #' @param tanc Numerical matrix with the time-distance from the root of the tree
 #'   to the mrca of each tip-couple. If NULL it will be calculated.
-#' @param tauij Numerical matrix with the time (patristic) distance between each pair of tips. 
-#'   If NULL, it will be calculated. 
+#' @param tauij Numerical matrix with the time (patristic) distance between each
+#'   pair of tips. If NULL, it will be calculated.
 #' @return a variance covariance or a correlation matrix of the tips in tree.
 #' @references (Hansen 1997) Stabilizing selection and the comparative analysis 
 #'   of adaptation.
@@ -477,9 +480,17 @@ gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
   #V.g <- cov.poumm(tree, alpha, sigma, sigmae) ###???? shouldn't sigmae be 0 here?
   V.g <- covVTipsGivenTreePOUMM(tree, alpha, sigma)
   if(sigma > 0) {
-    V.g_1 <- chol2inv(chol(V.g))
-    V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
-    mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)
+    if(sigmae > 0) {
+      V.g_1 <- chol2inv(chol(V.g))
+      V.g.poumm <- try(chol2inv(chol(V.g_1 + V.e_1)), silent = TRUE)
+      mu.g.poumm <- V.g.poumm %*% (V.g_1 %*% mu.g + V.e_1 %*% mu.e)  
+    } else {
+      V.g_1 <- chol2inv(chol(V.g))
+      V.g.poumm <- try(chol2inv(chol(V.g_1)), silent = TRUE)
+      mu.g.poumm <- z
+      warning("For sigmae=0, gPOUMM returns z.")
+    }
+    
   } else {
     # sigma = 0
     warning("V.g.poumm is not defined for sigma == 0.")

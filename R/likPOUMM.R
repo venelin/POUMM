@@ -10,7 +10,8 @@
 #' 
 #' @return A numeric vector containing the generated values at all nodes
 #'   (internal and tips) of the phylogenetic tree. 
-#' @examples    
+#' @examples   
+#' \dontrun{
 #'   N <- 20 
 #'   tree <- TreeSim::sim.bd.taxa(N, 1, lambda = 2, mu = 1, complete =
 #'   FALSE)[[1]] 
@@ -20,6 +21,7 @@
 #'   FALSE, show.node.label = FALSE) 
 #'   ape::nodelabels(round(z[-(1:N)], 2)) 
 #'   ape::tiplabels(round(z[(1:N)], 2))
+#' } 
 #' @export
 rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
   g <- ape::rTraitCont(tree, 
@@ -185,8 +187,6 @@ pruneTree <- function(tree, z) {
 #' Fast POUMM likelihood calculation based on the breadth-first pruning algorithm
 #' and Armadillo-library vector operations.
 #' @param integrator An object of the Integrator C++ class (see example).
-#' @param tree an object of class phylo
-#' @param z A numeric vector of size length(tree$tip.label) representing the
 #'   trait values at the tip-nodes.
 #' @param alpha the strength of the selection
 #' @param theta long term mean value of the OU process
@@ -208,10 +208,12 @@ pruneTree <- function(tree, z) {
 #'   instead of likelihood, default is TRUE.
 #'
 #' @details This function is the C++ equivalent of dVTipsGivenTreePOUMM (aliased also as
-#' likPOUMMGivenTreeVTips)
+#' likPOUMMGivenTreeVTips). C++ implementation using contiguous vector operations and
+#'  vectors a, b and c
 #' @return A numeric with attributes "g0" and "g0LogPrior".
 #' 
 #' @examples 
+#' \dontrun{
 #' N <- 100
 #' tr <- ape::rtree(N)
 #' z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
@@ -223,6 +225,7 @@ pruneTree <- function(tree, z) {
 #' # should be the same values
 #' likArma
 #' likR
+#' }
 #' 
 #' @export
 likPOUMMGivenTreeVTipsC <- function(
@@ -255,14 +258,84 @@ likPOUMMGivenTreeVTipsC <- function(
   }
 }
 
+#' Older C++ implementation using contiguous vector views and matrix abcMat
+#' @inheritParams  likPOUMMGivenTreeVTipsC
+#' @export
+likPOUMMGivenTreeVTipsC2 <- function(
+  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
+  
+  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
+    warning('Some parameters are NA or NaN')
+    ifelse(log, -Inf, 0)
+  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
+    ifelse(log, -Inf, 0)
+  } else {
+    abc <- integrator$abc2(alpha, theta, sigma, sigmae)
+    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
+      value <- NaN
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- NA
+    } else {
+      resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
+      loglik <- resList$loglik
+      g0 <- resList$g0
+      g0LogPrior <- resList$g0LogPrior
+      
+      value <- if(log) loglik else exp(loglik)
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- g0LogPrior
+    }
+    
+    value
+  }
+}
 
-#' Processing of the root value and calculation of the maximum log-likelihood
-#' for the given coefficients abc, and parameters theta, g0 and g0Prior. This 
-#' is an internal function.
+#' First C++ implementation using non-contiguous vector operations
+#' @inheritParams likPOUMMGivenTreeVTipsC
+#' @export
+likPOUMMGivenTreeVTipsC_old <- function(
+  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
+  
+  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
+    warning('Some parameters are NA or NaN')
+    ifelse(log, -Inf, 0)
+  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
+    ifelse(log, -Inf, 0)
+  } else {
+    abc <- integrator$abc_old(alpha, theta, sigma, sigmae)
+    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
+      value <- NaN
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- NA
+    } else {
+      resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
+      loglik <- resList$loglik
+      g0 <- resList$g0
+      g0LogPrior <- resList$g0LogPrior
+      
+      value <- if(log) loglik else exp(loglik)
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- g0LogPrior
+    }
+    
+    value
+  }
+}
+
+
+#' Processing of the root value and calculation of the maximum log-likelihood 
+#' for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
+#' an internal function.
 #' 
 #' @param abc a vector of 3 numerical values denoting the corresponding 
-#' coefficients in the POUMM likelihood presented as exp(a g0^2 + b g0 + c).
-#' 
+#'   coefficients in the POUMM likelihood presented as exp(a g0^2 + b g0 + c).
+#' @param theta parameter theta of the OU-process.
+#' @param g0 initial value at the root of the tree (can be NA). See argument
+#'   parMapping in ?specifyPOUMM.
+#' @param g0Prior list object. See parameter g0Prior in ?specifyPOUMM.
+#'   
 loglik_abc_g0_g0Prior <- function(abc, theta, g0, g0Prior) {
   if(is.list(g0Prior)) {
     if(is.null(g0Prior$mean) | is.null(g0Prior$var)) {
@@ -640,330 +713,310 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
   }
 }
 
-#' An "algebraic" implementation of the POUMM likelihood calculation based on
-#' multivariate normal density function
-#' This is an internal function used for tests only.
-#' 
-#' @importFrom mvtnorm dmvnorm
-dVTipsGivenTreePOUMMg0Alg <- function(z, tree, alpha, theta, sigma, sigmae, g0) {
-  tanc <- vcv(tree)
-  tipTimes <- diag(tanc)
-  N <- length(tree$tip.label)
-  
-  D0 <- sapply(tipTimes, function(t) exp(-alpha*t))
-  D1 <- 1-D0
-  Vt <- covVTipsGivenTreePOUMM(tree, alpha, sigma, 0, tanc)
-  Ve <- diag(sigmae^2, N, N)
-  
-  muz <- D0 * g0  +  D1 * theta
-  
-  dmvnorm(z, muz, Vt+Ve, log=TRUE)
-}
-
 #' old likelihood version including theta in expressions
 #' to be adapted for the case of multiple regimes.
-dVTipsGivenTreePOUMMwithThetaInExpressions <- function(
-  z, tree, alpha, theta, sigma, sigmae = 0, g0 = NA, g0Prior = NULL,
-  log = TRUE, pruneInfo = pruneTree(tree), 
-  usempfr = 0, maxmpfr = 2, precbits = 128, 
-  debug = FALSE) {
-  
-  availRmpfr <- requireNamespace("Rmpfr", quietly = TRUE) 
-  
-  alphaorig <- alpha
-  thetaorig <- theta
-  sigmaorig <- sigma
-  sigmaeorig <- sigmae
-  g0orig <- g0
-  vorig <- z
-  
-  if(any(tree$edge.length <= 0)) {
-    stop('All branch lengths in tree should be positive!')
-  }
-  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
-    warning('Some parameters are NA or NaN')
-    ifelse(log, -Inf, 0)
-  } 
-  
-  if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
-     all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
-    ifelse(log, -Inf, 0)
-  } else {
-    logpi <- log(pi)
-    loge2 <- log(2)
-    
-    if(as.integer(usempfr) >= 2 |
-       (usempfr & ((as.double(alpha) != 0 & as.double(alpha) < 0.01) |
-                   (as.double(sigma) != 0 & as.double(sigma) < 0.01) |
-                   (as.double(sigmae) != 0 & as.double(sigmae) < 0.01)))) {
-      usempfr <- 2 # indicate for later code that we shall convert to mpfr!
-    }
-    
-    done <- FALSE
-    # this loop governs the use of mpfr
-    while(!done & usempfr <= maxmpfr) { 
-      if(availRmpfr & usempfr >= 2) {
-        if(is.double(alphaorig)) {
-          alpha <- Rmpfr::mpfr(alphaorig, precbits*2^(usempfr-2))
-        }
-        if(is.double(thetaorig)) {
-          theta <- Rmpfr::mpfr(thetaorig, precbits*2^(usempfr-2))
-        }
-        if(is.double(sigmaorig)) {
-          sigma <- Rmpfr::mpfr(sigmaorig, precbits*2^(usempfr-2))
-        }
-        if(is.double(sigmaeorig)) {
-          sigmae <- Rmpfr::mpfr(sigmaeorig, precbits*2^(usempfr-2))
-        }
-        if(is.finite(g0)) {
-          g0 <- Rmpfr::mpfr(g0orig, precbits*2^(usempfr-2))
-        }
-        if(is.double(z)) {
-          z <- Rmpfr::mpfr(z, precbits*2^(usempfr-2))
-        }
-      }
-      
-      if(is.list(g0Prior)) {
-        if(is.null(g0Prior$mean) | is.null(g0Prior$var)) {
-          stop("g0Prior must have a 'mean' and a 'var' character members.")
-        } else {
-          g0Mean <- eval(parse(text=g0Prior$mean))
-          g0Var <- eval(parse(text=g0Prior$var))
-        }
-      } else {
-        g0Mean <- NA
-        g0Var <- NA
-      }
-      
-      N <- length(tree$tip.label)                # number of tips
-      
-      if(is.null(pruneInfo)) {
-        pruneInfo <- pruneTree(tree)
-      }
-      
-      # use is.double(alpha) to check whether Rmpfr is being used
-      
-      edge <- tree$edge
-      
-      M <- pruneInfo$M
-      endingAt <- pruneInfo$endingAt
-      nodesVector <- pruneInfo$nodesVector
-      nodesIndex <- pruneInfo$nodesIndex
-      nLevels <- pruneInfo$nLevels
-      unVector <- pruneInfo$unVector
-      unIndex <- pruneInfo$unIndex
-      unJ <- 1
-      
-      t <- tree$edge.length
-      
-      alphasigma2 <- alpha/sigma/sigma
-      theta2 <- theta^2
-      sigma2 <- sigma^2
-      sigmae2 <- sigmae^2
-      logsigma <- log(sigma)
-      logsigmae <- log(sigmae)
-      
-      talpha <- t*alpha
-      etalpha <- exp(talpha)
-      if(alpha != 0) {
-        fetalpha <- alpha/(1 - etalpha)
-      } else {
-        fetalpha <- -1/t
-      }
-      
-      e2talpha <- etalpha*etalpha
-      limitfe2talpha <- -0.5 / t
-      if(alpha != 0) {
-        fe2talpha <- alpha / (1 - e2talpha)
-      } else {
-        fe2talpha <- limitfe2talpha
-      }
-      
-      if(availRmpfr & usempfr & usempfr < maxmpfr) {
-        if(any(fe2talpha >= 0) | any(fe2talpha < limitfe2talpha)) {
-          usempfr <- usempfr + 1
-          next 
-        }
-      }
-      
-      log_fe2talpha <- log(-fe2talpha)
-      
-      fe2talphasigma2 <- fe2talpha / sigma2
-      
-      # for sigmae=0
-      r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
-      
-      # matrix for paramsIntegForks one pif for every node
-      # the following code creates a matrix for the class of alpha,
-      # i.e. could be mpfr as well as double
-      pif <- rep(alpha*0, M*3)
-      dim(pif) <- c(M, 3)
-      
-      
-      for(i in 1:nLevels) {
-        es <- endingAt[nodesVector[(nodesIndex[i]+1):nodesIndex[i+1]]]
-        
-        edgeEnds <- edge[es, 2]
-        
-        if(edge[es[1], 2] <= N) {
-          # all es pointing to tips
-          if(sigmae==0) {
-            # no environmental deviation
-            g1 <- z[edgeEnds]  # tip values
-            etalphag1thetatheta <- etalpha[es] * (g1 - theta) + theta
-            
-            pif[edgeEnds, 1] <- fe2talphasigma2[es]
-            pif[edgeEnds, 2] <- -2 * etalphag1thetatheta * fe2talphasigma2[es]
-            pif[edgeEnds, 3] <- r0[es] + etalphag1thetatheta^2 * fe2talphasigma2[es]
-          } else {
-            z1 <- z[edgeEnds]  # tip values
-            
-            u <- -0.5/sigmae2
-            v <- z1/sigmae2
-            w <- -0.5 * loge2 - 0.5 * logpi  - z1^2 / (2 * sigmae2) - logsigmae 
-            
-            gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
-            
-            pif[edgeEnds, 1] <- u / gutalphasigma2
-            pif[edgeEnds, 2] <- 
-              (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
-            pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
-              0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
-              alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
-              ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
-              talpha[es] + w
-          }
-        } else {
-          # edges pointing to internal nodes, for which all children nodes have been visited
-          u <- pif[edgeEnds, 1]
-          v <- pif[edgeEnds, 2]
-          w <- pif[edgeEnds, 3]
-          
-          gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
-          
-          pif[edgeEnds, 1] <- u / gutalphasigma2
-          pif[edgeEnds, 2] <- 
-            (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
-          pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
-            0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
-            alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
-            ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
-            talpha[es] + w
-        } 
-        
-        #update parent pifs
-        while(length(es)>0) {
-          un <- unVector[(unIndex[unJ]+1):unIndex[unJ+1]]
-          unJ <- unJ+1
-          
-          pif[edge[es[un], 1], ] <- 
-            pif[edge[es[un], 1], ] + pif[edge[es[un], 2], ]
-          
-          es <- es[-un]
-        }
-      }
-      
-      # at the root: P[Vtips|tree, g_root, alpha, theta, sigma, sigmae] =
-      #                  abc[1]*g_root^2 + abc[2]*g_root + abc[3]
-      abc <- pif[N+1, ]
-      
-      if(availRmpfr & usempfr & (any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3]))) {
-        usempfr <- usempfr + 1
-        next 
-      }
-      done <- TRUE
-    }
-    
-    # Processing of the root value
-    if(is.finite(g0)) {
-      # fixed g0 specified as parameter; 
-      
-      # pdf of the data conditioned on fixed g0
-      loglik <- abc[1]*g0^2 + abc[2]*g0 + abc[3]
-      
-      if(is.list(g0Prior)) {
-        # Normal prior for g0 with mean g0Mean and variance g0Var
-        g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = sqrt(as.double(g0Var)), log = log)
-      } else {
-        # No prior for g0 specified
-        g0LogPrior <- NA
-      }
-    } else if(is.na(g0) & !is.nan(g0)) {
-      # find g0 that would maximise one of the following:
-      # (1) if a normal prior for g0 was specified, 
-      #     pdf(z | alpha, theta, sigma, sigmae, g0, tree) x prior(g0)
-      # (2) otherwise, pdf(z | alpha, theta, sigma, sigmae, g0, tree) 
-      if(is.list(g0Prior)) {
-        # (1) Normal prior for g0 with mean g0Mean and variance g0Var
-        # max(loglik + g0Prior): derivative : 
-        # 2 * (abc[1] - 1 / (2 * g0Var)) * g0 + (abc[2] + g0Mean / g0Var) == 0
-        g0 <- -0.5 * (abc[2] + g0Mean / g0Var) / (abc[1] - 1 / (2 * g0Var))
-        loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
-        g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = as.double(sqrt(g0Var)), log = log)
-      } else {
-        # (2) No prior for g0 specified
-        # max(loglik): derivative : 2 * abc[1] * g0 + abc[2] == 0
-        g0 <- -0.5 * abc[2] / abc[1]
-        loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
-        g0LogPrior <- NA
-      }
-    } else {
-      # g0 is NaN or infinite. In this case, 
-      # we treat g0 as not specified, so the only option is to integrate under 
-      # its prior distribution. If g0Prior is not specified, assume that g0Prior 
-      # is the stationary OU normal distribution with mean, theta, and variance, 
-      # varOU(Inf, alpha, sigma)
-      if(!is.list(g0Prior)) {
-        g0Mean <- theta
-        g0Var <- varOU(Inf, alpha, sigma)
-      }
-      
-      if(g0Var != 0) {
-        def <- c(-0.5 / g0Var, 
-                 g0Mean / g0Var, 
-                 -0.5 * g0Mean^2 / g0Var - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
-        abc <- abc + def
-        loglik <- abc[3] + 0.5 * (logpi - log(-abc[1])) - abc[2]^2 / (4 * abc[1])
-        g0 <- NaN
-        g0LogPrior <- NaN
-      } else {
-        #g0Var = 0, i.e. gr=g0Mean with probability 1
-        loglik <- abc[1]*g0Mean[1]^2 + abc[2]*g0Mean[1] + abc[3]
-        g0 <- g0Mean
-        g0LogPrior <- Inf
-      }
-    }
-    
-    if(debug) {
-      debugdata <- data.table(
-        alpha = list(alpha), theta = list(theta), sigma = list(sigma), 
-        sigmae = list(sigmae),
-        alphasigma2 = list(alphasigma2), theta2 = list(theta2), 
-        sigma2 = list(sigma2),
-        sigmae2 = list(sigmae2), logsigma = list(logsigma), 
-        logsigmae = list(logsigmae), 
-        t = list(t),
-        talpha = list(talpha), etalpha = list(etalpha), 
-        e2talpha = list(e2talpha), 
-        fe2talpha = list(fe2talpha), log_fe2talpha = list(log_fe2talpha), 
-        r0 = list(r0), pif = list(pif), abc = list(abc), 
-        g0 = list(g0), g0Mean = list(g0Mean), g0Var = list(g0Var),
-        g0LogPrior = list(g0LogPrior), loglik = list(loglik), 
-        availRmpfr = list(availRmpfr), usempfr = list(usempfr), 
-        precbits = list(precbits))
-      print(debudata)
-    }
-    
-    if(is.double(alphaorig) & is.double(thetaorig) & is.double(sigmaorig) & 
-       is.double(sigmaeorig) & is.double(vorig)) {
-      loglik <- as.double(loglik)
-      g0 <- as.double(g0)
-      g0LogPrior <- as.double(g0LogPrior)
-    }
-    
-    value <- if(log) loglik else exp(loglik)
-    attr(value, "g0") <- g0
-    attr(value, "g0LogPrior") <- g0LogPrior
-    value
-  }
-}
+# dVTipsGivenTreePOUMMwithThetaInExpressions <- function(
+#   z, tree, alpha, theta, sigma, sigmae = 0, g0 = NA, g0Prior = NULL,
+#   log = TRUE, pruneInfo = pruneTree(tree), 
+#   usempfr = 0, maxmpfr = 2, precbits = 128, 
+#   debug = FALSE) {
+#   
+#   availRmpfr <- requireNamespace("Rmpfr", quietly = TRUE) 
+#   
+#   alphaorig <- alpha
+#   thetaorig <- theta
+#   sigmaorig <- sigma
+#   sigmaeorig <- sigmae
+#   g0orig <- g0
+#   vorig <- z
+#   
+#   if(any(tree$edge.length <= 0)) {
+#     stop('All branch lengths in tree should be positive!')
+#   }
+#   if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
+#     warning('Some parameters are NA or NaN')
+#     ifelse(log, -Inf, 0)
+#   } 
+#   
+#   if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+#      all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
+#     ifelse(log, -Inf, 0)
+#   } else {
+#     logpi <- log(pi)
+#     loge2 <- log(2)
+#     
+#     if(as.integer(usempfr) >= 2 |
+#        (usempfr & ((as.double(alpha) != 0 & as.double(alpha) < 0.01) |
+#                    (as.double(sigma) != 0 & as.double(sigma) < 0.01) |
+#                    (as.double(sigmae) != 0 & as.double(sigmae) < 0.01)))) {
+#       usempfr <- 2 # indicate for later code that we shall convert to mpfr!
+#     }
+#     
+#     done <- FALSE
+#     # this loop governs the use of mpfr
+#     while(!done & usempfr <= maxmpfr) { 
+#       if(availRmpfr & usempfr >= 2) {
+#         if(is.double(alphaorig)) {
+#           alpha <- Rmpfr::mpfr(alphaorig, precbits*2^(usempfr-2))
+#         }
+#         if(is.double(thetaorig)) {
+#           theta <- Rmpfr::mpfr(thetaorig, precbits*2^(usempfr-2))
+#         }
+#         if(is.double(sigmaorig)) {
+#           sigma <- Rmpfr::mpfr(sigmaorig, precbits*2^(usempfr-2))
+#         }
+#         if(is.double(sigmaeorig)) {
+#           sigmae <- Rmpfr::mpfr(sigmaeorig, precbits*2^(usempfr-2))
+#         }
+#         if(is.finite(g0)) {
+#           g0 <- Rmpfr::mpfr(g0orig, precbits*2^(usempfr-2))
+#         }
+#         if(is.double(z)) {
+#           z <- Rmpfr::mpfr(z, precbits*2^(usempfr-2))
+#         }
+#       }
+#       
+#       if(is.list(g0Prior)) {
+#         if(is.null(g0Prior$mean) | is.null(g0Prior$var)) {
+#           stop("g0Prior must have a 'mean' and a 'var' character members.")
+#         } else {
+#           g0Mean <- eval(parse(text=g0Prior$mean))
+#           g0Var <- eval(parse(text=g0Prior$var))
+#         }
+#       } else {
+#         g0Mean <- NA
+#         g0Var <- NA
+#       }
+#       
+#       N <- length(tree$tip.label)                # number of tips
+#       
+#       if(is.null(pruneInfo)) {
+#         pruneInfo <- pruneTree(tree)
+#       }
+#       
+#       # use is.double(alpha) to check whether Rmpfr is being used
+#       
+#       edge <- tree$edge
+#       
+#       M <- pruneInfo$M
+#       endingAt <- pruneInfo$endingAt
+#       nodesVector <- pruneInfo$nodesVector
+#       nodesIndex <- pruneInfo$nodesIndex
+#       nLevels <- pruneInfo$nLevels
+#       unVector <- pruneInfo$unVector
+#       unIndex <- pruneInfo$unIndex
+#       unJ <- 1
+#       
+#       t <- tree$edge.length
+#       
+#       alphasigma2 <- alpha/sigma/sigma
+#       theta2 <- theta^2
+#       sigma2 <- sigma^2
+#       sigmae2 <- sigmae^2
+#       logsigma <- log(sigma)
+#       logsigmae <- log(sigmae)
+#       
+#       talpha <- t*alpha
+#       etalpha <- exp(talpha)
+#       if(alpha != 0) {
+#         fetalpha <- alpha/(1 - etalpha)
+#       } else {
+#         fetalpha <- -1/t
+#       }
+#       
+#       e2talpha <- etalpha*etalpha
+#       limitfe2talpha <- -0.5 / t
+#       if(alpha != 0) {
+#         fe2talpha <- alpha / (1 - e2talpha)
+#       } else {
+#         fe2talpha <- limitfe2talpha
+#       }
+#       
+#       if(availRmpfr & usempfr & usempfr < maxmpfr) {
+#         if(any(fe2talpha >= 0) | any(fe2talpha < limitfe2talpha)) {
+#           usempfr <- usempfr + 1
+#           next 
+#         }
+#       }
+#       
+#       log_fe2talpha <- log(-fe2talpha)
+#       
+#       fe2talphasigma2 <- fe2talpha / sigma2
+#       
+#       # for sigmae=0
+#       r0 <- talpha + 0.5*log_fe2talpha - 0.5*logpi - logsigma
+#       
+#       # matrix for paramsIntegForks one pif for every node
+#       # the following code creates a matrix for the class of alpha,
+#       # i.e. could be mpfr as well as double
+#       pif <- rep(alpha*0, M*3)
+#       dim(pif) <- c(M, 3)
+#       
+#       
+#       for(i in 1:nLevels) {
+#         es <- endingAt[nodesVector[(nodesIndex[i]+1):nodesIndex[i+1]]]
+#         
+#         edgeEnds <- edge[es, 2]
+#         
+#         if(edge[es[1], 2] <= N) {
+#           # all es pointing to tips
+#           if(sigmae==0) {
+#             # no environmental deviation
+#             g1 <- z[edgeEnds]  # tip values
+#             etalphag1thetatheta <- etalpha[es] * (g1 - theta) + theta
+#             
+#             pif[edgeEnds, 1] <- fe2talphasigma2[es]
+#             pif[edgeEnds, 2] <- -2 * etalphag1thetatheta * fe2talphasigma2[es]
+#             pif[edgeEnds, 3] <- r0[es] + etalphag1thetatheta^2 * fe2talphasigma2[es]
+#           } else {
+#             z1 <- z[edgeEnds]  # tip values
+#             
+#             u <- -0.5/sigmae2
+#             v <- z1/sigmae2
+#             w <- -0.5 * loge2 - 0.5 * logpi  - z1^2 / (2 * sigmae2) - logsigmae 
+#             
+#             gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+#             
+#             pif[edgeEnds, 1] <- u / gutalphasigma2
+#             pif[edgeEnds, 2] <- 
+#               (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+#             pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
+#               0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
+#               alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
+#               ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
+#               talpha[es] + w
+#           }
+#         } else {
+#           # edges pointing to internal nodes, for which all children nodes have been visited
+#           u <- pif[edgeEnds, 1]
+#           v <- pif[edgeEnds, 2]
+#           w <- pif[edgeEnds, 3]
+#           
+#           gutalphasigma2 <- (fe2talpha[es] - alpha + u * sigma2) / fe2talpha[es]
+#           
+#           pif[edgeEnds, 1] <- u / gutalphasigma2
+#           pif[edgeEnds, 2] <- 
+#             (etalpha[es] * (2 * theta * u + v) - 2 * theta * u) / gutalphasigma2
+#           pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2) -
+#             0.25 * sigma2 * v^2 / (fe2talpha[es] - alpha + sigma2 * u) +
+#             alpha * theta * (theta * u - etalpha[es] * (theta * u + v)) /
+#             ((1 + etalpha[es]) * (sigma2 * u - alpha) + fetalpha[es]) +
+#             talpha[es] + w
+#         } 
+#         
+#         #update parent pifs
+#         while(length(es)>0) {
+#           un <- unVector[(unIndex[unJ]+1):unIndex[unJ+1]]
+#           unJ <- unJ+1
+#           
+#           pif[edge[es[un], 1], ] <- 
+#             pif[edge[es[un], 1], ] + pif[edge[es[un], 2], ]
+#           
+#           es <- es[-un]
+#         }
+#       }
+#       
+#       # at the root: P[Vtips|tree, g_root, alpha, theta, sigma, sigmae] =
+#       #                  abc[1]*g_root^2 + abc[2]*g_root + abc[3]
+#       abc <- pif[N+1, ]
+#       
+#       if(availRmpfr & usempfr & (any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3]))) {
+#         usempfr <- usempfr + 1
+#         next 
+#       }
+#       done <- TRUE
+#     }
+#     
+#     # Processing of the root value
+#     if(is.finite(g0)) {
+#       # fixed g0 specified as parameter; 
+#       
+#       # pdf of the data conditioned on fixed g0
+#       loglik <- abc[1]*g0^2 + abc[2]*g0 + abc[3]
+#       
+#       if(is.list(g0Prior)) {
+#         # Normal prior for g0 with mean g0Mean and variance g0Var
+#         g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = sqrt(as.double(g0Var)), log = log)
+#       } else {
+#         # No prior for g0 specified
+#         g0LogPrior <- NA
+#       }
+#     } else if(is.na(g0) & !is.nan(g0)) {
+#       # find g0 that would maximise one of the following:
+#       # (1) if a normal prior for g0 was specified, 
+#       #     pdf(z | alpha, theta, sigma, sigmae, g0, tree) x prior(g0)
+#       # (2) otherwise, pdf(z | alpha, theta, sigma, sigmae, g0, tree) 
+#       if(is.list(g0Prior)) {
+#         # (1) Normal prior for g0 with mean g0Mean and variance g0Var
+#         # max(loglik + g0Prior): derivative : 
+#         # 2 * (abc[1] - 1 / (2 * g0Var)) * g0 + (abc[2] + g0Mean / g0Var) == 0
+#         g0 <- -0.5 * (abc[2] + g0Mean / g0Var) / (abc[1] - 1 / (2 * g0Var))
+#         loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
+#         g0LogPrior <- dnorm(as.double(g0), mean = as.double(g0Mean), sd = as.double(sqrt(g0Var)), log = log)
+#       } else {
+#         # (2) No prior for g0 specified
+#         # max(loglik): derivative : 2 * abc[1] * g0 + abc[2] == 0
+#         g0 <- -0.5 * abc[2] / abc[1]
+#         loglik <- abc[1] * g0^2 + abc[2] * g0 + abc[3]
+#         g0LogPrior <- NA
+#       }
+#     } else {
+#       # g0 is NaN or infinite. In this case, 
+#       # we treat g0 as not specified, so the only option is to integrate under 
+#       # its prior distribution. If g0Prior is not specified, assume that g0Prior 
+#       # is the stationary OU normal distribution with mean, theta, and variance, 
+#       # varOU(Inf, alpha, sigma)
+#       if(!is.list(g0Prior)) {
+#         g0Mean <- theta
+#         g0Var <- varOU(Inf, alpha, sigma)
+#       }
+#       
+#       if(g0Var != 0) {
+#         def <- c(-0.5 / g0Var, 
+#                  g0Mean / g0Var, 
+#                  -0.5 * g0Mean^2 / g0Var - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
+#         abc <- abc + def
+#         loglik <- abc[3] + 0.5 * (logpi - log(-abc[1])) - abc[2]^2 / (4 * abc[1])
+#         g0 <- NaN
+#         g0LogPrior <- NaN
+#       } else {
+#         #g0Var = 0, i.e. gr=g0Mean with probability 1
+#         loglik <- abc[1]*g0Mean[1]^2 + abc[2]*g0Mean[1] + abc[3]
+#         g0 <- g0Mean
+#         g0LogPrior <- Inf
+#       }
+#     }
+#     
+#     if(debug) {
+#       debugdata <- data.table(
+#         alpha = list(alpha), theta = list(theta), sigma = list(sigma), 
+#         sigmae = list(sigmae),
+#         alphasigma2 = list(alphasigma2), theta2 = list(theta2), 
+#         sigma2 = list(sigma2),
+#         sigmae2 = list(sigmae2), logsigma = list(logsigma), 
+#         logsigmae = list(logsigmae), 
+#         t = list(t),
+#         talpha = list(talpha), etalpha = list(etalpha), 
+#         e2talpha = list(e2talpha), 
+#         fe2talpha = list(fe2talpha), log_fe2talpha = list(log_fe2talpha), 
+#         r0 = list(r0), pif = list(pif), abc = list(abc), 
+#         g0 = list(g0), g0Mean = list(g0Mean), g0Var = list(g0Var),
+#         g0LogPrior = list(g0LogPrior), loglik = list(loglik), 
+#         availRmpfr = list(availRmpfr), usempfr = list(usempfr), 
+#         precbits = list(precbits))
+#       print(debudata)
+#     }
+#     
+#     if(is.double(alphaorig) & is.double(thetaorig) & is.double(sigmaorig) & 
+#        is.double(sigmaeorig) & is.double(vorig)) {
+#       loglik <- as.double(loglik)
+#       g0 <- as.double(g0)
+#       g0LogPrior <- as.double(g0LogPrior)
+#     }
+#     
+#     value <- if(log) loglik else exp(loglik)
+#     attr(value, "g0") <- g0
+#     attr(value, "g0LogPrior") <- g0LogPrior
+#     value
+#   }
+# }

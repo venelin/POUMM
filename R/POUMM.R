@@ -1,65 +1,69 @@
-
 # Implementation of the POUMM likelihood and heritability estimators
 
-#' @title The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model
-#' @name POUMM_PMM
-#'   
-#' @description This is the high-level entry point to the POUMM method. The 
-#'   POUMM function fits the PMM method to data and returns an object of class 
-#'   "POUMM", the PMM function is a shortcut to calling POUMM with alpha fixed 
-#'   to 0 and returns an object of class "PMM" which is a subclass of "POUMM". 
-#'   The functions described here perform an ML-fit and an MCMC-fit to a 
-#'   phylogenetic tree with observed values at its tips.
-#'   
-#' @param z Either a numeric vector containing the phenotypic values at the tips
-#'   of tree or a named list containing named elements z - a numeric vector and 
-#'   tree - a phylo object (it is possible to specify different element names 
-#'   using the arguments zName and treeName).
-#' @param tree A phylo object or NULL in case z is a list.
-#' @param zName,treeName Character strings used when the parameter z is a list; 
-#'   indicate the names in the list of the values-vector and the tree. Default: 
-#'   'z' and 'tree'.
-#' @param ... additional arguments passed to the dVGivenTreeOU function 
-#'   (?dVGivenTreeOU for details).
-#' @param spec A named list specifying how the ML and MCMC fit should be done.
-#'   See ?specifyPOUMM.
-#' @param doMCMC logical: should a MCMC fit be performed. An MCMC fit provides a sample
-#'   from the posterior distribution of the parameters given a prior 
-#'   distribution and the data. Unlike the ML-fit, it allows to estimate 
-#'   confidence intervals for the estimated parameters. This argument is TRUE by 
-#'   default. The current implementation uses a modified version of the adaptive 
-#'   Metropolis sampler from the package "adaptMCMC" written by Andreas Scheidegger. 
-#'   To obtain meaningful estimates MCMC may need 
-#'   to run for several millions of iterations (parameter nSamplesMCMC set to 1e5 by default). 
-#'   See parameters ending at MCMC in ?specifyPOUMM for details.
-#'
-#' @param usempfr integer indicating if and how mpfr should be used for
-#'   small parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the
-#'   mpfr package can be forced by specifying an integer greater or equal to 2.
-#'   Setting usempfr=0 disables high precision likelihood calculation. Requires
-#'   the Rmpfr package. Note that when using mpfr, the time for one likelihood
-#'   calculation can increase more than 100-fold. Default (0). Note that during
-#'   the ML and MCMC fit this flag is temporarily raised by 1 in order to enable 
-#'   mpfr-check on parameters resulting in higher likelihood than the current 
-#'   maximum one.
-#'   
-#' @param useArma Logical indicating if the Armadillo library should be used for 
-#'   faster vector operations. Defaults to TRUE. Since Armadillo doesn't support
-#'   mpfr, it gets disabled when usempfr is bigger than 0.   
-#' @param verbose,debug Logical flags indicating whether to print informative 
+#'@title The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model
+#'  
+#'@description This is the high-level entry point to the POUMM method. The POUMM
+#'  function fits the POUMM method to a tree and observed trait-values at its tips
+#'   and returns an object of class "POUMM".
+#'  
+#'@param z Either a numeric vector containing the phenotypic values at the tips 
+#'  of tree or a named list containing named elements z - a numeric vector and 
+#'  tree - a phylo object (it is possible to specify different element names 
+#'  using the arguments zName and treeName).
+#'@param tree A phylo object or NULL in case z is a list.
+#'@param zName,treeName Character strings used when the parameter z is a list; 
+#'  indicate the names in the list of the values-vector and the tree. Default: 
+#'  'z' and 'tree'.
+#'@param parDigits Integer specifying rounding to be done on the parameter 
+#'  vector before likelihood calculation. Defaults to 6 decimal digits. This can
+#'  be useful during maximum likelihood optimization to prevent likelihood 
+#'  calculation on very small but positive values of alpha, but should be used 
+#'  with caution since specifying a small number of digits, i.e. 2 or 3 can
+#'  result in an infinite loop during optim. Specify a negative number
+#'  to disable rounding.
+#'@param ... additional arguments passed to the likPOUMMGivenTreeVTips function 
+#'  (?dVGivenTreeOU for details).
+#'@param spec A named list specifying how the ML and MCMC fit should be done. 
+#'  See ?specifyPOUMM.
+#'@param doMCMC logical: should a MCMC fit be performed. An MCMC fit provides a 
+#'  sample from the posterior distribution of the parameters given a prior 
+#'  distribution and the data. Unlike the ML-fit, it allows to estimate 
+#'  confidence intervals for the estimated parameters. This argument is TRUE by 
+#'  default. The current implementation uses a modified version of the adaptive 
+#'  Metropolis sampler from the package "adaptMCMC" written by Andreas 
+#'  Scheidegger. To obtain meaningful estimates MCMC may need to run for several
+#'  millions of iterations (parameter nSamplesMCMC set to 1e5 by default). See 
+#'  parameters ending at MCMC in ?specifyPOUMM for details.
+#'  
+#'@param usempfr integer indicating if and how mpfr should be used for small 
+#'  parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the mpfr 
+#'  package can be forced by specifying an integer greater or equal to 2. 
+#'  Setting usempfr=0 disables high precision likelihood calculation. Requires 
+#'  the Rmpfr package. Note that when using mpfr, the time for one likelihood 
+#'  calculation can increase more than 100-fold. Default (0). Note that during 
+#'  the ML and MCMC fit this flag is temporarily raised by 1 in order to enable 
+#'  mpfr-check on parameters resulting in higher likelihood than the current 
+#'  maximum one.
+#'  
+#'@param useArma Logical indicating if the Armadillo library should be used for 
+#'  faster vector operations. Defaults to TRUE. Since Armadillo doesn't support 
+#'  mpfr, it gets disabled when usempfr is bigger than 0.
+#'@param verbose,debug Logical flags indicating whether to print informative 
 #'  and/or debug information on the standard output (both are set to to FALSE by
 #'  default).
-#'   
-#'   
-#' @details The PMM function fits the PMM model to the tree and data
-#'   by fixing the parameter alpha to 0. 
-#'   
-#' @return For POUMM, an object of S3 class 'POUMM'. For PMM, an object of S3 
-#' class 'PMM'.
-#'
+#'  
+#'@return An object of S3 class 'POUMM'. This object can be analyzed using 
+#'  S3 generic functions: \code{\link{summary}}, 
+#'  \code{\link{plot}}, \code{\link{AIC}}, \code{\link{BIC}}, \code{\link{coef}},
+#'  \code{\link{logLik}}, \code{\link{fitted}}.
+#' 
+#' @seealso \code{\link{specifyPOUMM}} for parametrizations and custom settings
+#'  of the POUMM fit.
+#'  
 #' @examples 
+#' \dontrun{
 #' # Please, read the package vignette for more detailed examples.
-#' N <- 100
+#' N <- 500
 #' tr <- ape::rtree(N)
 #' z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
 #' fit <- POUMM::POUMM(z, tr, spec = POUMM::specifyPOUMM(nSamplesMCMC = 5e4))
@@ -76,13 +80,22 @@
 #' # fit PMM to the same data and do a likelihood ratio test
 #' fitPMM <- POUMM::POUMM(z, tr, spec = POUMM::specifyPMM(nSamplesMCMC = 5e4))
 #' lmtest::lrtest(fitPMM, fit)
+#' }
 #' 
-#' @references \insertRef{Vihola:2012by}{POUMM}   
-#' @importFrom stats var sd rnorm dnorm dexp rexp dunif runif 
+#'@references 
+#'  Mitov, V., and Stadler, T. (2016). The heritability of pathogen traits - 
+#'  definitions and estimators. bioRxiv, 058503. http://doi.org/10.1101/058503 
+#'  
+#'  Vihola, M. (2012). Robust adaptive Metropolis algorithm with coerced 
+#'  acceptance rate. Statistics and Computing, 22(5), 997-1008. 
+#'  http://doi.org/10.1007/s11222-011-9269-5 
+#'  
+#'  Scheidegger, A. (2012). adaptMCMC: Implementation of a generic adaptive 
+#'  Monte Carlo Markov Chain sampler. 
+#'  http://CRAN.R-project.org/package=adaptMCMC
+#'
+#'@importFrom stats var sd rnorm dnorm dexp rexp dunif runif nobs
 #'@useDynLib POUMM
-NULL
-
-#' @describeIn POUMM_PMM Maximum likelihood and Bayesian fit of the POUMM
 #' 
 #' @export
 POUMM <- function(
@@ -293,6 +306,7 @@ POUMM <- function(
 
 #' Extract maximum likelihood and degrees of freedom from a fitted POUMM model
 #' @param object An object of class POUMM.
+#' @param ... not used; included for compliance with generic function logLik.
 #' @export
 logLik.POUMM <- function(object, ...) {
   if("POUMM" %in% class(object)) {
@@ -312,12 +326,14 @@ logLik.POUMM <- function(object, ...) {
 #' @param object An object of class POUMM.
 #' @param mapped Logical indicating whether the standard POUMM parameters should
 #' also be extracted.
+#' @param ... Not used; added for compatibility with generic function coef.
 #' @details The parameters extracted are the ones used as input to the model's
 #' parMapping function. 
 #' 
+#' 
 #' @return A named vector with the fitted parameters of the model.
 #' @export
-coef.POUMM <- function(object, mapped = FALSE) {
+coef.POUMM <- function(object, mapped = FALSE, ...) {
   if("POUMM" %in% class(object)) {
     pars <- object$fitML$par
     g0 <- attr(object$fitML$value, "g0")
@@ -337,15 +353,15 @@ coef.POUMM <- function(object, mapped = FALSE) {
 #' Extract maximum likelihood expected genotypic values at the tips of a tree,
 #' to which a POUMM model has been previously fitted
 #' @param object An object of class POUMM.
-#' @param g0 A number specifying the root-genotypic value. It defaults to NA,
-#'   which would cause the maximum likelihood value .
 #' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
+#' @param ... Not used; added for compatibility with generic function fitted.
 #' @return If vCov == TRUE, a list with elements g - the genotypic values and
 #' vCov - the variance-covariance matrix of these values for the specific tree,
 #' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
 #' @export
-fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCov=FALSE) {
+fitted.POUMM <- function(object, vCov=FALSE, ...) {
   if("POUMM" %in% class(object)) {
+    g0 <- coef.POUMM(object, mapped=TRUE)['g0']
     if(is.nan(g0)) {
       warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
     }
@@ -366,9 +382,11 @@ fitted.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0'], vCo
 
 #' Number of tips in a phylogenetic tree, POUMM has been fit on.
 #' @param object An object of class POUMM.
+#' @param ... Not used; added for compatibility with generic function nobs.
 #' @return The number of tips in the tree, POUMM has been called on
+#' 
 #' @export
-nobs.POUMM <- function(object) {
+nobs.POUMM <- function(object, ...) {
   if("POUMM" %in% class(object)) {
     object$N
   } else {
@@ -378,17 +396,12 @@ nobs.POUMM <- function(object) {
 
 #' Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.
 #' @param object An object of class POUMM.
-#' @param g0 A number specifying the root-genotypic value. It defaults to NA, 
-#'   which would cause the maximum likeliheood value .
-#' @param vCov A logical indicating whether a list with the genotypic values and their variance covariance matrix should be returned or only a vector of the genotypic values (default is FALSE).
+#' @param ... Not used; added for compatibility with generic function residuals.
 #' @return The vector of e-values (residuals) corresponding to the tip-labels in the tree.
 #' @export
-residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) {
+residuals.POUMM <- function(object, ...) {
   if("POUMM" %in% class(object)) {
-    if(is.nan(g0)) {
-      warning("Environmental contributions cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
-    }
-    e <- object$pruneInfo$z - fitted(object, g0)
+    e <- object$pruneInfo$z - fitted(object)
     names(e) <- object$pruneInfo$tree$tip.label
     e
   } else {
@@ -397,7 +410,7 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
 }
 
 #' Plots of a POUMM-fit
-#' @param object An object of class POUMM.
+#' @param x An object of class POUMM.
 #' @param type A character indicating the type of plot(s) to be generated.
 #'   Defaults to "MCMC", resulting in a trace and density plot for the selected
 #'   statistics (see argument stat).
@@ -425,23 +438,24 @@ residuals.POUMM <- function(object, g0 = coef.POUMM(object, mapped=TRUE)['g0']) 
 #'   since filtering out points from the MCMC-sample can affect the kernel 
 #'   densities. Default value is "(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)". The identifiers in this expression can be any
 #'   column names found in a summary of a POUMM object.
-#'   
-#' 
+#' @param ... not used, needed for consistency with the generic plot-function.
+#'
 #' @return If doPlot==FALSE, a named list containing a member called data of
 #'   class data.table and several members of class ggplot.
 #' @export
 plot.POUMM <- 
-  function(object, type=c("MCMC"), 
+  function(x, type=c("MCMC"), 
            doPlot = TRUE, interactive = TRUE,
            stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
            chain=NULL,
            startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
-           statFunctions = statistics(object),
+           statFunctions = statistics(x),
            doZoomIn = FALSE,
-           zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)") {
+           zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)",
+           ...) {
   
-  if("POUMM" %in% class(object)) {
-    summ <- summary(object, mode = "expert", 
+  if("POUMM" %in% class(x)) {
+    summ <- summary(x, mode = "expert", 
                     startMCMC = startMCMC, endMCMC = endMCMC, 
                     thinMCMC = thinMCMC, stats = statFunctions)
     plot(summ, doPlot = doPlot, interactive = interactive, 

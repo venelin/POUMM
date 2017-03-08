@@ -8,3 +8,4 @@ src/RcppExports.cpp
 src/*.o
 src/*.so
 R/RcppExports.R
+Rprof.out
