@@ -5,6 +5,8 @@
 using namespace Rcpp;
 using namespace arma;
 
+typedef unsigned int uint;
+
 class Integrator {
   uvec ZERO;
   uvec ONE;

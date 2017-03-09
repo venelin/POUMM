@@ -2,7 +2,7 @@ library(testthat)
 library(POUMM)
 library(mvtnorm)
 
-EPS <- 10^-9
+EPS <- 10^-6
 
 #' An "algebraic" implementation of the POUMM likelihood calculation based on
 #' multivariate normal density function
