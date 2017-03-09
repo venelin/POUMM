@@ -4,7 +4,7 @@ library(POUMM)
 
 set.seed(1)
 
-N <- 1e5
+N <- 4000
 tree <- ape::rtree(N)  
 
 g0 <- 16
@@ -16,14 +16,11 @@ z <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sigmae)
 
 
 ou.lik <- make.ou(tree, z[1:N], states.sd =  sigmae, with.optimum = TRUE, control = list(method = 'pruning', backend = 'C'))
-pruneInfo <- POUMM:::pruneTree(tree, z[1:N])
-pruneInfo$integrator$reorderEdges()
+pruneInfo <- pruneTree(tree, z[1:N])
 
 microbenchmark(
   likPOUMMGivenTreeVTipsC(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0),
-  likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0),
-  likPOUMMGivenTreeVTipsC_old(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0),
-  likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sigmae, g0, pruneInfo = pruneInfo),
+  #likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sigmae, g0, pruneInfo = pruneInfo),
   ou.lik(c(s2=sigma^2, alpha=alpha, theta=theta)),
   times = 100)
 

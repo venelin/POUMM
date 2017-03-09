@@ -30,13 +30,15 @@ fitPMM <- POUMM::POUMM(z, tr, spec = POUMM::specifyPMM(nSamplesMCMC = 5e4))
 lmtest::lrtest(fitPMM, fit)
 ```
 
-You can find more examples in the package vignette.
+You can find more examples in the package vignette entitled "A User Guide to The POUMM R-package" and in the help-pages, i.e. ?POUMM, ?specifyPOUMM, ?summary.POUMM, ?plot.POUMM.
 
 How do I get it?
 ================
 
-Simply, install the newest package version from CRAN.
+Install the newest package version from CRAN.
 
 ``` r
 install.packages("POUMM")
 ```
+
+This will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as "Suggests" in POUMM's DESCRIPTION, since it's installation has been problematic on some systems (i.e. Linux).

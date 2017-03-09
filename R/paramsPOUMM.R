@@ -315,7 +315,9 @@ H2e <- function(z, sigmae, tree=NULL, tFrom=0, tTo=Inf) {
     tipTimes <- nodeTimes(tree)[1:length(tree$tip.label)]
     z <- z[which(tipTimes >= tFrom & tipTimes <= tTo)]
   }
-  1 - (sigmae^2 / var(z))
+  res <- 1 - (sigmae^2 / var(z))
+  names(res) <- NULL
+  res
 }
 
 #' Phylogenetic heritability estimated at time t
@@ -511,6 +513,7 @@ r.squared <- function(obj) {
   sum((fittedValues-grandMean)^2)/sum((obj$pruneInfo$z-grandMean)^2)
 }
 
+#' @importFrom stats nobs logLik
 adj.r.squared <- function(obj, r.sq = r.squared(obj)) {
   1 - (1 - r.sq) * ((nobs(obj) - 1)/(nobs(obj) - attr(logLik(obj), 'df')))
 }

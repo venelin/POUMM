@@ -83,7 +83,8 @@
 #'    p(g0) x lik(data|g0, other parameters and tree). This can be helpful to 
 #'    prevent extremely big or low estimates of g0. To avoid this behavior and
 #'    always maximize the likelihood, use g0Prior = NULL. 
-#' @param sigmaeFixed fixed value for the sigmae parameter (used in specifyPOUMM_ATS).
+#' @param sigmaeFixed fixed value for the sigmae parameter (used in 
+#' specifyPOUMM_ATS and specifyPOUMM_ATSG0).
 #' @param parInitML A named vector (like parLower and parUpper) or a list of such
 #'   vectors - starting points for optim.
 #' @param control List of parameters passed on to optim in the ML-fit, default 
@@ -380,6 +381,112 @@ specifyPOUMM_ATS <- function(
   spec
 }
 
+#' @describeIn specifyPOUMM Fitting a POU model with fixed sigmae.
+#'  Parameter vector is c(alpha, theta, sigma, g0).
+#' @export
+specifyPOUMM_ATSG0 <- function(
+  z = NULL, tree = NULL,
+  zMin = -10, zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), 
+  tMin = 0.1, tMean = 2, tMax = 10, 
+  parMapping = NULL, 
+  parLower = NULL, parUpper = NULL, 
+  g0Prior = NULL,
+  parInitML = NULL,
+  control = NULL,
+  parPriorMCMC = NULL, 
+  parInitMCMC = NULL, 
+  parScaleMCMC = NULL,
+  nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
+  thinMCMC = 100, 
+  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  samplePriorMCMC = TRUE,
+  parallelMCMC = FALSE, 
+  sigmaeFixed = 0) {
+  
+  spec <- list(parMapping = parMapping, 
+               parLower = parLower, parUpper = parUpper, 
+               g0Prior = g0Prior,
+               parInitML = parInitML,
+               control = control,
+               parPriorMCMC = parPriorMCMC, 
+               parInitMCMC = parInitMCMC, 
+               parScaleMCMC = parScaleMCMC,
+               nSamplesMCMC = nSamplesMCMC, nAdaptMCMC = nAdaptMCMC, 
+               thinMCMC = thinMCMC, accRateMCMC = accRateMCMC, 
+               gammaMCMC = gammaMCMC, nChainsMCMC = nChainsMCMC, 
+               samplePriorMCMC = samplePriorMCMC,
+               parallelMCMC = parallelMCMC)
+  
+  if(validateZTree(z, tree)) {
+    zMin <- min(z); zMean <- mean(z); zMax <- max(z); 
+    zVar <- var(z); zSD <- sd(z);
+    tipTimes <- nodeTimes(tree, tipsOnly = TRUE)
+    tMin <- min(tipTimes); tMean <- mean(tipTimes); tMax <- max(tipTimes); 
+  }
+  
+  specDefault <- specifyPOUMM(
+    z, tree, zMin, zMean, zMax, zVar, zSD, tMin, tMean, tMax, 
+    
+    parMapping = function(par) {
+      if(is.matrix(par)) {
+        atsseg0 <- cbind(par[, 1:3, drop = FALSE], sigmaeFixed, par[, 4, drop = FALSE]) 
+        colnames(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      } else {
+        atsseg0 <- c(par[1:3], sigmaeFixed, par[4]) 
+        names(atsseg0) <- c("alpha", "theta", "sigma", "sigmae", "g0")
+      }
+      atsseg0
+    },
+    
+    parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
+                 sigma = 0, 
+                 g0 = zMin - 2 * zSD), 
+    
+    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean),
+                 g0 = zMax + 2 * zSD),
+    
+    parPriorMCMC = function(par) {
+      dexp(par[1], rate = .1, log = TRUE) +
+        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+        dexp(par[3],  rate = .1, TRUE) +
+        dnorm(par[4], zMean, 5 * zSD, log = TRUE)
+    },
+    
+    parInitMCMC = function(chainNo, fitML = NULL) {
+      if(!is.null(fitML)) {
+        parML <- fitML$par
+      } else {
+        parML <- NULL
+      }
+      
+      init <- rbind(
+        c(alpha = 0, theta = 0, sigma = 1, g0 = zMin),
+        parML,
+        c(alpha = 0, theta = 0, sigma = 1, g = zMax)
+      )
+      
+      init[(chainNo - 1) %% nrow(init) + 1, ]
+    },
+    
+    parScaleMCMC = diag(4),
+    
+    validateSpec = FALSE
+  )
+  
+  if(is.list(spec)) {
+    for(name in names(specDefault)) {
+      if(is.null(spec[[name]]) & !is.null(specDefault[[name]])) {
+        spec[[name]] <- specDefault[[name]]
+      } 
+    } 
+  } else {
+    spec <- specDefault
+  }
+  
+  validateSpecPOUMM(spec)
+  spec
+}
 
 #' @describeIn specifyPOUMM Fitting a POUMM model with sampling of g0.
 #'  Parameter vector is c(alpha, theta, sigma, sigmae, g0).

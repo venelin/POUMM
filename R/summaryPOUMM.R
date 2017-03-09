@@ -177,6 +177,9 @@ summary.POUMM <- function(object, ...,
 #'   chain and the data-point is filtered out if it evaluates to FALSE. This 
 #'   allows to zoomIn the x-axis of density plots but should be use with caution,
 #'   since filtering out points from the MCMC-sample can affect the kernel densities.
+#'   Default value is 
+#'    paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
+#'           " (value >= HPDLower & value <= HPDUpper))"). 
 #' @param ... Not used; included for compatibility with the generic function plot.
 #' 
 #' @return The function returns nothing if doPlot=TRUE; Otherwise, it returns a
@@ -192,7 +195,8 @@ plot.summary.POUMM <- function(
   stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
   chain=NULL,
   doZoomIn = FALSE,
-  zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)", ...) {
+  zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
+                        " (value >= HPDLower & value <= HPDUpper))"), ...) {
   
   if(class(x) == "summary.POUMM" & !is.null(x$MCMC)) {
     .stat <- stat

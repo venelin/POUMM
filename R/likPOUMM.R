@@ -244,73 +244,7 @@ likPOUMMGivenTreeVTipsC <- function(
       attr(value, "g0") <- g0
       attr(value, "g0LogPrior") <- NA
     } else {
-      resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
-      loglik <- resList$loglik
-      g0 <- resList$g0
-      g0LogPrior <- resList$g0LogPrior
-      
-      value <- if(log) loglik else exp(loglik)
-      attr(value, "g0") <- g0
-      attr(value, "g0LogPrior") <- g0LogPrior
-    }
-    
-    value
-  }
-}
-
-#' Older C++ implementation using contiguous vector views and matrix abcMat
-#' @inheritParams  likPOUMMGivenTreeVTipsC
-#' @export
-likPOUMMGivenTreeVTipsC2 <- function(
-  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
-  
-  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
-    warning('Some parameters are NA or NaN')
-    ifelse(log, -Inf, 0)
-  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
-            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
-    ifelse(log, -Inf, 0)
-  } else {
-    abc <- integrator$abc2(alpha, theta, sigma, sigmae)
-    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
-      value <- NaN
-      attr(value, "g0") <- g0
-      attr(value, "g0LogPrior") <- NA
-    } else {
-      resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
-      loglik <- resList$loglik
-      g0 <- resList$g0
-      g0LogPrior <- resList$g0LogPrior
-      
-      value <- if(log) loglik else exp(loglik)
-      attr(value, "g0") <- g0
-      attr(value, "g0LogPrior") <- g0LogPrior
-    }
-    
-    value
-  }
-}
-
-#' First C++ implementation using non-contiguous vector operations
-#' @inheritParams likPOUMMGivenTreeVTipsC
-#' @export
-likPOUMMGivenTreeVTipsC_old <- function(
-  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
-  
-  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
-    warning('Some parameters are NA or NaN')
-    ifelse(log, -Inf, 0)
-  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
-            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
-    ifelse(log, -Inf, 0)
-  } else {
-    abc <- integrator$abc_old(alpha, theta, sigma, sigmae)
-    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
-      value <- NaN
-      attr(value, "g0") <- g0
-      attr(value, "g0LogPrior") <- NA
-    } else {
-      resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
+      resList <- loglik_abc_g0_g0Prior(abc, theta, sigma, g0, g0Prior)
       loglik <- resList$loglik
       g0 <- resList$g0
       g0LogPrior <- resList$g0LogPrior
@@ -332,11 +266,15 @@ likPOUMMGivenTreeVTipsC_old <- function(
 #' @param abc a vector of 3 numerical values denoting the corresponding 
 #'   coefficients in the POUMM likelihood presented as exp(a g0^2 + b g0 + c).
 #' @param theta parameter theta of the OU-process.
+#' @param sigma parameter sigma of the OU-process.
 #' @param g0 initial value at the root of the tree (can be NA). See argument
 #'   parMapping in ?specifyPOUMM.
 #' @param g0Prior list object. See parameter g0Prior in ?specifyPOUMM.
 #'   
-loglik_abc_g0_g0Prior <- function(abc, theta, g0, g0Prior) {
+loglik_abc_g0_g0Prior <- function(abc, theta, sigma, g0, g0Prior) {
+  logpi <- log(pi)
+  loge2 <- log(2)
+  
   if(is.list(g0Prior)) {
     if(is.null(g0Prior$mean) | is.null(g0Prior$var)) {
       stop("g0Prior must have a 'mean' and a 'var' character members.")
@@ -673,7 +611,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       done <- TRUE
     }
     
-    resList <- loglik_abc_g0_g0Prior(abc, theta, g0, g0Prior)
+    resList <- loglik_abc_g0_g0Prior(abc, theta, sigma, g0, g0Prior)
     
     loglik <- resList$loglik
     g0 <- resList$g0
@@ -702,7 +640,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         e2talpha = list(e2talpha), 
         fe2talpha = list(fe2talpha),
         pif = list(pif), abc = list(abc), 
-        g0 = list(g0), g0Mean = list(g0Mean), g0Var = list(g0Var),
+        g0 = list(g0), 
         g0LogPrior = list(g0LogPrior), loglik = list(loglik), 
         availRmpfr = list(availRmpfr), usempfr = list(usempfr), 
         precbits = list(precbits))

@@ -36,7 +36,6 @@ sigmae <- .8
 z <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sigmae)
 
 pruneInfo <- POUMM:::pruneTree(tree, z)
-pruneInfo$integrator$reorderEdges()
 
 # pruneInfo2 <- POUMM::pruneTree(tree, z)
 # 
@@ -67,17 +66,6 @@ test_that(
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, g0)))
   })
 
-test_that(
-  "fastLik(C++) vs algebraic lik", {
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
-                            dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, sigmae, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
-                            dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, 0, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
-                            dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
-                            dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, g0)))
-  })
 context("POUMM parameters") 
 
 # At POUMM stationary state (equilibrium, t=Inf)
@@ -106,6 +94,7 @@ test_that("default calls no error", {
   expect_silent(specifyPOUMM_ATH2tMeanSe())
   expect_silent(specifyPOUMM_ATH2tMeanSeG0())
   expect_silent(specifyPOUMM_ATS())
+  expect_silent(specifyPOUMM_ATSG0())
   expect_silent(specifyPOUMM_ATSSeG0())
   expect_silent(specifyPMM())
   expect_silent(specifyPMM_H2tMeanSe())
