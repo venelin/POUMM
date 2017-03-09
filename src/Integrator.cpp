@@ -14,18 +14,11 @@ class Integrator {
   uint M;
   uint N;
   
-  arma::vec z;
-  arma::vec t;
-  arma::umat edge;
-  
   arma::vec zReord;
   arma::vec tReord;
   arma::uvec eReord;
   
-  arma::uvec endingAt;
-  arma::uvec nodesVector;
   arma::uvec nodesIndex;
-  arma::uvec unVector;
   arma::uvec unIndex;
   
   arma::mat abcMat;
@@ -56,127 +49,15 @@ public:
     // this is the actual value of nLevels (not corrected for 0 indexing)
     nLevels = nodesIndex_.n_elem - 1;
     
-    z = vec(z_); t = vec(t_); 
-    
-    edge = umat(edge_ - 1);
-      
-    abcMat = mat(M, 3);
     a = b = c = vec(M);
     
-    
     // values corrected for 0-based indexing
-    endingAt = endingAt_ - 1; 
-    nodesVector = nodesVector_ - 1;
     nodesIndex = nodesIndex_ - 1; 
     unIndex = unIndex_ - 1; 
-    unVector = unVector_ - 1;
     
-    reorderEdges();
-  };
-  
-  arma::rowvec abc_old(double alpha, double theta, double sigma, double sigmae) {
-    
-    ++count_abc_calls;
-    
-    // time for main-loop
-    //auto start = std::chrono::high_resolution_clock::now();
-    
-    double sigma2 = sigma*sigma, logsigma = log(sigma), 
-      logsigmae = log(sigmae), sigmae2 = sigmae*sigmae;
-    
-    arma::vec talpha = t * alpha;
-    arma::vec etalpha = exp(talpha);
-    arma::vec e2talpha = etalpha % etalpha;
-    arma::vec fe2talpha(M);
-    if(alpha != 0) {
-      fe2talpha = alpha / (1 - e2talpha);
-    } else {
-      fe2talpha = -0.5 / t;
-    }
-    
-    
-    // needed to re-initialize abcMat;
-    abcMat.fill(0);
-    
-    // edges pointing to tips
-    uvec es = endingAt.elem(nodesVector(span(nodesIndex(0) + 1, nodesIndex(1))));
-    uvec edgeEnds = edge(es, ONE);
-    
-    vec gutalphasigma2(M);
-    
-    gutalphasigma2.elem(es) = e2talpha.elem(es) + ((-0.5 / sigmae2) * sigma2) / fe2talpha.elem(es);
-    
-    // (possibly reordered) shifted tip values
-    vec z1 = z.elem(edgeEnds) - theta ;
-    
-    if(sigmae != 0) {
-      // integration over g1 including e1 = z1 - g1
-      abcMat(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
-        0.25 * sigma2 * pow(z1 / sigmae2, 2) /
-          (fe2talpha.elem(es) - alpha + (-0.5 / sigmae2) * sigma2) +
-            talpha.elem(es) + (-0.5 * (M_LN_2PI  + z1 % (z1 / sigmae2)) - logsigmae) ;
-      
-      abcMat(edgeEnds, ONE) = (etalpha.elem(es) % (z1 / sigmae2)) / gutalphasigma2.elem(es) ;
-      
-      abcMat(edgeEnds, ZERO) = (-0.5 / sigmae2) / gutalphasigma2.elem(es);
-    } else {
-      // integration over g1 with e1 = 0
-      abcMat(edgeEnds, ZERO) = fe2talpha.elem(es) / sigma2;
-      
-      abcMat(edgeEnds, ONE) = -2 * etalpha.elem(es) % z1 % abcMat(edgeEnds, ZERO);
-      
-      abcMat(edgeEnds, TWO) = talpha.elem(es) + 0.5 * log(-fe2talpha.elem(es)) -
-        M_LN_SQRT_PI - logsigma + pow(etalpha.elem(es) % z1, 2) % abcMat(edgeEnds, ZERO);
-    }
-    
-    uint unJ = 0;
-    
-    //update parent abcs
-    uint lenUnAll = 0;
-    while(lenUnAll != es.n_elem) {
-      uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
-      ++unJ;
-      lenUnAll += un.n_elem;
-      
-      abcMat.rows(edge(es(un), ZERO)) += abcMat.rows(edge(es(un), ONE)) ;
-    }
-    
-    // edges pointing to internal nodes
-    for(int i = 1; i < nLevels; ++i) {
-      es = endingAt.elem(nodesVector(span(nodesIndex(i) + 1, nodesIndex(i + 1))));
-      edgeEnds = edge(es, ONE);
-      
-      // edges pointing to internal nodes, for which all children nodes have been visited
-      gutalphasigma2.elem(es) = e2talpha.elem(es) + (abcMat(edgeEnds, ZERO) * sigma2) / fe2talpha.elem(es);
-      
-      abcMat(edgeEnds, TWO) = -0.5 * log(gutalphasigma2.elem(es)) -
-        // use the formula log(a+c) = log(a) + log(1+c/a), where
-        // a=e2talpha, c = (abcMat[edgeEnds, 0] * sigma2) / fe2talpha.elem(es), b = e.
-        0.25 * sigma2 * pow(abcMat(edgeEnds, ONE), 2) /
-          (fe2talpha.elem(es) - alpha + abcMat(edgeEnds, ZERO) * sigma2) +
-            talpha.elem(es) + abcMat(edgeEnds, TWO);
-      
-      abcMat(edgeEnds, ONE) = (etalpha.elem(es) % abcMat(edgeEnds, ONE)) / gutalphasigma2.elem(es);
-      
-      abcMat(edgeEnds, ZERO) = abcMat(edgeEnds, ZERO) / gutalphasigma2.elem(es);
-      
-      //update parent abcs
-      lenUnAll = 0;
-      while(lenUnAll != es.n_elem) {
-        uvec un = unVector(span(unIndex(unJ) + 1, unIndex(unJ + 1)));
-        ++unJ;
-        lenUnAll += un.n_elem;
-        
-        abcMat.rows(edge(es(un), ZERO)) += abcMat.rows(edge(es(un), ONE)) ;
-      }
-    }
-    
-    
-    //auto elapsed = std::chrono::high_resolution_clock::now() - start;
-    //long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    //cout<<microseconds<<endl;
-
-    return abcMat.row(N);
+    reorderEdges(edge_ - 1, t_, z_, 
+                 endingAt_ - 1, nodesVector_ - 1, nodesIndex, 
+                 unVector_ - 1, unIndex, M, nLevels);
   };
   
   void multiReplace(arma::uvec &x, arma::uvec const& a, arma::uvec const& b) {
@@ -193,10 +74,17 @@ public:
     }
   }
   
-  void reorderEdges() {
+  void reorderEdges(arma::umat const& edge, arma::vec const& t, 
+                    arma::vec const& z,
+                    arma::uvec const& endingAt,
+                    arma::uvec const& nodesVector,
+                    arma::uvec const& nodesIndex, 
+                    arma::uvec const& unVector,
+                    arma::uvec const& unIndex,
+                    uint M, uint nLevels) {
+    
     arma::uvec parents = edge.col(0);
     parents.replace(N, 2*M-1);
-    
     eReord = parents;
     tReord = t;
     zReord = z;
@@ -247,112 +135,6 @@ public:
     }
     
     eReord = eReord - M;
-  };
-  
-  arma::rowvec abc2(double alpha, double theta, double sigma, double sigmae) {
-    
-    ++count_abc_calls;
-    
-    // time for main-loop
-    //auto start = std::chrono::high_resolution_clock::now();
-    
-    double sigma2 = sigma*sigma, logsigma = log(sigma), 
-      logsigmae = log(sigmae), sigmae2 = sigmae*sigmae;
-    
-    arma::vec talpha = tReord * alpha;
-    arma::vec etalpha = exp(talpha);
-    arma::vec e2talpha = etalpha % etalpha;
-    arma::vec fe2talpha(M);
-    if(alpha != 0) {
-      fe2talpha = alpha / (1 - e2talpha);
-    } else {
-      fe2talpha = -0.5 / tReord;
-    }
-    
-    // needed to re-initialize abcMat;
-    abcMat.fill(0);
-    
-    // edges pointing to tips
-    uint eFirst = nodesIndex(0) + 1, eLast = nodesIndex(1);
-    uvec es = arma::regspace<uvec>(eFirst, eLast);
-    
-    vec gutalphasigma2(M);
-    
-    gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + 
-      ((-0.5 / sigmae2) * sigma2) / fe2talpha(span(eFirst, eLast));
-    
-    // (possibly reordered) shifted tip values
-    vec z1 = zReord(span(eFirst, eLast)) - theta ;
-    
-    if(sigmae != 0) {
-      // integration over g1 including e1 = z1 - g1
-      abcMat(span(eFirst, eLast), 2) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
-        0.25 * sigma2 * pow(z1 / sigmae2, 2) /
-          (fe2talpha(span(eFirst, eLast)) - alpha + (-0.5 / sigmae2) * sigma2) +
-            talpha(span(eFirst, eLast)) + (-0.5 * (M_LN_2PI  + z1 % (z1 / sigmae2)) - logsigmae) ;
-      
-      abcMat(span(eFirst, eLast), 1) = (etalpha(span(eFirst, eLast)) % (z1 / sigmae2)) / 
-        gutalphasigma2(span(eFirst, eLast)) ;
-      
-      abcMat(span(eFirst, eLast), 0) = (-0.5 / sigmae2) / gutalphasigma2(span(eFirst, eLast));
-    } else {
-      // integration over g1 with e1 = 0
-      abcMat(span(eFirst, eLast), 0) = fe2talpha(span(eFirst, eLast)) / sigma2;
-      
-      abcMat(span(eFirst, eLast), 1) = -2 * etalpha(span(eFirst, eLast)) % z1 % abcMat(span(eFirst, eLast), 0);
-      
-      abcMat(span(eFirst, eLast), 2) = talpha(span(eFirst, eLast)) + 0.5 * log(-fe2talpha(span(eFirst, eLast))) -
-        M_LN_SQRT_PI - logsigma + pow(etalpha(span(eFirst, eLast)) % z1, 2) % abcMat(span(eFirst, eLast), 0);
-    }
-    
-    uint unJ = 0;
-    //update parent abcs
-    uint lenUnAll = 0;
-    while(lenUnAll != es.n_elem) {
-      abcMat.rows(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
-        abcMat.rows(span(unIndex(unJ) + 1, unIndex(unJ + 1))) ;
-      
-      lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
-      ++unJ;
-    }
-    
-    // edges pointing to internal nodes
-    for(int i = 1; i < nLevels; ++i) {
-      uint eFirst = nodesIndex(i) + 1, eLast = nodesIndex(i+1);
-      es = arma::regspace<uvec>(eFirst, eLast);
-
-      
-      // edges pointing to internal nodes, for which all children nodes have been visited
-      gutalphasigma2(span(eFirst, eLast)) = e2talpha(span(eFirst, eLast)) + (abcMat(span(eFirst, eLast), 0) * sigma2) / fe2talpha(span(eFirst, eLast));
-      
-      abcMat(span(eFirst, eLast), 2) = -0.5 * log(gutalphasigma2(span(eFirst, eLast))) -
-        0.25 * sigma2 * pow(abcMat(span(eFirst, eLast), 1), 2) /
-          (fe2talpha(span(eFirst, eLast)) - alpha + abcMat(span(eFirst, eLast), 0) * sigma2) +
-            talpha(span(eFirst, eLast)) + abcMat(span(eFirst, eLast), 2);
-      
-      abcMat(span(eFirst, eLast), 1) = (etalpha(span(eFirst, eLast)) % abcMat(span(eFirst, eLast), 1)) / 
-        gutalphasigma2(span(eFirst, eLast));
-      
-      abcMat(span(eFirst, eLast), 0) = abcMat(span(eFirst, eLast), 0) / gutalphasigma2(span(eFirst, eLast));
-      
-      lenUnAll = 0;
-      while(lenUnAll != es.n_elem) {
-        abcMat.rows(eReord(span(unIndex(unJ) + 1, unIndex(unJ + 1)))) += 
-          abcMat.rows(span(unIndex(unJ) + 1, unIndex(unJ + 1))) ;
-        
-        lenUnAll +=  unIndex(unJ + 1) - unIndex(unJ);
-        ++unJ;
-      }
-      
-    }
-    
-    //auto elapsed = std::chrono::high_resolution_clock::now() - start;
-    
-    //long long microseconds = std::chrono::duration_cast<std::chrono::microseconds>(elapsed).count();
-    
-    //cout<<microseconds<<endl;
-    
-    return abcMat.row(M-1);
   };
   
   arma::vec abc(double alpha, double theta, double sigma, double sigmae) {
@@ -468,15 +250,6 @@ public:
     return res;
   };
   
-  
-  arma::mat get_abcMat() const {
-    return abcMat;
-  };
-  
-  arma::umat get_edge() const {
-    return edge;
-  };
-  
   uint get_count_abc_calls() const {
     return count_abc_calls;
   }
@@ -486,12 +259,7 @@ RCPP_MODULE(IntegratorPOUMM) {
   class_<Integrator>( "Integrator" )
   .constructor()
   .method( "setPruningInfo", &Integrator::setPruningInfo )
-  .method( "reorderEdges", &Integrator::reorderEdges )
   .method( "abc", &Integrator::abc )
-  .method( "abc2", &Integrator::abc2 )
-  .method( "abc_old", &Integrator::abc_old )
-  .property( "abcMat", &Integrator::get_abcMat )
-  .property( "edge", &Integrator::get_edge )
   .property("count_abc_calls", &Integrator::get_count_abc_calls )
   ;
 }

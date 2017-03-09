@@ -83,8 +83,9 @@
 #' }
 #' 
 #'@references 
-#'  Mitov, V., and Stadler, T. (2016). The heritability of pathogen traits - 
-#'  definitions and estimators. bioRxiv, 058503. http://doi.org/10.1101/058503 
+#'  Mitov, V., and Stadler, T. (2017). POUMM: An R-package for Bayesian Inference 
+#'  of Phylogenetic Heritability. bioRxiv, 115089. 
+#'  https://doi.org/10.1101/115089
 #'  
 #'  Vihola, M. (2012). Robust adaptive Metropolis algorithm with coerced 
 #'  acceptance rate. Statistics and Computing, 22(5), 997-1008. 
@@ -332,6 +333,9 @@ logLik.POUMM <- function(object, ...) {
 #' 
 #' 
 #' @return A named vector with the fitted parameters of the model.
+#' 
+#' @importFrom stats coef
+#' 
 #' @export
 coef.POUMM <- function(object, mapped = FALSE, ...) {
   if("POUMM" %in% class(object)) {
@@ -357,7 +361,10 @@ coef.POUMM <- function(object, mapped = FALSE, ...) {
 #' @param ... Not used; added for compatibility with generic function fitted.
 #' @return If vCov == TRUE, a list with elements g - the genotypic values and
 #' vCov - the variance-covariance matrix of these values for the specific tree,
-#' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of genotypic values corresponding to the tip-labels in the tree is returned.
+#' observed values z and POUMM ML-fit. If vCov == FALSE, only the vector of 
+#' genotypic values corresponding to the tip-labels in the tree is returned.
+#' 
+#' @importFrom stats fitted
 #' @export
 fitted.POUMM <- function(object, vCov=FALSE, ...) {
   if("POUMM" %in% class(object)) {
@@ -397,7 +404,11 @@ nobs.POUMM <- function(object, ...) {
 #' Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.
 #' @param object An object of class POUMM.
 #' @param ... Not used; added for compatibility with generic function residuals.
-#' @return The vector of e-values (residuals) corresponding to the tip-labels in the tree.
+#' @return The vector of e-values (residuals) corresponding to the tip-labels in
+#'  the tree.
+#'  
+#' @importFrom stats fitted
+#' 
 #' @export
 residuals.POUMM <- function(object, ...) {
   if("POUMM" %in% class(object)) {
@@ -436,7 +447,10 @@ residuals.POUMM <- function(object, ...) {
 #'   chain and the data-point is filtered out if it evaluates to FALSE. This 
 #'   allows to zoomIn the x-axis of density plots but should be use with caution,
 #'   since filtering out points from the MCMC-sample can affect the kernel 
-#'   densities. Default value is "(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)". The identifiers in this expression can be any
+#'   densities. Default value is 
+#'    paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
+#'           " (value >= HPDLower & value <= HPDUpper))"). 
+#'   The identifiers in this expression can be any
 #'   column names found in a summary of a POUMM object.
 #' @param ... not used, needed for consistency with the generic plot-function.
 #'
@@ -451,7 +465,9 @@ plot.POUMM <-
            startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
            statFunctions = statistics(x),
            doZoomIn = FALSE,
-           zoomInFilter = "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') | value >= HPDLower & value <= HPDUpper)",
+           zoomInFilter = 
+             paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
+                    " (value >= HPDLower & value <= HPDUpper))"),
            ...) {
   
   if("POUMM" %in% class(x)) {

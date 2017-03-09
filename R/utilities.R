@@ -51,6 +51,7 @@ printPOUMMLikelihoodMainLoop <- function(tree) {
   }
 }
 
+#' @importFrom graphics par plot
 plotPOUMMLikelihoodMainLoop <- function(tree, x.lim=c(-2,16.4)) {
   pruneInfo <- pruneTree(tree)
   M <- pruneInfo$M

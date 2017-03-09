@@ -1,5 +1,5 @@
 ---
-title: "First Steps with the Phylogenetic Ornstein-Uhlenbeck Mixed Model"
+title: "A User Guide to The POUMM R-package"
 author: "Venelin Mitov"
 date: "`r Sys.Date()`"
 output: 
@@ -8,7 +8,7 @@ output:
     toc: true
     toc_depth: 2
 vignette: >
-  %\VignetteIndexEntry{First Steps with the Phylogenetic Ornstein-Uhlenbeck Mixed Model}
+  %\VignetteIndexEntry{A User Guide to The POUMM R-package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 bibliography: ../inst/REFERENCES.bib
@@ -21,8 +21,14 @@ library(ggplot2)
 library(data.table)
 knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
+useCachedResults <- file.exists("UserGuideCache.RData") & TRUE
+
+if(useCachedResults) {
+  load("UserGuideCache.RData")
+}
 ```
-Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2016kd]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
+
+Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
 
 * Is the POUMM an appropriate model for the data?
 * Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
@@ -34,9 +40,7 @@ TODO
 * What are the maximum-likelihood genotypic values of the root and tips of the tree?
 -->
 
-In the first section, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation.
-
-In the second section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
+In the first two sections, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. In the third section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
 
 But before we start, quickly install the needed packages:
 
@@ -97,7 +101,7 @@ The POUMM models the evolution of a continuous trait, $z$, along a phylogenetic 
 ## Simulating the phylogeny
 Once the POUMM parameters are specified, we use the **TreeSim** R-package [@R-TreeSim] to generate a random birth-death tree with `r N` tips:
 
-```{r simulate-tree, results="hide"}
+```{r simulate-tree, results="hide", eval=!useCachedResults}
 # Number of tips
 tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6, 
                                timesky=c(0, Inf), sampprobsky = 1)[[1]]
@@ -107,7 +111,7 @@ tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6,
 Starting from the root value $g_0$, we simulate the genotypic values, $g$, and the environmental contributions, $e$, at all internal nodes down to the tips of the phylogeny:
 
 
-```{r simulate-gez-OU}
+```{r simulate-gez-OU, eval=!useCachedResults}
 # genotypic (heritable) values
 g <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
 
@@ -132,16 +136,14 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
 ```
 
 
-## Fitting the POUMM
+# Fitting the POUMM
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function: 
 
-```{r fitPOUMM-1, eval=TRUE, results="hide", message=FALSE, warning=FALSE}
+```{r fitPOUMM-1, results="hide", message=FALSE, warning=FALSE, eval=!useCachedResults}
 fitPOUMM <- POUMM::POUMM(z[1:N], tree)
 ```
 
-Be prepared that the call below can take up to 10 minutes to execute since it has to complete three MCMC chains: One chain sampling from the prior distribution and two MCMC chains starting from arbitrary points in the POUMM parameter space. This would allow to assess the quality of the POUMM fit later on. 
-
-The above code runs for about 5 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}). To speed-up the model-fit, it is possible to parallelize the MCMCs on a multi-core system (see the section "Parallelizing the MCMC sampling")
+The above code runs for about 5 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}). 
 
 The strategy of executing three MCMC chains instead of one allows to assess: 
 
@@ -163,17 +165,24 @@ summary(fitPOUMM)
 The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
 
 
-```{r fitPOUMM-2, eval=TRUE, results="hide"}
+```{r fitPOUMM-2, results="hide", eval=!useCachedResults}
 fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))  
 ```
 
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE, eval=FALSE}
-plot(fitPOUMM2, interactive = FALSE)
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+filter <- paste0(
+       "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax')) | ",
+       "(stat == 'alpha' & value >= 0 & value <= 4) | ",
+       "(stat == 'sigma' & value >= 0 & value <= 2) | ",
+       "(stat == 'sigmae' & value >= 0 & value <= 2) | ",
+       "(stat == 'g0' & value >= -4 & value <= 4) | ",
+       "(stat == 'theta' & value >= -2 & value <= 4)")
+plot(fitPOUMM2, interactive = FALSE, doZoomIn = TRUE, zoomInFilter = filter)
 ```
 
-```{r, warning=FALSE, eval=TRUE}
+```{r, warning=FALSE}
 summary(fitPOUMM2)
 ```
 
@@ -201,7 +210,7 @@ c(# phylogenetic heritability at mean root-tip distance:
 
 Finally, we compare the ratio of empirical genotypic to total phenotypic variance with the HPD-interval for the phylogenetic heritability. 
 
-```{r, warning=FALSE, eval=TRUE}
+```{r, warning=FALSE}
 c(H2empirical = var(g[1:N])/var(z[1:N]))
 summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 ```
@@ -227,27 +236,31 @@ The first step to answering that question is to visualize the data and check for
 
 Once visualizing the data has confirmed its normality, we recommend comaparing the POUMM-fit with a fit from a NULL-model such as the phylogenetic mixed model (PMM) [@Housworth:2004gj]. Since the PMM is nested in the POUMM, i.e. in the limit $\alpha\to0$, the POUMM model is equivalent to a PMM model with the same initial genotypic value $g_0$ and unit-time variance $\sigma$, it is easy to fit a PMM model to the data by fixing the value of the parameter $\alpha$ to 0:
 
-```{r}
+```{r, eval=!useCachedResults}
 specPMM <- POUMM::specifyPMM(z[1:N], tree)
 fitPMM <- POUMM::POUMM(z[1:N], tree, spec = specPMM, doMCMC=FALSE)
 ```
 
 Now a likelihood-ratio test between the maximum likelihood fits clearly shows that the POUMM fits significantly better to the data:
 
-```{r, eval=FALSE}
+```{r}
 lmtest::lrtest(fitPMM, fitPOUMM2)
 ```
 
 As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:
 
-```{r}
+```{r, eval=!useCachedResults}
 gBM <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha = 0, theta = 0, sigma = sigma)
 zBM <- gBM + e
 
-fitPMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, spec=specPMM, doMCMC = FALSE)
+fitPMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, spec = specPMM, doMCMC = FALSE)
 fitPOUMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, doMCMC = FALSE)
 
 lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM)
+```
+
+```{r saveCache, include=FALSE, eval=!useCachedResults}
+save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, fitPOUMM2, fitPOUMM, g, z, tree, file="UserGuideCache.RData")
 ```
 
 ## Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
@@ -259,12 +272,64 @@ if a likelihood ratio test between a ML PMM and POUMM fits gives a p-value below
 of neutral drift (Brownian motion) cannot be rejected.
 
 ## To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
-In other words, what is the proportion of observable phenotypic variance attributed to the phylogeny? To answer this question one needs to estimate the phylogenetic heritability of the trait. Assuming that the tree represents the genetic relationship between individuals in a population, $H_\bar{t}^2$ provides an estimate for the broad-sense heritability $H^2$ of the trait in the population. The POUMM package reports the following three types of phylogenetic heritability (see table \ref{tab:table1} for simplified expressions):
+In other words, what is the proportion of observable phenotypic variance attributable to the phylogeny? To answer this question, the POUMM package allows to estimate the phylogenetic heritability of the trait. Assuming that the tree represents the genetic relationship between individuals in a population, $H_\bar{t}^2$ provides an estimate for the broad-sense heritability $H^2$ of the trait in the population. The POUMM package reports the following types of phylogenetic heritability (see table \ref{tab:table1} for simplified expressions):
 
 * Expectation at the mean root-tip distance : $H_{\bar{t}}^2:=\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}\right]/\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}+\sigma_e^2\right]$;
 * Expectation at equilibrium of the OU-process: $H_{\infty}^2:=\lim_{\bar{t}\to\infty}H_{\bar{t}}^2$;
-* Empirical (time-independent) version of the heritability based on the sample phenotypic variance $s^2(\textbf{z})$ : $H_e^2:=1-\sigma_e^2/s^2(\textbf{z})$.
+* Empirical (time-independent) version of the heritability based on the sample 
+phenotypic variance $s^2(\textbf{z})$ : $H_e^2:=1-\sigma_e^2/s^2(\textbf{z})$.
 
+When the goal is to estimate $H_{\bar{t}}^2$ (`H2tMean`), it is imortant to specify an uninformed prior for it. Looking at the densities for chain 1 (red) on the previous figures, it becomes clear that the default prior favors values of `H2tMean`, which are either close to 0 or close to 1. Since by definition $H_{\bar{t}}^2\in[0,1]$, a reasonable uninformed prior for it is the standard uniform distribution. We set this prior by using the `POUMM::specifyPOUMM_ATH2tMeanSeG0` function. This specifies that the POUMM fit should be done on a parametrization $<\alpha,\theta,H_{\bar{t}}^2,\sigma_e,g_0>$ rather than the standard parametrization $<\alpha,\theta,\sigma,\sigma_e,g_0>$. It also specifies a uniform prior for $H_{\bar{t}}^2$. You can explore the members of the specification list to see the different settings: 
+
+```{r, message=FALSE, warning=FALSE, eval=TRUE}
+specH2tMean <- POUMM::specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, nSamplesMCMC = 4e5)
+# Mapping from the sampled parameters to the standard POUMM parameters:
+specH2tMean$parMapping
+# Prior for the MCMC sampling
+specH2tMean$parPriorMCMC
+# Bounds for the maximum likelihood search
+specH2tMean$parLower
+specH2tMean$parUpper
+```
+
+Then we fit the model:
+```{r eval=!useCachedResults}
+fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
+```
+
+```{r saveCache2, include=FALSE, eval=!useCachedResults}
+save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, 
+     fitPOUMM2, fitPOUMM, g, z, tree, specH2tMean, fitH2tMean, 
+     file="UserGuideCache.RData")
+```
+
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), interactive = FALSE,
+     doZoomIn = TRUE, zoomInFilter = "value >= 0 & value <= 1")
+```
+
+```{r, warning=FALSE}
+summary(fitH2tMean)[stat %in% c("H2tMean", "H2e", "H2tInf", "sigmae")]
+```
+
+Now we see that the density for `H2tMean` is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for `H2tMean` and `H2tInf` are nearly the same. Notice, though, that the estimate for the empirical heritability `H2e` is shifted towards 1 compared to `H2tMean` and `H2tInf`. This shows an important difference between `H2e` and the time-dependent formulae for phylogenetic heritability: `H2e` takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:
+
+```{r}
+# Compare global empirical heritability
+H2eGlobal <- POUMM::H2e(z[1:N], sigmae = coef(fitH2tMean)['sigmae'])
+# versus recent empirical heritability
+H2eRecent <- POUMM::H2e(z[1:N], tree, sigmae = coef(fitH2tMean)['sigmae'], tFrom = 5)
+print(c(H2eGlobal, H2eRecent))
+```
+
+```{r saveCache3, include=FALSE, eval=!useCachedResults}
+save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, 
+     fitPOUMM2, fitPOUMM, g, z, tree, specH2tMean, fitH2tMean,
+     file="UserGuideCache.RData")
+```
+
+
+To learn more about different ways to specify the POUMM fit, read the documentation page `?POUMM::specifyPOUMM_ATH2tMeanSeG0`. 
 <!--
 TODO
 ## What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
@@ -272,7 +337,6 @@ TODO
 
 ## What are the maximum-likelihood genotypic values of the root and tips of the tree?
 -->
-
 
 # Packages used
 ```{r create-references, echo=FALSE, include=FALSE, eval=TRUE}

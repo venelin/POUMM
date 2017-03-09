@@ -1,19 +1,19 @@
 citHeader("To cite POUMM in publications use:")
 
 citEntry(entry = "Article",
-  title        = "The Heritability of Pathogen Traits - Definitions and Estimators",
+  title        = "POUMM: An R-package for Bayesian Inference of Phylogenetic Heritability",
   author       = personList(as.person("Venelin Mitov"),
                    as.person("Tanja Stadler")),
   journal      = "BiorXiv",
-  year         = "2016",
+  year         = "2017",
   volume       = "",
   number       = "",
   pages        = "",
-  url          = "http://www.biorxiv.org/content/early/2016/06/12/058503",
+  url          = "http://www.biorxiv.org/content/early/2017/03/08/115089",
 
   textVersion  =
   paste("Venelin Mitov, Tanja Stadler (2017).",
-        "The Heritability of Pathogen Traits - Definitions and Estimators",
+        "POUMM: An R-package for Bayesian Inference of Phylogenetic Heritability",
         "BiorXiv",
-        "URL http://www.biorxiv.org/content/early/2016/06/12/058503")
+        "URL http://www.biorxiv.org/content/early/2017/03/08/115089")
 )
