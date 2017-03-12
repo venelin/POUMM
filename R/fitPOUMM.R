@@ -545,8 +545,7 @@ MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc
   if (list) {
     return(list(samples = X, log.p = p.val, cov.jump = M, 
                 n.sample = n, acceptance.rate = acceptance.rate, 
-                adaption = adapt, sampling.parameters = list(sample.density = p, 
-                                                             acc.rate = acc.rate, gamma = gamma)))
+                adaption = adapt, sampling.parameters = list(acc.rate = acc.rate, gamma = gamma)))
   }
   else {
     cat("Acceptance rate:", acceptance.rate, "\n")

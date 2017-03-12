@@ -25,6 +25,12 @@ summary.POUMM <- function(object, ...,
                           startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
                           stats = statistics(object),
                           mode = c('short', 'long', 'expert')) {
+  
+  # declare global variables to avoid CRAN CHECK NOTES "no visible binding":
+  N <- estML <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
+    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- Mean <- mcs <- 
+    ESS <- nChains <- chain <- G.R. <- stat <- NULL
+  
   mode <- tolower(mode)
   
   tipTimes <- nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE)
@@ -187,6 +193,7 @@ summary.POUMM <- function(object, ...,
 #'  ggplot objects corresponding to an MCMC-trace and a posterior density plot.
 #'  
 #' @import ggplot2
+#' @import methods
 #'  
 #' @export
 plot.summary.POUMM <- function(
@@ -197,6 +204,11 @@ plot.summary.POUMM <- function(
   doZoomIn = FALSE,
   zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
                         " (value >= HPDLower & value <= HPDUpper))"), ...) {
+  
+  # declare global variables to avoid CRAN CHECK NOTES "no visible binding":
+  N <- estML <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
+    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- Mean <- mcs <- 
+    ESS <- nChains <- chain <- G.R. <- NULL
   
   if(class(x) == "summary.POUMM" & !is.null(x$MCMC)) {
     .stat <- stat
@@ -213,7 +225,7 @@ plot.summary.POUMM <- function(
     
     setkey(data, stat)
     
-    data <- data[J(.stat)]
+    data <- data[list(.stat)]
     
     data <- data[{ 
       if(!is.null(.stat)) {stat %in% .stat} else TRUE 

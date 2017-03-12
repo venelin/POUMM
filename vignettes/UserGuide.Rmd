@@ -21,11 +21,9 @@ library(ggplot2)
 library(data.table)
 knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
-useCachedResults <- file.exists("UserGuideCache.RData") & TRUE
 
-if(useCachedResults) {
-  load("UserGuideCache.RData")
-}
+# set this to FALSE to disable cache and run all MCMC-fits.
+useCachedResults <- file.exists("UserGuideCache.RData") & TRUE 
 ```
 
 Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
@@ -64,6 +62,10 @@ alpha <- .5
 theta <- 2        
 sigma <- 0.2     
 sigmae <- 0.2 
+```
+
+```{r, include=FALSE, eval=useCachedResults}
+load("UserGuideCache.RData")
 ```
 
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `POUMM::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
@@ -139,7 +141,42 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
 # Fitting the POUMM
 Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function: 
 
-```{r fitPOUMM-1, results="hide", message=FALSE, warning=FALSE, eval=!useCachedResults}
+```{r MaintainCache, echo=FALSE, warning=FALSE, results="hide", message=FALSE, eval=TRUE}
+if(!useCachedResults) {
+  # Perform the heavy fits locally. 
+  # set up a parallel cluster on the local computer for parallel MCMC:
+  cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
+  doParallel::registerDoParallel(cluster)
+  
+  fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(thinMCMC = 1000, parallelMCMC=TRUE))
+  fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5, thinMCMC = 1000, parallelMCMC=TRUE))
+  
+  specH2tMean <- POUMM::specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, 
+                                                   nSamplesMCMC = 4e5, 
+                                                   thinMCMC = 1000, parallelMCMC=TRUE)
+  fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
+  
+  
+  # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
+  parallel::stopCluster(cluster)
+  
+  # delete some of the slots to make cach-file smaller :-(.
+  fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
+  fitPOUMM$loglik <- fitPOUMM2$loglik <- fitH2tMean$loglik <- NULL
+  fitPOUMM$fitMCMC$post <- fitPOUMM2$fitMCMC$post <- fitH2tMean$fitMCMC$post <- NULL
+  fitPOUMM$spec$parPriorMCMC <- fitPOUMM2$spec$parPriorMCMC <- fitH2tMean$spec$parPriorMCMC <- NULL
+  fitPOUMM$spec$parInitMCMC <- fitPOUMM2$spec$parInitMCMC <- fitH2tMean$spec$parInitMCMC <- NULL
+  
+  save(g, z, tree, e, 
+       fitPOUMM2, fitPOUMM, fitH2tMean,
+       file="UserGuideCache.RData")
+} 
+# restore the pruneInfo since it is needed afterwards.
+fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- POUMM::pruneTree(tree, z[1:N])
+```
+
+
+```{r fitPOUMM-1, results="hide", message=FALSE, warning=FALSE, eval=FALSE}
 fitPOUMM <- POUMM::POUMM(z[1:N], tree)
 ```
 
@@ -164,14 +201,13 @@ summary(fitPOUMM)
 
 The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
 
-
-```{r fitPOUMM-2, results="hide", eval=!useCachedResults}
+```{r fitPOUMM-2, results="hide", eval=FALSE}
 fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))  
 ```
 
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
+```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE, eval=TRUE}
 filter <- paste0(
        "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax')) | ",
        "(stat == 'alpha' & value >= 0 & value <= 4) | ",
@@ -182,7 +218,8 @@ filter <- paste0(
 plot(fitPOUMM2, interactive = FALSE, doZoomIn = TRUE, zoomInFilter = filter)
 ```
 
-```{r, warning=FALSE}
+
+```{r, warning=FALSE, eval=TRUE}
 summary(fitPOUMM2)
 ```
 
@@ -218,7 +255,7 @@ summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 ## Parallelizing the MCMC
 On multi-core systems, it is possible to speed-up the POUMM-fit by parallelizing the MCMC-chains. This can be done by creating a cluster using the parallel R-package:
 
-```{r, eval=FALSE, echo=TRUE}
+```{r, echo=TRUE, eval=FALSE}
 # set up a parallel cluster on the local computer for parallel MCMC:
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
@@ -236,7 +273,7 @@ The first step to answering that question is to visualize the data and check for
 
 Once visualizing the data has confirmed its normality, we recommend comaparing the POUMM-fit with a fit from a NULL-model such as the phylogenetic mixed model (PMM) [@Housworth:2004gj]. Since the PMM is nested in the POUMM, i.e. in the limit $\alpha\to0$, the POUMM model is equivalent to a PMM model with the same initial genotypic value $g_0$ and unit-time variance $\sigma$, it is easy to fit a PMM model to the data by fixing the value of the parameter $\alpha$ to 0:
 
-```{r, eval=!useCachedResults}
+```{r}
 specPMM <- POUMM::specifyPMM(z[1:N], tree)
 fitPMM <- POUMM::POUMM(z[1:N], tree, spec = specPMM, doMCMC=FALSE)
 ```
@@ -247,9 +284,11 @@ Now a likelihood-ratio test between the maximum likelihood fits clearly shows th
 lmtest::lrtest(fitPMM, fitPOUMM2)
 ```
 
+Since `lrtest` only uses the ML-fit, to save time, we desabled the MCMC fit by specifying `doMCMC = FALSE`. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit.
+
 As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:
 
-```{r, eval=!useCachedResults}
+```{r}
 gBM <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha = 0, theta = 0, sigma = sigma)
 zBM <- gBM + e
 
@@ -259,9 +298,6 @@ fitPOUMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, doMCMC = FALSE)
 lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM)
 ```
 
-```{r saveCache, include=FALSE, eval=!useCachedResults}
-save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, fitPOUMM2, fitPOUMM, g, z, tree, file="UserGuideCache.RData")
-```
 
 ## Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
 To answer this question, consider the estimated values of the POUMM-parameters $\theta$ and
@@ -293,14 +329,8 @@ specH2tMean$parUpper
 ```
 
 Then we fit the model:
-```{r eval=!useCachedResults}
+```{r eval=FALSE}
 fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
-```
-
-```{r saveCache2, include=FALSE, eval=!useCachedResults}
-save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, 
-     fitPOUMM2, fitPOUMM, g, z, tree, specH2tMean, fitH2tMean, 
-     file="UserGuideCache.RData")
 ```
 
 ```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
@@ -320,12 +350,6 @@ H2eGlobal <- POUMM::H2e(z[1:N], sigmae = coef(fitH2tMean)['sigmae'])
 # versus recent empirical heritability
 H2eRecent <- POUMM::H2e(z[1:N], tree, sigmae = coef(fitH2tMean)['sigmae'], tFrom = 5)
 print(c(H2eGlobal, H2eRecent))
-```
-
-```{r saveCache3, include=FALSE, eval=!useCachedResults}
-save(gBM, zBM, e, fitPMM_on_zBM, fitPOUMM_on_zBM, specPMM, fitPMM, 
-     fitPOUMM2, fitPOUMM, g, z, tree, specH2tMean, fitH2tMean,
-     file="UserGuideCache.RData")
 ```
 
 

@@ -6,4 +6,3 @@
 ^NEWS\.md$
 ^cran-comments\.md$
 ^benchmark$
-^vignettes/UserGuideCache\.RData$
