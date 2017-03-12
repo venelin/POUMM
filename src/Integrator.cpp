@@ -1,11 +1,26 @@
 #include <RcppArmadillo.h>
 #include <algorithm>
+#include <R_ext/Rdynload.h>
 // [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
 using namespace arma;
 
+// Needed to compile on WINDOWS:
 typedef unsigned int uint;
+
+// BEGIN: Needed for r-devel (R 3.4)
+void R_init_POUMM(DllInfo *info) {
+  /* Register routines,
+  allocate resources. */
+  R_registerRoutines(info, NULL, NULL, NULL, NULL);
+  R_useDynamicSymbols(info, TRUE);
+}
+
+void R_unload_POUMM(DllInfo *info) {
+    /* Release resources. */
+}
+// END Needed for r-devel (R 3.4)
 
 class Integrator {
   uvec ZERO;
