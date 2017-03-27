@@ -189,8 +189,8 @@ The strategy of executing three MCMC chains instead of one allows to assess:
 
 We plot traces and posterior sample densities from the MCMC fit:
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE, fig.cap="MCMC traces and posterior density plots from a POUMM MCMC-fit. Black dots on the x-axis indicate the ML-fit.", eval=TRUE}
-plot(fitPOUMM, interactive = FALSE)
+```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, fig.cap="MCMC traces and posterior density plots from a POUMM MCMC-fit. Black dots on the x-axis indicate the ML-fit.", results="hide", eval=TRUE}
+plot(fitPOUMM)
 ```
 
 A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
@@ -207,7 +207,7 @@ fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))
 
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE, eval=TRUE}
+```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, results="hide", eval=TRUE}
 filter <- paste0(
        "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax')) | ",
        "(stat == 'alpha' & value >= 0 & value <= 4) | ",
@@ -215,7 +215,8 @@ filter <- paste0(
        "(stat == 'sigmae' & value >= 0 & value <= 2) | ",
        "(stat == 'g0' & value >= -4 & value <= 4) | ",
        "(stat == 'theta' & value >= -2 & value <= 4)")
-plot(fitPOUMM2, interactive = FALSE, doZoomIn = TRUE, zoomInFilter = filter)
+pl <- plot(fitPOUMM2, doPlot = FALSE, doZoomIn = TRUE, zoomInFilter = filter)
+pl$densplot
 ```
 
 
@@ -333,8 +334,8 @@ Then we fit the model:
 fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
 ```
 
-```{r, fig.height=4, fig.show="hold", fig.width=7, warning=FALSE}
-plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), interactive = FALSE,
+```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE}
+plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), 
      doZoomIn = TRUE, zoomInFilter = "value >= 0 & value <= 1")
 ```
 
@@ -369,7 +370,7 @@ mcmcSampling <- c("adaptMCMC")
 mcmcDiagnosis <- c("coda")
 otherPackages <- c("parallel", "foreach", "data.table", "Matrix", "gsl")
 treeProcessing <- c("ape")
-reporting <- c("data.table", "ggplot2", "lmtest")
+reporting <- c("data.table", "ggplot2", "GGally", "lmtest")
 testing <- c("testthat", "mvtnorm", "TreeSim")
  
 packagesUsed <- c(likCalculation, mcmcDiagnosis, otherPackages, treeProcessing, reporting, testing)
@@ -386,7 +387,7 @@ printPackages <- function(packs) {
 }
 
 # Write bib information (this line is executed manually and the bib-file is edited manually after that)
-# knitr::write_bib(packagesUsed, file = "./REFERENCES.bib")
+# knitr::write_bib(packagesUsed, file = "./REFERENCES-R.bib")
 ```
 
 

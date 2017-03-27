@@ -11,17 +11,29 @@ How do I use it?
 Here is a quick example on how to use the package on a simulated tree and data:
 
 ``` r
+# number of tips in the tree
 N <- 500
+# a random tree (a phylo object)
 tr <- ape::rtree(N)
+# simulate trait values along the tree
 z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
+# fitting the POUMM to the tree and data
 fit <- POUMM::POUMM(z, tr, spec = POUMM::specifyPOUMM(nSamplesMCMC = 5e4))
+# plotting the inferred parameters (MCMC trace, and posterior densities):
 plot(fit)
+# summary as a table
 summary(fit)
+# information criterions based on maximum likelihood
 AIC(fit)
 BIC(fit)
+# parameters maximizing the likelihood:
 coef(fit)
+# log-likelihood 
 logLik(fit)
+# most-likely genotypic values at the tips
 fitted(fit)
+# residuals represent the difference between the genotypic values and the 
+# observed values. 
 plot(resid(fit))
 abline(h=0)
 
