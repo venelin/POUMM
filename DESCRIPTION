@@ -1,18 +1,24 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 1.2.1
-Date: 2017-03-10
+Version: 1.2.2
+Date: 2017-03-27
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre", "cph"))
-Description: Combined maximum likelihood and Bayesian inference of the 
-    univariate Phylogenetic Ornstein-Uhlenbeck Mixed Model; Fast POUMM likelihood
-    calculation. Maximum likelihood inference of the genotypic values
-    at the tips of a phylogeny assuming that the trait has evolved on it 
-    according to a POUMM with specified genotypic value at the root.
-    Functions for summarizing and plotting the inference results; 
-    Functions for simulation of univariate continuous trait evolution along a 
-    phylogenetic tree.
+Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to 
+    estimate the phylogenetic heritability of continuous traits, to test 
+    hypotheses of neutral evolution versus stabilizing selection, to quantify 
+    the strength of stabilizing selection, to estimate measurement error and to
+    make predictions about the evolution of a phenotype and phenotypic variation 
+    in a population. The package implements combined maximum likelihood and 
+    Bayesian inference of the univariate Phylogenetic Ornstein-Uhlenbeck Mixed 
+    Model, fast POUMM likelihood calculation, maximum likelihood inference of 
+    the genotypic values at the tips, functions for summarizing and plotting
+    traces and posterior samples, functions for simulation of a univariate 
+    continuous trait evolution along a phylogenetic tree. A quick example on
+    using the POUMM package can be found in the README. More elaborate
+    examples and use-cases are provided in the vignette 
+    "A User Guide to The POUMM R-package".
 License: GPL (>= 3.0)
 LazyData: true
 Depends:
@@ -27,6 +33,7 @@ Imports:
     coda,
     foreach,
     ggplot2,
+    GGally,
     gsl,
     Matrix
 Suggests:
