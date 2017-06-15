@@ -19,6 +19,7 @@
 #' 
 #' @import data.table
 #' @import coda
+#' @importFrom stats AIC
 #' 
 #' @export
 summary.POUMM <- function(object, ...,
@@ -27,9 +28,9 @@ summary.POUMM <- function(object, ...,
                           mode = c('short', 'long', 'expert')) {
   
   # declare global variables to avoid CRAN CHECK NOTES "no visible binding":
-  N <- estML <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
-    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- Mean <- mcs <- 
-    ESS <- nChains <- chain <- G.R. <- stat <- NULL
+  N <- MLE <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
+    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- PostMean <- mcs <- 
+    ESS <- nChains <- chain <- G.R. <- stat <- Mean <-  NULL
   
   mode <- tolower(mode)
   
@@ -42,18 +43,20 @@ summary.POUMM <- function(object, ...,
   parML <- matrix(object$fitML$par, nrow = 1)
   
   anlist <- lapply(1:length(stats), function(i) {
-    data.table(stat = names(stats)[i], estML = stats[[i]](parML))
+    data.table(stat = names(stats)[i], MLE = stats[[i]](parML))
   })
   
   anlist <- c(anlist, list(
-    data.table(stat = "logpost", estML = NA),
-    data.table(stat = "loglik", estML = object$fitML$value),
-    data.table(stat = "g0", estML = attr(object$fitML$value, "g0"))
+    data.table(stat = "logpost", MLE = NA),
+    data.table(stat = "loglik", MLE = object$fitML$value),
+    data.table(stat = "AIC", MLE = AIC(object)),
+    data.table(stat = "AICc", MLE = AIC(object) + 2*object$dof*(object$dof+1)/(object$N-object$dof-1)),
+    data.table(stat = "g0", MLE = attr(object$fitML$value, "g0"))
   ))
   
   an.ML <- rbindlist(anlist)
   an.ML[, N:=object$N]
-  setcolorder(an.ML, c('stat', 'N', 'estML'))
+  setcolorder(an.ML, c('stat', 'N', 'MLE'))
   
   if(!is.null(object$fitMCMC)) {
     if(is.na(startMCMC)) {
@@ -76,15 +79,23 @@ summary.POUMM <- function(object, ...,
                    start = startMCMC, end=endMCMC, thinMCMC = thinMCMC, 
                    as.dt = TRUE),
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat = NULL, statName='loglik', logprior=object$spec$parPrior,
+                   stat = NULL, statName='loglik', logprior=object$spec$parPriorMCMC,
                    start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
-                   as.dt = TRUE)
+                   as.dt = TRUE),
+      analyseMCMCs(object$fitMCMC$chains, 
+                   stat = NULL, statName='AIC', logprior=object$spec$parPriorMCMC,
+                   start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
+                   as.dt = TRUE, k = object$dof, N = object$N),
+      analyseMCMCs(object$fitMCMC$chains, 
+                   stat = NULL, statName='AICc', logprior=object$spec$parPriorMCMC,
+                   start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
+                   as.dt = TRUE, k = object$dof, N = object$N)
     ))
     
     if( !("g0" %in% names(stats)) ) {
       anlist <- c(anlist, list(
         analyseMCMCs(object$fitMCMC$chains, 
-                     stat=NULL, statName='g0', logprior=object$spec$parPrior,
+                     stat=NULL, statName='g0', logprior=object$spec$parPriorMCMC,
                      start=startMCMC, end=endMCMC, thinMCMC=thinMCMC, 
                      as.dt=TRUE))
       )
@@ -97,7 +108,7 @@ summary.POUMM <- function(object, ...,
     if(mode[1]!='expert') {
       an.MCMC <- an.MCMC[, 
                          list(
-                           Mean = mean(unlist(Mean)),
+                           PostMean = mean(unlist(Mean)),
                            HPD = list(colMeans(do.call(rbind, HPD))),
                            HPD50 = list(colMeans(do.call(rbind, HPD50))),
                            start = start(mcs), 
@@ -117,15 +128,15 @@ summary.POUMM <- function(object, ...,
     if(mode[1] == 'short') {
       an.MCMC <- an.MCMC[
         samplePriorMCMC == FALSE, 
-        list(stat, HPD, ESS, G.R.)]
+        list(stat, PostMean, HPD, ESS, G.R.)]
     } else if(mode[1] == 'long') {
       an.MCMC <- an.MCMC[
         samplePriorMCMC == FALSE, 
-        list(stat, Mean, HPD, HPD50, start, end, 
+        list(stat, PostMean, HPD, HPD50, start, end, 
              thin = thinMCMC, ESS, G.R., nChains, mcmc)]
     } else if(mode[1] == 'expert') {
       an.MCMC <- an.MCMC[, list(stat, samplePriorMCMC, 
-                                Mean, HPD, HPD50, start, end, thin = thinMCMC,
+                                PostMean, HPD, HPD50, start, end, thin = thinMCMC,
                                 ESS, mcmc = mcs, chain)]
     } else {
       warning(paste('mode should be one of "short", "long" or "expert", but was', mode[1], '.'))
@@ -135,7 +146,7 @@ summary.POUMM <- function(object, ...,
     an.MCMC <- NULL
   }
   
-  if(mode[1]%in%c('short', 'long')) {
+  if(mode[1] %in% c('short', 'long')) {
     if(!is.null(an.ML) & !is.null(an.MCMC)) {
       res <- merge(an.ML, an.MCMC, by = 'stat', all = TRUE, sort = FALSE)
       res[sapply(HPD, is.null), HPD:=list(list(as.double(c(NA, NA))))]
@@ -149,12 +160,10 @@ summary.POUMM <- function(object, ...,
   } else {
     res <- list(spec = object$spec, startMCMC = startMCMC, endMCMC = endMCMC,
                 thinMCMC = thinMCMC,
-                ML = an.ML, MCMC = an.MCMC)
+                ML = an.ML, MCMC = an.MCMC, 
+                MCMCBetterLik = object$MCMCBetterLik)
   }
   
-  #r.sq <- r.squared(object)
-  #attr(res, 'r.squared') <- r.sq
-  #attr(res, 'adj.r.squared') <- adj.r.squared(object, r.sq = r.sq)
   class(res) <- c('summary.POUMM', class(res))
   res
 }
@@ -177,15 +186,26 @@ summary.POUMM <- function(object, ...,
 #' @param zoomInFilter A character string which evaluates as logical value. If 
 #'   doZoomIn is set to TRUE, this filter is applied to each point in each MCMC
 #'   chain and the data-point is filtered out if it evaluates to FALSE. This 
-#'   allows to zoomIn the x-axis of density plots but should be use with caution,
+#'   allows to zoomIn the x-axis of density plots but should be used with caution,
 #'   since filtering out points from the MCMC-sample can affect the kernel densities.
-#'   Default value is 
-#'    paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
-#'           " (value >= HPDLower & value <= HPDUpper))"). 
+#'   Unfortunately, filtering out values is currently the only way to affect the
+#'   limits of individual facets in ggplot2. The default value is a complicated 
+#'   expression involving the HPD from all MCMC chains (normally one chain from the
+#'   prior and 2 chains from the posterior):
+#'    zoomInFilter = paste0("stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
+# "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+#   "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower)))").
+#'  The identifiers in this expression can be any
+#'   column names found in a summary of a POUMM object.
 #' @param palette A vector of colors (can be character strings) corresponding to the 
 #' different chains (in their order 1 (prior), 2, 3). Defaults to c("#999999", 
 #' "#0072B2", "#CC79A7", "#E69F00", "#D55E00", "#56B4E9", "#009E73", "#F0E442"),
 #' which is a color-blind friendly.
+#' @param prettyNames A logical indicating if greek letters and sub/superscripts 
+#' should be used for the names of columns in the posterior density pairs-plot.
+#' @param showUnivarDensityOnDiag A logical indicating if univariate density 
+#' plots should be displaied on the main diagonal in the bivariate posterior plot.
+#' Defaults to FALSE, in which case the column names are displayed on the diagonal.
 #' @param ... Not used; included for compatibility with the generic function plot.
 #' 
 #' @return If doPlot==TRUE, the function returns nothing and produces output on 
@@ -230,20 +250,25 @@ summary.POUMM <- function(object, ...,
 #' 
 #' @export
 plot.summary.POUMM <- function(
-  x, type=c("MCMC"), 
+  x, type = c("MCMC"), 
   doPlot = TRUE, 
-  stat=c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
-  chain=NULL,
+  stat = c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
+  chain = NULL,
   doZoomIn = FALSE,
-  zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
-                        " (value >= HPDLower & value <= HPDUpper))"), 
+  zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ", 
+                        "(value >= 0 & value <= 1) ) |",
+                        "( !stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ",
+                        "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+                        "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"), 
   palette = c("#999999", "#0072B2", "#CC79A7", "#E69F00", "#D55E00", "#56B4E9", "#009E73", "#F0E442"), 
+  prettyNames = TRUE,
+  showUnivarDensityOnDiag = FALSE,
   ...) {
   
   # declare global variables to avoid CRAN CHECK NOTES "no visible binding":
-  N <- estML <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
-    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- Mean <- mcs <- 
-    ESS <- nChains <- chain <- G.R. <- NULL
+  N <- MLE <- samplePriorMCMC <- HPD <- HPD50 <- ESS <- HPDUpperFiltered <- 
+    HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- PostMean <- mcs <- 
+    ESS <- nChains <- chain <- G.R. <- stat2 <- statFactor <- NULL
   
   if(class(x) == "summary.POUMM" & !is.null(x$MCMC)) {
     .stat <- stat
@@ -267,7 +292,7 @@ plot.summary.POUMM <- function(
     } & {
       if(!is.null(.chain)) {chain %in% .chain} else TRUE 
     }, list(
-      N, estML, 
+      N, MLE, 
       samplePriorMCMC, 
       HPDLower = sapply(HPD, function(.) .[1]),
       HPDUpper = sapply(HPD, function(.) .[2]),
@@ -278,7 +303,16 @@ plot.summary.POUMM <- function(
       it = seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]])), 
     by = list(stat = factor(stat), chain = factor(chain))]
     
-    data <- data[!doZoomIn | eval(parse(text=zoomInFilter))]
+    if(doZoomIn) {
+      data[, stat2:=stat]
+      
+      data <- data[, {
+        .SD[eval(parse(text = zoomInFilter))]
+        }, by = stat2]
+      
+      data[, stat2:=NULL]
+    }
+    
     
     data[, HPDUpperFiltered:=min(max(value), unique(HPDUpper)), 
          list(stat = factor(stat), chain = factor(chain))]
@@ -287,6 +321,14 @@ plot.summary.POUMM <- function(
          list(stat = factor(stat), chain = factor(chain))]
     
     .availStats <- data[, as.character(unique(stat))]
+    
+    statFactorLabels <- if(prettyNames) {
+      prettifyNames(.availStats) 
+    } else {
+      .availStats
+    }
+    data[, statFactor:=factor(stat, levels = .availStats, labels = statFactorLabels)]
+    
     .stat <- .availStats[1]
     dtm <- data[stat == .stat, list(stat, it, chain, value)]
     dtm[, (.stat) := value]
@@ -299,6 +341,7 @@ plot.summary.POUMM <- function(
       dtm <- merge(dtm, dtm2, by=c("it", "chain"), all=TRUE)
     }
     
+    
     names(palette) <- as.character(1:length(palette))
     
     my_ggplot <- function(...) ggplot(...) + 
@@ -308,11 +351,17 @@ plot.summary.POUMM <- function(
     if(type == "MCMC") {
       traceplot <- my_ggplot(data) + 
         geom_line(aes(x=it, y=value, col = chain)) + 
-        facet_wrap(~stat, scales = "free")
+        facet_wrap(~statFactor, 
+                   scales = "free", 
+                   labeller = if(prettyNames) "label_parsed" else "label_value")
       
       my_dens <- function(data, mapping, ...) {
         my_ggplot(data = data, mapping=mapping) +
-          geom_density(..., alpha = 0.5) 
+            geom_density(..., alpha = 0.5)
+      }
+      
+      eval_data_col <- function (data, aes_col) {
+        eval(aes_col, data)
       }
       
       my_points <- function(data, mapping, ...) {
@@ -331,11 +380,6 @@ plot.summary.POUMM <- function(
         # copied from GGally
         is_date <- function (x) {
           inherits(x, c("POSIXt", "POSIXct", "POSIXlt", "Date"))
-        }
-        
-        # copied from GGally
-        eval_data_col <- function (data, aes_col) {
-          eval(aes_col, data)
         }
         
         # copied from GGally
@@ -482,11 +526,23 @@ plot.summary.POUMM <- function(
         }
       }
       
-      densplot <- ggpairs(
+      densplot <- my_ggplot(data) + 
+        geom_density(aes(x=value, fill = chain, col = chain), alpha=0.5) + 
+        geom_segment(aes(x=HPDLowerFiltered, xend=HPDUpperFiltered, 
+                         y=0, yend=0, col = chain)) +
+        geom_point(aes(x=MLE, y=0)) +
+        facet_wrap(~statFactor, 
+                   scales = "free", labeller= if(prettyNames) "label_parsed" else "label_value")
+      
+      densplot_bivar <- ggpairs(
         as.data.frame(dtm), 
         mapping = aes(fill = chain, color = chain), 
         columns = .availStats, 
-        diag = list(continuous = my_dens),
+        columnLabels = if(prettyNames) prettifyNames(.availStats) else .availStats,
+        axisLabels = "show", 
+        showStrips = showUnivarDensityOnDiag,
+        labeller = if(prettyNames) "label_parsed" else "label_value",
+        diag = list(continuous = if(showUnivarDensityOnDiag) my_dens else "blankDiag"),
         lower = list(continuous = my_points, 
                      combo = wrap("box_no_facet")),
         upper = list(continuous = my_cor, 
@@ -495,17 +551,34 @@ plot.summary.POUMM <- function(
       if(doPlot) {
         print(traceplot) 
         if(interactive()) {
-          print("Press Enter to see a univariate density plot")
+          print("Press Enter to see a univariate posterior density plot")
           scan("", what = "character", nlines = 1)
         }
         print(densplot) 
+        if(interactive()) {
+          print("Press Enter to see a bivariate posterior density plot")
+          scan("", what = "character", nlines = 1)
+        }
+        print(densplot_bivar)
       } else {
-        list(traceplot = traceplot, densplot = densplot)  
+        list(traceplot = traceplot, densplot = densplot, densplot_bivar = densplot_bivar)  
       }
     }
   } else {
     stop("plot.summary.POUMM called on a non summary.POUMM-object or a missing MCMC element. Verify that summary.POUMM has been called with mode = 'expert'")
   }
+}
+
+prettifyNames <- function(names) {
+  prettyNames <- c(alpha = "alpha",
+                   theta = "theta",
+                   g0 = "g[0]", 
+                   sigma = "sigma",
+                   sigmae = "sigma[e]",
+                   H2tMean = "H[bar(t)]^2",
+                   H2e = "H[e]^2",
+                   H2tInf = "H[infinity]^2")
+  sapply(names, function(n) {pn <- prettyNames[n]; if(!is.na(pn)) pn else n}, USE.NAMES = FALSE)
 }
 
 #' Extract statistics from sampled or inferred parameters of a 

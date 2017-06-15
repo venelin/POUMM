@@ -23,7 +23,8 @@ knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
 
 # set this to FALSE to disable cache and run all MCMC-fits.
-useCachedResults <- file.exists("UserGuideCache.RData") & TRUE 
+useCachedResults <- file.exists("UserGuideCache.RData") & TRUE
+
 ```
 
 Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
@@ -40,7 +41,7 @@ TODO
 
 In the first two sections, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. In the third section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
 
-But before we start, quickly install the needed packages:
+But before we start, we install the needed packages:
 
 ```{r install, eval=FALSE}
 install.packages('POUMM')
@@ -148,7 +149,7 @@ if(!useCachedResults) {
   cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
   doParallel::registerDoParallel(cluster)
   
-  fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(thinMCMC = 1000, parallelMCMC=TRUE))
+  fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(thinMCMC = 1000, parallelMCMC=TRUE), verbose = TRUE)
   fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5, thinMCMC = 1000, parallelMCMC=TRUE))
   
   specH2tMean <- POUMM::specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, 
@@ -190,7 +191,7 @@ The strategy of executing three MCMC chains instead of one allows to assess:
 We plot traces and posterior sample densities from the MCMC fit:
 
 ```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, fig.cap="MCMC traces and posterior density plots from a POUMM MCMC-fit. Black dots on the x-axis indicate the ML-fit.", results="hide", eval=TRUE}
-plot(fitPOUMM)
+plot(fitPOUMM, showUnivarDensityOnDiag = TRUE)
 ```
 
 A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
@@ -208,14 +209,7 @@ fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
 
 ```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, results="hide", eval=TRUE}
-filter <- paste0(
-       "(stat %in% c('H2e','H2tMean','H2tInf','H2tMax')) | ",
-       "(stat == 'alpha' & value >= 0 & value <= 4) | ",
-       "(stat == 'sigma' & value >= 0 & value <= 2) | ",
-       "(stat == 'sigmae' & value >= 0 & value <= 2) | ",
-       "(stat == 'g0' & value >= -4 & value <= 4) | ",
-       "(stat == 'theta' & value >= -2 & value <= 4)")
-pl <- plot(fitPOUMM2, doPlot = FALSE, doZoomIn = TRUE, zoomInFilter = filter)
+pl <- plot(fitPOUMM2, doPlot = FALSE, doZoomIn = TRUE)
 pl$densplot
 ```
 
@@ -253,9 +247,10 @@ c(H2empirical = var(g[1:N])/var(z[1:N]))
 summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
 ```
 
-## Parallelizing the MCMC
-On multi-core systems, it is possible to speed-up the POUMM-fit by parallelizing the MCMC-chains. This can be done by creating a cluster using the parallel R-package:
+## Parallelization
+On multi-core systems, it is possible to speed-up the POUMM-fit by parallelization. The POUMM package supports parallelization on two levels:
 
+* parallelizing the MCMC-chains - this can be done by creating a *cluster* using the R-package ```parallel```. With the default settings of the MCMC-fit (executing two MCMC chains sampling from the posterior distribution and one MCMC chain sampling from the prior), this parallelization can result in about two times speed-up of the POUMM fit on a computer with at least two available physical cores. Unless you wish to run more parallel MCMC chains, having more available physical cores would not improve the speed.
 ```{r, echo=TRUE, eval=FALSE}
 # set up a parallel cluster on the local computer for parallel MCMC:
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
@@ -265,6 +260,29 @@ fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(parallelMCMC = TRUE))
 
 # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
 parallel::stopCluster(cluster)
+```
+
+
+* parallelizing the POUMM likelihood calculation. The POUMM package implements a parallel pruning algorithm for model likelihood calculation [@Mitov:2017ku]. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical CPU cores. Performance benchmarks on Linux systems running Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz processors show between 2 and 4 times speed-up from SIMD parallelization on a single core. Parallelization on multiple cores becomes beneficial with trees of more than 1,000 tips [@Mitov:2017ku]. The POUMM package uses OpenMP 4.0 for parallelization supported by several modern C++ compilers including Gnu-g++ and Intel-icpc, but not the current version of the clang compiler. We have tested the package on Linux using the Intel compiler v16.0.0. To that end, before installing the package from source, we modify the global ```Makevars``` file found in the directory ```.R``` under the user's home directory:
+
+```
+CFLAGS +=             -O3 -Wall -pipe -pedantic -std=gnu99
+CXXFLAGS +=           -O3 -Wall -pipe -Wno-unused -pedantic
+
+FC=gfortran
+F77=gfortran
+MAKE=make -j8
+
+CPP=cpp
+CXX=icpc
+CC=icc
+SHLIB_CXXLD=icpc
+```
+
+Then, before starting R, we can define the maximum number of cores (defaults to all physical cores on the system) by specifying the environment variable OMP_NUM_THREADS, e.g.:
+
+```
+export OMP_NUM_THREADS=4
 ```
 
 # Using the POUMM fit to answer biological questions
@@ -336,7 +354,8 @@ fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
 
 ```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE}
 plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), 
-     doZoomIn = TRUE, zoomInFilter = "value >= 0 & value <= 1")
+     showUnivarDensityOnDiag = TRUE, 
+     doZoomIn = TRUE, doPlot = TRUE)
 ```
 
 ```{r, warning=FALSE}

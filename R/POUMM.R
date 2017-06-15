@@ -11,6 +11,11 @@
 #'  tree - a phylo object (it is possible to specify different element names 
 #'  using the arguments zName and treeName).
 #'@param tree A phylo object or NULL in case z is a list.
+#'@param se A non-negative numerical vector (or single number) indicating known 
+#'measurement standard error (defaults to 0). Note the elements of this vector 
+#'are assumed to describe the measurement error at individual nodes independent
+#'of the environmental contribution (described by the parameter sigmae). The total
+#'error standard deviation is thus sqrt(sigmae2+se^2).
 #'@param zName,treeName Character strings used when the parameter z is a list; 
 #'  indicate the names in the list of the values-vector and the tree. Default: 
 #'  'z' and 'tree'.
@@ -25,7 +30,8 @@
 #'  (?dVGivenTreeOU for details).
 #'@param spec A named list specifying how the ML and MCMC fit should be done. 
 #'  See ?specifyPOUMM.
-#'@param doMCMC logical: should a MCMC fit be performed. An MCMC fit provides a 
+#'@param doMCMC Deprecated - use nSamplesMCMC = 0 instead. 
+#'  logical: should a MCMC fit be performed. An MCMC fit provides a 
 #'  sample from the posterior distribution of the parameters given a prior 
 #'  distribution and the data. Unlike the ML-fit, it allows to estimate 
 #'  confidence intervals for the estimated parameters. This argument is TRUE by 
@@ -38,16 +44,18 @@
 #'@param usempfr integer indicating if and how mpfr should be used for small 
 #'  parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the mpfr 
 #'  package can be forced by specifying an integer greater or equal to 2. 
-#'  Setting usempfr=0 disables high precision likelihood calculation. Requires 
-#'  the Rmpfr package. Note that when using mpfr, the time for one likelihood 
-#'  calculation can increase more than 100-fold. Default (0). Note that during 
-#'  the ML and MCMC fit this flag is temporarily raised by 1 in order to enable 
-#'  mpfr-check on parameters resulting in higher likelihood than the current 
-#'  maximum one.
+#'  Setting usempfr=0 (default) causes high precision likelihood 
+#'  calculation to be done on each encounter of parameters with at least 1 bigger
+#'  log-likelihood value than any of the currently found
+#'  maximum log-likelihood or the previously calculated log-likelihood value
+#'  Requires the Rmpfr package. Note that using mpfr may increase the time for 
+#'  one likelihood calculation more than 100-fold. Set usempfr to -1 or less
+#'  to completely disable Rmpfr functionality. 
 #'  
-#'@param useArma Logical indicating if the Armadillo library should be used for 
-#'  faster vector operations. Defaults to TRUE. Since Armadillo doesn't support 
-#'  mpfr, it gets disabled when usempfr is bigger than 0.
+#'@param useCpp Logical indicating whether C++ likelihood calculation should be 
+#'  used for faster vector operations. Defaults to TRUE. Since the C++ likelihood
+#'  implementation does not support mpfr, useCpp gets disabled when usempfr is 
+#'  bigger than 0.
 #'@param verbose,debug Logical flags indicating whether to print informative 
 #'  and/or debug information on the standard output (both are set to to FALSE by
 #'  default).
@@ -83,8 +91,7 @@
 #' }
 #' 
 #'@references 
-#'  Mitov, V., and Stadler, T. (2017). POUMM: An R-package for Bayesian Inference 
-#'  of Phylogenetic Heritability. bioRxiv, 115089. 
+#'  Mitov, V., and Stadler, T. (2017). Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation. bioRxiv, 115089. 
 #'  https://doi.org/10.1101/115089
 #'  
 #'  Vihola, M. (2012). Robust adaptive Metropolis algorithm with coerced 
@@ -100,8 +107,8 @@
 #' 
 #' @export
 POUMM <- function(
-  z, tree, zName = 'z', treeName = 'tree', 
-  parDigits = 6, usempfr = 0, useArma = TRUE,
+  z, tree, se = 0, zName = 'z', treeName = 'tree', 
+  parDigits = 6, usempfr = 0, useCpp = TRUE,
   ..., 
   spec = NULL, doMCMC = TRUE,
   verbose = FALSE, debug=FALSE) {
@@ -134,7 +141,7 @@ POUMM <- function(
     stop("Invalid z and/or tree.")
   }
   
-  pruneInfo <- pruneTree(tree, z)
+  pruneInfo <- pruneTree(tree, z, se)
   
   tTips <- nodeTimes(tree, tipsOnly = TRUE)
   
@@ -155,15 +162,27 @@ POUMM <- function(
                      tMax = max(tTips)), spec))
   }
   
+  g0Lower <- spec$parMapping(spec$parLower)['g0']
+  
+  dof = if(is.na(g0Lower) & !is.nan(g0Lower)) {
+    length(spec$parLower) + 1 
+  } else {
+    length(spec$parLower) 
+  }
+  
   result <- list(pruneInfo = pruneInfo, 
-                 N = length(tree$tip.label), 
+                 N = length(tree$tip.label), dof = dof, 
                  tMax = max(nodeTimes(tree, tipsOnly = TRUE)),
                  tMean = mean(nodeTimes(tree, tipsOnly = TRUE)), 
                  spec = spec, 
                  ...)
   
   
-  
+  likPOUMM_lowLevelFun <- likPOUMMGivenTreeVTipsC4;
+  if(pruneInfo$N < 1000) {
+    likPOUMM_lowLevelFun <- likPOUMMGivenTreeVTipsC2;
+  }
+    
   # define a loglik function to be called during likelihood maximization as well
   # as MCMC-sampling. 
   # The argument par is a named numeric vector. This vector is mapped to the 
@@ -174,24 +193,28 @@ POUMM <- function(
   # normal distribution with mean g0Prior$mean and variance g0Prior$var, 
   # p(z | tree, alpha, theta, sigma, sigmae, g0) x N(g0 | g0Prior$mean,
   # g0Prior$var). 
-  loglik <- function(par, pruneInfo, useCpp = useArma, memo = NULL) {
+  loglik <- function(par, pruneInfo, memo = NULL) {
     if(parDigits >= 0) {
       par <- as.vector(round(par, parDigits))
     }
     
     atsseg0 <- spec$parMapping(par)
     
-    if(useCpp & usempfr == 0) {
+    if(useCpp & usempfr <= 0) {
+      #if(verbose) 
+      #  cat('.')
       # no use of high-precision floating point ops, so we call the faster C++ 
       # likelihood implementation
-      val <- likPOUMMGivenTreeVTipsC(
+      val <- likPOUMM_lowLevelFun(
         pruneInfo$integrator, 
         alpha = atsseg0[1], theta = atsseg0[2],
         sigma = atsseg0[3], sigmae = atsseg0[4], g0 = atsseg0[5], 
         g0Prior = spec$g0Prior, log = TRUE)
     } else {
+      atsseg0.list <- as.list(atsseg0)
+      atsseg0[[4]] <- sqrt(atsseg0.list[[4]]^2+se^2)
       val <- 
-        do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(atsseg0), list(
+        do.call(likPOUMMGivenTreeVTips, c(list(z, tree), atsseg0.list, list(
           g0Prior = spec$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
           usempfr = usempfr, ...)))
     }
@@ -203,33 +226,42 @@ POUMM <- function(
     } 
     
     if(!is.null(memo)) {
-      valMemo <- mget('val', memo, ifnotfound = list(-Inf))$val  
+      valMemo <- mget('val', memo, ifnotfound = list(-Inf))$val
+      valPrev <- mget('valPrev', memo, ifnotfound = list(-Inf))$valPrev
+      valDelta <- mget('valDelta', memo, ifnotfound = list(NA))$valDelta  
     } else {
-      valMemo <- NA
+      valMemo <- valPrev <- valDelta <- NA
     }
     
-    if(!is.na(valMemo) & valMemo + 1 < val) {
-      if(usempfr == 0) {
+    if(usempfr == 0 & 
+       (!is.na(valMemo) & valMemo < val & 
+        ((valMemo + 1 < val) | 
+         (valPrev + .01 * abs(valPrev) < val)))) {
+  
         if(verbose) {
           print(par)
-          cat('Rmpfr check on: ', val, '>', valMemo)
+          cat('Rmpfr check on: val =', val, '; valDelta =', val - valPrev)
         }
         
-        val <- 
-          do.call(likPOUMMGivenTreeVTips, c(list(z, tree), as.list(atsseg0), list(
+        atsseg0.list <- as.list(atsseg0)
+        atsseg0[[4]] <- sqrt(atsseg0.list[[4]]^2+se^2)
+      
+        val2 <- 
+          do.call(likPOUMMGivenTreeVTips, c(list(z, tree), atsseg0.list, list(
             g0Prior = spec$g0Prior, log = TRUE, pruneInfo = pruneInfo, 
-            usempfr = usempfr + 1, ...)))
+            usempfr = 2, 
+            ...)))
         
-        if(is.na(val) | is.infinite(val)) {
-          val <- -1e100
-          attr(val, "g0") <- atsseg0[5]
-          attr(val, "g0LogPrior") <- NA
+        if(is.na(val2) | is.infinite(val2)) {
+          val2 <- -1e100
+          attr(val2, "g0") <- atsseg0[5]
+          attr(val2, "g0LogPrior") <- NA
         } 
         
-        if(verbose) {
-          cat('. New: ', val, '.\n')
-        }  
-      }
+        if(verbose & abs(val2 - val) > abs(val) * 0.0001) {
+          cat(' ====>  Changed difference - after Rmpfr-check valDelta =', val2 - valPrev, '.\n')
+        } 
+        val <- val2
     }
     
     val
@@ -240,10 +272,45 @@ POUMM <- function(
   if(verbose) {
     print('Performing ML-fit...')
   }
+  
+  # default Rmpfr strategy 
+  defaultRmpfr <- usempfr == 0
+  
+  # disable Rmpfr the first time we call maxLikPOUMMGivenTreeVTips
+  if(defaultRmpfr) {
+    usempfr <- -.5
+  }
   fitML <- do.call(
     maxLikPOUMMGivenTreeVTips, 
     c(list(loglik = loglik, verbose = verbose, debug = debug, 
            pruneInfo = pruneInfo), spec))
+  
+  
+  if(defaultRmpfr) {
+    if(verbose) {
+      cat('Checking the max-loglik value with Rmpfr, current: val = ', fitML$value)
+    }
+    usempfr = 2
+    valLoglikRmpfr <- loglik(fitML$par, pruneInfo)
+    if(verbose) {
+      cat(' ===> New: ', valLoglikRmpfr)
+    }
+    if(fitML$value - valLoglikRmpfr > 1E-6 * pruneInfo$N) {
+      warning('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for every improved log-likelihood point. You can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.')
+      
+      usempfr <-  0
+      fitML <- do.call(
+        maxLikPOUMMGivenTreeVTips, 
+        c(list(loglik = loglik, verbose = verbose, debug = debug, 
+               pruneInfo = pruneInfo), spec))
+    } else {
+      usempfr <- 0
+      if(verbose) {
+        cat( " ===> OK.")
+      }
+    }
+  } 
+  
   
   if(verbose) {
     cat("max loglik from ML: \n")
@@ -254,7 +321,10 @@ POUMM <- function(
   
   result[['fitML']] <- fitML
   
-  if(doMCMC) {
+  # by default, no better likelihood found by mcmc (to be changed later if needed)
+  result[['MCMCBetterLik']] <- 0 
+  
+  if(doMCMC & spec$nSamplesMCMC > 0) {
     if(verbose) {
       print('Performing MCMC-fit...')
     }
@@ -279,22 +349,58 @@ POUMM <- function(
       names(parInitML) <- names(spec$parLower)
       
       if(all(c(parInitML >= spec$parLower, parInitML <= spec$parUpper))) {
-        if(verbose) {
-          cat("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
-        }
+        warning("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
         
         spec[["parInitML"]] <- parInitML
+        
+        # fitML2 <- do.call(
+        #   maxLikPOUMMGivenTreeVTips, 
+        #   c(list(loglik = loglik, verbose = verbose,
+        #          debug = debug, pruneInfo = pruneInfo), spec))
+        # 
+        
+        if(defaultRmpfr) {
+          # something smaller than here
+          usempfr <- -.5
+        }
         fitML2 <- do.call(
           maxLikPOUMMGivenTreeVTips, 
-          c(list(loglik = loglik, verbose = verbose,
-                 debug = debug, pruneInfo = pruneInfo), spec))
+          c(list(loglik = loglik, verbose = verbose, debug = debug, 
+                 pruneInfo = pruneInfo), spec))
+        
+        
+        if(defaultRmpfr) {
+          if(verbose) {
+            cat('Checking the max-loglik value with Rmpfr, current: val = ', fitML2$value)
+          }
+          usempfr = 2
+          valLoglikRmpfr <- loglik(fitML2$par, pruneInfo)
+          if(verbose) {
+            cat(' ===> New: ', valLoglikRmpfr)
+          }
+          if(fitML2$value - valLoglikRmpfr > 1E-6 * pruneInfo$N) {
+            warning('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for improved log-likelihood points. \nYou can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.\n')
+            
+            usempfr <-  0
+            fitML2 <- do.call(
+              maxLikPOUMMGivenTreeVTips, 
+              c(list(loglik = loglik, verbose = verbose, debug = debug, 
+                     pruneInfo = pruneInfo), spec))
+          } else {
+            usempfr <- 0
+            if(verbose) {
+              cat( " ===> OK.")
+            }
+          }
+        } 
         
         result[['fitML']] <- fitML2
-        
+        result[['MCMCBetterLik']] <- 1 # within search-region
       } else {
         message <- "The MCMC-fit found a better likelihood outside of the search-region of the ML-fit."
         cat(message)
         warning(message)
+        result[['MCMCBetterLik']] <- 2 # outside search-region
       }
     }
     
@@ -312,7 +418,11 @@ POUMM <- function(
 logLik.POUMM <- function(object, ...) {
   if("POUMM" %in% class(object)) {
     lik <- object$fitML$value
-    attr(lik, "df") <- length(object$spec$parLower)
+    if(!is.null(object$dof)) {
+      attr(lik, "df") <- object$dof
+    } else {
+      attr(lik, "df") <- length(coef(object))
+    }
     attr(lik, "nobs") <- object$N
     class(lik) <- "logLik"
     lik
@@ -445,13 +555,24 @@ residuals.POUMM <- function(object, ...) {
 #' @param zoomInFilter A character string which evaluates as logical value. If 
 #'   doZoomIn is set to TRUE, this filter is applied to each point in each MCMC
 #'   chain and the data-point is filtered out if it evaluates to FALSE. This 
-#'   allows to zoomIn the x-axis of density plots but should be use with caution,
-#'   since filtering out points from the MCMC-sample can affect the kernel 
-#'   densities. Default value is 
-#'    paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
-#'           " (value >= HPDLower & value <= HPDUpper))"). 
-#'   The identifiers in this expression can be any
+#'   allows to zoomIn the x-axis of density plots but should be used with caution,
+#'   since filtering out points from the MCMC-sample can affect the kernel densities.
+#'   Unfortunately, filtering out values is currently the only way to affect the
+#'   limits of individual facets in ggplot2. The default value is a complicated 
+#'   expression involving the HPD from all MCMC chains (normally one chain from the
+#'   prior and 2 chains from the posterior):
+#'   zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ", 
+#'   "(value >= 0 & value <= 1) ) |",
+#'   "( !stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ",
+#'   "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+#'   "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))").
+#'  The identifiers in this expression can be any
 #'   column names found in a summary of a POUMM object.
+#' @param prettyNames A logical indicating if greek letters and sub/superscripts 
+#' should be used for the names of columns in the posterior density pairs-plot.
+#' @param showUnivarDensityOnDiag A logical indicating if univariate density 
+#' plots should be displaied on the main diagonal in the bivariate posterior plot.
+#' Defaults to FALSE, in which case the column names are displayed on the diagonal.
 #' @param ... not used, needed for consistency with the generic plot-function.
 #'
 #' @return If doPlot==FALSE, a named list containing a member called data of
@@ -465,9 +586,13 @@ plot.POUMM <-
            startMCMC = NA, endMCMC = NA, thinMCMC = 1000, 
            statFunctions = statistics(x),
            doZoomIn = FALSE,
-           zoomInFilter = 
-             paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') |",
-                    " (value >= HPDLower & value <= HPDUpper))"),
+           zoomInFilter = paste0("(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ", 
+                  "(value >= 0 & value <= 1) ) |",
+                  "( !stat %in% c('H2e','H2tMean','H2tInf','H2tMax') & ",
+                  "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+                  "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
+           prettyNames = TRUE, 
+           showUnivarDensityOnDiag = FALSE,
            ...) {
   
   if("POUMM" %in% class(x)) {
@@ -475,8 +600,77 @@ plot.POUMM <-
                     startMCMC = startMCMC, endMCMC = endMCMC, 
                     thinMCMC = thinMCMC, stats = statFunctions)
     plot(summ, doPlot = doPlot, interactive = interactive, 
-         stat = stat, chain = chain, doZoomIn = doZoomIn, zoomInFilter = zoomInFilter)
+         stat = stat, chain = chain, 
+         doZoomIn = doZoomIn, zoomInFilter = zoomInFilter, 
+         prettyNames = prettyNames, 
+         showUnivarDensityOnDiag = showUnivarDensityOnDiag)
   } else {
     stop("plot.POUMM called on a non POUMM-object.")
+  }
+}
+
+#' A vectorized expected covariance function for a given tree and a fitted POUMM
+#' model
+#' 
+#' @param object an S3 object of class POUMM
+#' @param corr logical indicating if an expected correlation function 
+#' should be returned
+#' 
+#' @return a function of a numerical parameter x denoting the phylogenetic distance
+#' between a couple of tips.
+#' 
+#' @export
+covFunPOUMM <- function(object, corr=FALSE) {
+  if("POUMM" %in% class(object)) {
+    tMean <- mean(nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE))
+    function(x) {
+      par <- object$spec$parMapping(coef(object))
+      covPOUMM(par['alpha'], par['sigma'], par['sigmae'], 
+               t = tMean,
+               tau = x, corr = corr)
+    } 
+  } else {
+    stop("In corrFunPOUMM: object should be of S3 class POUMM.")
+  }
+}
+
+#' A vectorized function returning HPD intervals of the expected covariance for 
+#' a given tree and a fitted POUMM model
+#'
+#' @param object an S3 object of class POUMM
+#' @param prob a Numerical between 0 and 1
+#' @param corr logical indicating if an expected correlation HPD interval 
+#' function should be returned.
+#' @param ... additional parameters passed to summary.POUMM
+#' 
+#' @import coda
+#' @export
+covHPDFunPOUMM <- function(object, prob = .95, corr = FALSE, ...) {
+  # avoid check note "no visible binding":
+  stat <- NULL
+  
+  if("POUMM" %in% class(object)) {
+    smm <- summary(object, mode="long", ...)
+    setkey(smm, stat)
+    mcmc_asse <- smm[list(c('alpha', 'sigma', 'sigmae')), mcmc]
+    asse <- cbind(mcmc_asse[[1]], mcmc_asse[[2]], mcmc_asse[[3]])
+    tMean <- mean(nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE))
+    
+    function(x) {
+      t(sapply(x, function(xi) {
+        covars <- apply(asse, 1, function(asse) {
+          covPOUMM(asse[1], asse[2], asse[3], 
+                   t = tMean, 
+                   tau = xi, corr = corr)
+        })  
+        covars_mcmc <- mcmc(covars, start = start(mcmc_asse[[1]]), 
+                            end = end(mcmc_asse[[1]]), 
+                            thin = thin(mcmc_asse[[1]]))  
+        
+        as.vector(HPDinterval(covars_mcmc, prob = prob))
+      }))
+    } 
+  } else {
+    stop("In corrFunPOUMM: object should be of S3 class POUMM.")
   }
 }

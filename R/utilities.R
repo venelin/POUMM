@@ -2,7 +2,6 @@
 
 NULL
 
-
 printPOUMMLikelihoodMainLoop <- function(tree) {
   pruneInfo <- pruneTree(tree)
   M <- pruneInfo$M

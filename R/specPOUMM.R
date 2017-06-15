@@ -67,8 +67,8 @@
 #' \preformatted{
 #' # Default for POUMM:
 #' parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), sigma = 0, sigmae = 0)
-#' parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-#'              sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD,
+#' parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
+#'              sigma = POUMM::sigmaOU(H2 = .99, alpha = 69.31 / tMean, sigmae = 2 * zSD,
 #'                                     t = tMean), 
 #'              sigmae = 2 * zSD)
 #' }
@@ -118,9 +118,9 @@
 #' \preformatted{
 #' # Default for POUMM:
 #'  parPriorMCMC = function(par) {
-#'    dexp(par[1], rate = .01, TRUE) + 
+#'    dexp(par[1], rate = tMean / 6.931, TRUE) + 
 #'      dnorm(par[2], zMean, 10 * zSD, TRUE) +
-#'      dexp(par[3],  rate = .0001, TRUE) + 
+#'      dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) + 
 #'      dexp(par[4], rate = .01, TRUE)
 #'  }
 #' }
@@ -129,14 +129,17 @@
 #'   matrix for the MCMC fit. Default for POUMM is diag(4); 
 #' @param nSamplesMCMC Integer indicating the length of each MCMC chain. 
 #' Defaults to 1e5.
-#' @param nAdaptMCMC Integer indicating how many initial MCMC iterations should 
+#' @param nAdaptMCMC Logical indicating whether adaptation of the MCMC jump 
+#'   distribution should be done with respect to the target acceptance rate 
+#'   (accRateMCMC) or integer indicating how many initial MCMC iterations should 
 #'   be used for adaptation of the jump-distribution matrix (see details in 
 #'   ?POUMM). Defaults to nSamplesMCMC meaning continuous adaptation throughout
 #'   the MCMC. 
 #' @param thinMCMC Integer indicating the thinning interval of the mcmc-chains. 
 #'   Defaults to 100.
 #' @param accRateMCMC numeric between 0 and 1 indicating the target 
-#'   acceptance rate of the Metropolis sampling (see details in ?POUMM). Default 0.01.
+#'   acceptance rate of the  adaptive Metropolis sampling (see details in ?POUMM). 
+#'   Default 0.01.
 #' @param gammaMCMC controls the speed of adaption. Should be between 0.5 and
 #'   1. A lower gamma leads to faster adaption. Default value is 0.5.
 #' @param nChainsMCMC integer indicating the number of chains to run. 
@@ -218,8 +221,8 @@ specifyPOUMM <- function(
     parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
                  sigma = 0, sigmae = 0), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 69.31 / tMean, sigmae = 2 * zSD, t = tMean), 
                  sigmae = 2 * zSD),
     
     g0Prior = NULL, 
@@ -229,9 +232,9 @@ specifyPOUMM <- function(
     control = list(factr = 1e8),
     
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, TRUE) + 
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
-        dexp(par[3],  rate = .1, TRUE) + 
+      dexp(par[1], rate = tMean / 6.931, TRUE) + 
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
+        dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) + 
         dexp(par[4], rate = .1, TRUE)  
       
     },
@@ -244,9 +247,9 @@ specifyPOUMM <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, sigma = 1, sigmae = 0),
+        c(alpha = 0, theta = zMean, sigma = 1, sigmae = 0),
         parML,
-        c(alpha = 0, theta = 0, sigma = 1, sigmae = 1)
+        c(alpha = 0, theta = zMean, sigma = 1, sigmae = 1)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -337,13 +340,13 @@ specifyPOUMM_ATS <- function(
     parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
                  sigma = 0), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean)),
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 69.31 / tMean, sigmae = 2 * zSD, t = tMean)),
     
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, log = TRUE) +
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
-        dexp(par[3],  rate = .1, TRUE)
+      dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
+        dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -354,9 +357,9 @@ specifyPOUMM_ATS <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, sigma = 1),
+        c(alpha = 0, theta = zMean, sigma = 1),
         parML,
-        c(alpha = 0, theta = 0, sigma = 1)
+        c(alpha = 0, theta = zMean, sigma = 1)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -442,15 +445,16 @@ specifyPOUMM_ATSG0 <- function(
                  sigma = 0, 
                  g0 = zMin - 2 * zSD), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean),
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 69.31 / tMean, 
+                                        sigmae = 2 * zSD, t = tMean),
                  g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, log = TRUE) +
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
-        dexp(par[3],  rate = .1, TRUE) +
-        dnorm(par[4], zMean, 5 * zSD, log = TRUE)
+      dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
+        dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) +
+        dnorm(par[4], zMean, 2 * zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -461,9 +465,9 @@ specifyPOUMM_ATSG0 <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, sigma = 1, g0 = zMin),
+        c(alpha = 0, theta = zMean, sigma = 1, g0 = zMean),
         parML,
-        c(alpha = 0, theta = 0, sigma = 1, g = zMax)
+        c(alpha = 0, theta = zMean, sigma = 1, g = zMean)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -545,16 +549,17 @@ specifyPOUMM_ATSSeG0 <- function(
     parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
                  sigma = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
-                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 50, sigmae = 2 * zSD, t = tMean), 
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
+                 sigma = POUMM::sigmaOU(H2 = .99, alpha = 69.31 / tMean, 
+                                        sigmae = 2 * zSD, t = tMean), 
                  sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, log = TRUE) +
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
-        dexp(par[3],  rate = .1, TRUE) +
+      dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
+        dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) +
         dexp(par[4], rate = .1, log = TRUE) + 
-        dnorm(par[5], zMean, 5 * zSD, log = TRUE)
+        dnorm(par[5], zMean, 2 * zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -565,9 +570,9 @@ specifyPOUMM_ATSSeG0 <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, sigma = 1, sigmae = 0, g0 = zMin),
+        c(alpha = 0, theta = zMean, sigma = 1, sigmae = 0, g0 = zMean),
         parML,
-        c(alpha = 0, theta = 0, sigma = 1, sigmae = 1, g0 = zMax)
+        c(alpha = 0, theta = zMean, sigma = 1, sigmae = 1, g0 = zMean)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -758,7 +763,7 @@ specifyPMM_SSeG0 <- function(
     parPriorMCMC = function(par) {
       dexp(par[1],  rate = .1, log = TRUE) +
         dexp(par[2], rate = .1, log = TRUE) + 
-        dnorm(par[3], zMean, 5 * zSD, log = TRUE)
+        dnorm(par[3], zMean, 2 * zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -769,9 +774,9 @@ specifyPMM_SSeG0 <- function(
       }
       
       init <- rbind(
-        c(sigma = 1, sigmae = 0, g0 = zMin),
+        c(sigma = 1, sigmae = 0, g0 = zMean),
         parML,
-        c(sigma = 1, sigmae = 1, g0 = zMax)
+        c(sigma = 1, sigmae = 1, g0 = zMean)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -859,12 +864,12 @@ specifyPOUMM_ATH2tMeanSe <- function(
     parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
                  H2tMean = 0, sigmae = 0), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
                  H2tMean = .99, sigmae = 2 * zSD),
   
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, log = TRUE) +
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+      dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dunif(par[3], min = 0, max = 1, log = TRUE) +
         dexp(par[4], rate = .1, log = TRUE)
     },
@@ -877,9 +882,9 @@ specifyPOUMM_ATH2tMeanSe <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, H2tMean = .9, sigmae = 0),
+        c(alpha = 0, theta = zMean, H2tMean = .9, sigmae = 0),
         parML,
-        c(alpha = 0, theta = 0, H2tMean = .1, sigmae = 1)
+        c(alpha = 0, theta = zMean, H2tMean = .1, sigmae = 1)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -968,15 +973,15 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
     parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), 
                  H2tMean = 0, sigmae = 0, g0 = zMin - 2 * zSD), 
     
-    parUpper = c(alpha = 50, theta = zMax + 2 * (zMax - zMin), 
+    parUpper = c(alpha = 69.31 / tMean, theta = zMax + 2 * (zMax - zMin), 
                  H2tMean = .99, sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1], rate = .1, log = TRUE) +
-        dnorm(par[2], zMean, 5 * zSD, TRUE) +
+      dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+        dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dunif(par[3], min = 0, max = 1, log = TRUE) +
         dexp(par[4], rate = .1, log = TRUE) + 
-        dnorm(par[5], zMean, 5 * zSD, log = TRUE)
+        dnorm(par[5], zMean, 2 * zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -987,9 +992,9 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
       }
       
       init <- rbind(
-        c(alpha = 0, theta = 0, H2tMean = .9, sigmae = 0, g0 = zMin),
+        c(alpha = 0, theta = zMean, H2tMean = .9, sigmae = 0, g0 = zMean),
         parML,
-        c(alpha = 0, theta = 0, H2tMean = .1, sigmae = 1, g0 = zMax)
+        c(alpha = 0, theta = zMean, H2tMean = .1, sigmae = 1, g0 = zMean)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1, ]
@@ -1190,7 +1195,7 @@ specifyPMM_H2tMeanSeG0 <- function(
     parPriorMCMC = function(par) {
       dunif(par[1], min = 0, max = 1, log = TRUE) +
         dexp(par[2], rate = .1, log = TRUE) + 
-        dnorm(par[3], zMean, 5 * zSD)
+        dnorm(par[3], zMean, 2 * zSD)
       
     },
     
@@ -1202,9 +1207,9 @@ specifyPMM_H2tMeanSeG0 <- function(
       }
       
       init <- rbind(
-        c(H2tMean = .9, sigmae = 0, g0 = zMin),
+        c(H2tMean = .9, sigmae = 0, g0 = zMean),
         parML,
-        c(H2tMean = .1, sigmae = 1, g0 = zMax)
+        c(H2tMean = .1, sigmae = 1, g0 = zMean)
       )
       
       init[(chainNo - 1) %% nrow(init) + 1,]
@@ -1281,8 +1286,14 @@ validateSpecPOUMM <- function(spec) {
                   nChainsMCMC, 
                   ". To disable MCMC-fit, set doMCMC = FALSE in the POUMM call."))
     }
-    if(any(c(nSamplesMCMC, nAdaptMCMC, thinMCMC) <= 0)) {
-      stop("nSamplesMCMC, nAdaptMCMC and thinMCMC should be positive integers.")
+    if(is.numeric(nAdaptMCMC) & nAdaptMCMC < 0) {
+      stop("nAdaptMCMC should be logical or a non-negative integer.")
+    }
+    if(nSamplesMCMC < 0) {
+      stop("nSamplesMCMC should be a non-negative integer (0 disables MCMC run).")
+    }
+    if(thinMCMC <= 0) {
+      stop("thinMCMC should be a positive integer (1 means no skipping).")
     }
     if(accRateMCMC <= 0 | accRateMCMC > 1) {
       stop("accRateMCMC should be a positive number between 0 and 1.")
