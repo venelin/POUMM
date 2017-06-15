@@ -1,8 +1,8 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 1.2.2
-Date: 2017-03-27
+Version: 1.3.0
+Date: 2017-06-15
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre", "cph"))
 Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to 
@@ -12,9 +12,9 @@ Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to
     make predictions about the evolution of a phenotype and phenotypic variation 
     in a population. The package implements combined maximum likelihood and 
     Bayesian inference of the univariate Phylogenetic Ornstein-Uhlenbeck Mixed 
-    Model, fast POUMM likelihood calculation, maximum likelihood inference of 
-    the genotypic values at the tips, functions for summarizing and plotting
-    traces and posterior samples, functions for simulation of a univariate 
+    Model, fast parallel likelihood calculation, maximum likelihood 
+    inference of the genotypic values at the tips, functions for summarizing and
+    plotting traces and posterior samples, functions for simulation of a univariate 
     continuous trait evolution along a phylogenetic tree. A quick example on
     using the POUMM package can be found in the README. More elaborate
     examples and use-cases are provided in the vignette 
@@ -35,7 +35,8 @@ Imports:
     ggplot2,
     GGally,
     gsl,
-    Matrix
+    Matrix,
+    adaptMCMC
 Suggests:
     testthat,
     TreeSim (>= 2.2),

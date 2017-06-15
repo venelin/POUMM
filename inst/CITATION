@@ -1,7 +1,7 @@
 citHeader("To cite POUMM in publications use:")
 
 citEntry(entry = "Article",
-  title        = "POUMM: An R-package for Bayesian Inference of Phylogenetic Heritability",
+  title        = "Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation",
   author       = personList(as.person("Venelin Mitov"),
                    as.person("Tanja Stadler")),
   journal      = "BiorXiv",
@@ -9,11 +9,11 @@ citEntry(entry = "Article",
   volume       = "",
   number       = "",
   pages        = "",
-  url          = "http://www.biorxiv.org/content/early/2017/03/08/115089",
+  url          = "http://biorxiv.org/content/early/2017/05/30/115089",
 
   textVersion  =
   paste("Venelin Mitov, Tanja Stadler (2017).",
-        "POUMM: An R-package for Bayesian Inference of Phylogenetic Heritability",
+        "Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation",
         "BiorXiv",
-        "URL http://www.biorxiv.org/content/early/2017/03/08/115089")
+        "URL http://biorxiv.org/content/early/2017/05/30/115089")
 )

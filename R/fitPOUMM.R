@@ -3,22 +3,29 @@
 memoiseMax <- function(f, par, memo, verbose, ...) {
   countMemo <- mget('count', envir = memo, ifnotfound = list(0))$count
   valMemo <- mget('val', envir = memo, ifnotfound = list(-Inf))$val
+  valPrev <- mget('valPrev', envir = memo, ifnotfound = list(-Inf))$valPrev
+  valDelta <- mget('valDelta', envir = memo, ifnotfound = list(NA))$valDelta
   parMemo <- mget('par', envir = memo, ifnotfound = list(NULL))$par
   
   assign("count", countMemo + 1, pos = memo)
   
   val <- f(par, memo = memo, ...)
   
+  # if the returned val higher than the current max-value, store this val:
   if(valMemo < val) {
     assign('par', par, pos = memo)
     assign('val', val, pos = memo)
-    valMemo <- val
-    parMemo <- par
+    assign('valDelta', val - valMemo, pos = memo)
+    
     if(verbose) {
-      cat('Call ', countMemo, ': loglik on par=(', 
+      cat('\nCall ', countMemo, ': loglik on par=(', 
           toString(round(par, 6)), "): ", val, "\n", sep = "")
     }
-  } 
+  }
+  
+  # store the returned val and valDelta in memo
+  assign('valPrev', val, pos = memo)
+  
   val
 }
 
@@ -42,12 +49,6 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
 #' (currently not implemented).
 #' @param ... currently not used.
 #'   
-#' @details If alpha is not fixed, then the optimization is done via calls to 
-#'   optimize over alpha, calling optim on the remaining variable parameters for
-#'   each alpha. The parameter tol is passed to optimize (default value is 
-#'   0.001), which guarantees that no evaluation is done on points closer than 
-#'   eps*|alpha*|+tol/3, where eps is .Machine$double.eps and alpha* is the 
-#'   optimal alpha.
 #' @return a list containing an element par and an element value as well as the 
 #'   parameters passed
 #'   
@@ -63,9 +64,26 @@ maxLikPOUMMGivenTreeVTips <- function(
   
   
   if(is.null(parInitML)) {
-    listParInitML <- list(parLower + 0.1 * (parUpper - parLower), 
-                      0.5 * (parLower + parUpper),
-                      parLower + 0.9 * (parUpper - parLower))
+    matParInitML <- rbind(
+      parLower + 0.05 * (parUpper - parLower),
+      parLower + 0.3 * (parUpper - parLower), 
+      0.5 * (parLower + parUpper),
+      parLower + 0.7 * (parUpper - parLower),
+      parLower + 0.95 * (parUpper - parLower)
+    )
+    
+    permuts_1to5 <- rep(
+      c(4, 1, 3, 1, 2, 1, 2, 5, 4, 2, 5, 5, 2, 1, 3, 1, 3, 2, 3, 3, 4, 3, 5, 5, 
+        5, 5, 4, 3, 2, 1, 4, 2, 3, 1, 1, 3, 4, 5, 2, 3, 1, 1, 4, 4, 2, 5, 4, 2, 
+        4, 5), 2)
+    
+    
+    matParInitML <- sapply(1:ncol(matParInitML), function(j) {
+      matParInitML[, j][permuts_1to5[j:(j+50-1)]]
+    })
+      
+    listParInitML <- lapply(1:nrow(matParInitML), function(i) matParInitML[i,])
+    
   } else if(is.list(parInitML)) {
     listParInitML <- parInitML
   } else {
@@ -103,6 +121,12 @@ maxLikPOUMMGivenTreeVTips <- function(
     control$fnscale <- -1
     
     if(length(parInitML) > 0) {
+      if(verbose) {
+        cat("Call to optim no.", iOptimTry, ": starting from ", 
+            toString(round(parInitML, 6)), "\n", 
+            "parLower = ", toString(round(parLower, 6)), "\n",
+            "parUpper = ", toString(round(parUpper, 6)), "\n")
+      }
       res <- optim(fn = fnForOptim, 
                    par = parInitML, lower = parLower, upper = parUpper, 
                    method = 'L-BFGS-B', control = control)
@@ -125,30 +149,8 @@ maxLikPOUMMGivenTreeVTips <- function(
 
 
 #' @importFrom stats window start end
+#' @importFrom adaptMCMC convert.to.coda
 convertToMCMC <- function(obj, thinMCMC=1) {
-  convert.to.coda <- function (sample) 
-  {
-    if (!is.null(names(sample))) {
-      if (is.matrix(sample)) {
-        obj <- coda::mcmc(sample)
-      }
-      if (is.list(sample)) {
-        obj <- coda::mcmc(sample$samples)
-      }
-      return(obj)
-    }
-    else {
-      if (is.matrix(sample[[1]])) {
-        obj <- as.mcmc.list(lapply(sample, coda::mcmc))
-      }
-      if (is.list(sample[[1]])) {
-        obj <- as.mcmc.list(lapply(sample, function(x) {
-          coda::mcmc(x$samples)
-        }))
-      }
-      return(obj)
-    }
-  }
   
   codaobj <- convert.to.coda(obj)
   
@@ -169,8 +171,14 @@ convertToMCMC <- function(obj, thinMCMC=1) {
     scale.start = obj$scale.start)
 }
 
+#' Extract data from an MCMC chain
+#' This is an internal function.
+#' @param chains,stat,statName,start,end,thinMCMC,as.dt,k,N,... internal use.
+#' 
+#' @importFrom coda as.mcmc.list mcmc effectiveSize gelman.diag HPDinterval thin
+#' 
 analyseMCMCs <- function(chains, stat=NULL, statName="logpost", 
-                         start, end, thinMCMC, as.dt=FALSE, ...) {
+                         start, end, thinMCMC, as.dt=FALSE, k = NA, N = NA, ...) {
   mcmcs <- lapply(chains, function(obj) {
     if(is.null(obj$mcmc)) 
       convertToMCMC(obj, thinMCMC)
@@ -178,26 +186,78 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
       obj
   })
   
-  log.ps <- window(coda::as.mcmc.list(lapply(mcmcs, function(mc) { mc$log.p })),
+  log.ps <- window(as.mcmc.list(lapply(mcmcs, function(mc) { mc$log.p })),
                    start=start, end=end, thin=thinMCMC)
   
-  if(statName=='logpost') {
-    mcs <- coda::as.mcmc.list(
-      lapply(1:length(log.ps), function(i) log.ps[[i]][, 1, drop = FALSE]))
+  if(statName == 'logpost') {
+    mcs <- as.mcmc.list(
+      lapply(1:length(log.ps), function(i) {
+          if(is.matrix(log.ps[[i]])) {
+            log.ps[[i]][, 1, drop = FALSE]
+          } else {
+            mcmc(matrix(log.ps[[i]], length(log.ps[[i]])), 
+                 start = start(log.ps[[i]]),
+                 end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+                  
+          }
+        }))
     names(mcs) <- names(chains)
-  } else if(statName=='loglik') {
-    mcs <- coda::as.mcmc.list(
-      lapply(1:length(log.ps), function(i) log.ps[[i]][, 2, drop = FALSE]))
+  } else if(statName == 'loglik') {
+    mcs <- as.mcmc.list(
+      lapply(1:length(log.ps), function(i) {
+        if(is.matrix(log.ps[[i]])) {
+          log.ps[[i]][, 2, drop = FALSE]
+        } else {
+          mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
+               start = start(log.ps[[i]]),
+               end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+        }
+      }))
     names(mcs) <- names(chains)
-  } else if(statName=='g0') {
-    mcs <- coda::as.mcmc.list(
-      lapply(1:length(log.ps), function(i) log.ps[[i]][, 3, drop = FALSE]))
+  } else if(statName == 'AIC') {
+    mcs <- as.mcmc.list(
+      lapply(1:length(log.ps), function(i) {
+        if(is.matrix(log.ps[[i]])) {
+          logl <- log.ps[[i]][, 2, drop = FALSE]
+          2*k - 2*logl  
+        } else {
+          mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
+               start = start(log.ps[[i]]),
+               end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+        }
+      }))
+    names(mcs) <- names(chains)
+  } else if(statName == 'AICc') {
+    mcs <- as.mcmc.list(
+      lapply(1:length(log.ps), function(i) {
+        if(is.matrix(log.ps[[i]])) {
+          logl <- log.ps[[i]][, 2, drop = FALSE]
+          2*k - 2*logl + 2*k*(k+1)/(N-k-1)  
+        } else {
+          mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
+               start = start(log.ps[[i]]),
+               end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+        }
+        
+      }))
+    names(mcs) <- names(chains)
+  } else if(statName == 'g0') {
+    mcs <- as.mcmc.list(
+      lapply(1:length(log.ps), function(i) {
+        if(is.matrix(log.ps[[i]])) {
+          log.ps[[i]][, 3, drop = FALSE]  
+        } else {
+          mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
+               start = start(log.ps[[i]]),
+               end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+        }
+      }))
     names(mcs) <- names(chains)
   } else {
-    mcs <- coda::as.mcmc.list(lapply(mcmcs, function(mc) {
+    mcs <- as.mcmc.list(lapply(mcmcs, function(mc) {
       winmcmc <- window(mc$mcmc, start = start, end = end, thin = thinMCMC)
       data <- matrix(stat(winmcmc, ...), nrow = nrow(winmcmc), byrow = TRUE)
-      coda::mcmc(data, start = start(winmcmc), end = end(winmcmc), 
+      mcmc(data, start = start(winmcmc), end = end(winmcmc), 
                  thin = thin(winmcmc))
     }))
     names(mcs) <- names(chains)
@@ -206,12 +266,12 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
   mcs.mat <- as.matrix(mcs)
   
   if(length(chains) > 1) {
-    gelman <- coda::gelman.diag(mcs, autoburnin=FALSE)
+    gelman <- gelman.diag(mcs, autoburnin=FALSE)
     gelman <- ifelse(ncol(mcs.mat) > 1, gelman$mpsrf, gelman$psrf[2]) 
   } else {
     gelman <- NULL
   }
-  ESS <- try(lapply(mcs, coda::effectiveSize), silent=TRUE)
+  ESS <- try(lapply(mcs, effectiveSize), silent=TRUE)
   if(class(ESS)=='try-error') {
     warning(paste("For ", statName, 
                   "calling coda::effectiveSize resulted in an error:", 
@@ -221,9 +281,8 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     
   names(ESS) <- NULL
   
-  
   HPD <- lapply(mcs, function(.) {
-    int <- try(coda::HPDinterval(.), silent = TRUE)
+    int <- try(HPDinterval(.), silent = TRUE)
     if(class(int) == 'try-error') {
       int <- matrix(as.double(NA), nrow = ncol(as.matrix(.)), ncol = 2)
       colnames(int) <- c("lower", "upper")
@@ -234,7 +293,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
   })
   
   HPD50 <- lapply(mcs, function(.) {
-    int <- try(coda::HPDinterval(., 0.5), silent = TRUE)
+    int <- try(HPDinterval(., 0.5), silent = TRUE)
     if(class(int) == 'try-error') {
       int <- matrix(as.double(NA), nrow = ncol(as.matrix(.)), ncol = 2)
       colnames(int) <- c("lower", "upper")
@@ -243,16 +302,6 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
       int
     }
   })
-  
-  # Mode <- list()
-  # for(i in 1:length(mcs)) {
-  #   Mode[[i]] <- {
-  #     par <- mcs[[i]][which.max(log.ps[[i]][, 1]), ]
-  #     setattr(par, 'logpost', max(log.ps[[i]][, 1]))
-  #     par
-  #   }
-  # }
-
 
   Mean <- sapply(1:length(mcs), function(i) {
     colMeans(mcs[[i]])
@@ -313,7 +362,9 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #'   package.
 #'   
 #' @return a list of coda objects
-#' @importFrom  foreach foreach %dopar% %do%
+#' 
+#' @importFrom foreach foreach %dopar% %do%
+#' @importFrom adaptMCMC MCMC
 #'   
 #' @aliases mcmcPOUMMGivenPriorTreeVTips mcmc.poumm
 mcmcPOUMMGivenPriorTreeVTips <- function(
@@ -399,14 +450,15 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
   }
   
   if(parallelMCMC) {
-    chains <- foreach::foreach(
-      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %dopar% {
-        
+    chains <- foreach(
+      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM', 'adaptMCMC')) %dopar% {
         # need to reinitialize the integrator since it is a C++ object
         pruneInfo$integrator <- Integrator$new()
-      
+        
         pruneInfo$integrator$setPruningInfo(
-          pruneInfo$z, pruneInfo$tree$edge, pruneInfo$tree$edge.length, 
+          pruneInfo$z,  pruneInfo$se, 
+          pruneInfo$tree$edge,
+          pruneInfo$tree$edge.length, 
           pruneInfo$M, pruneInfo$N, 
           pruneInfo$endingAt, 
           pruneInfo$nodesVector, pruneInfo$nodesIndex, 
@@ -415,8 +467,8 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
         chain <- try(doMCMC(i, pruneInfo = pruneInfo), silent = TRUE)
       }
   } else {
-    chains <- foreach::foreach(
-      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM')) %do% {
+    chains <- foreach(
+      i = 1:nChainsMCMC, .packages = c('coda', 'POUMM', 'adaptMCMC')) %do% {
         chain <- try(doMCMC(i, pruneInfo = pruneInfo), silent = TRUE)
       }
   }
@@ -437,118 +489,124 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
        )
 }
 
-#' (Adaptive) Metropolis Sampler
-#' @param p function that returns the log probability density to sample from. 
-#'   Must have two or more dimensions. In this changed version the function can 
-#'   return a vector, the first element of which is the log-propbability.
-#' @param n number of samples.
-#' @param init vector with initial values.
-#' @param scale vector with the variances or covariance matrix of the jump
-#'   distribution.
-#' @param adapt if TRUE, adaptive sampling is used, if FALSE classic metropolis
-#'   sampling, if a positive integer the adaption stops after adapt iterations.
-#' @param acc.rate desired acceptance rate (ignored if adapt=FALSE)
-#' @param gamma controls the speed of adaption. Should be between 0.5 and 1. A
-#'   lower gamma leads to faster adaption.
-#' @param list logical. If TRUE a list is returned otherwise only a matrix with 
-#'   the samples.
-#' @param n.start teration where the adaption starts. Only internally used.
-#' @param ... further arguments passed to p.
-#' @description Copied and modified from Andreas Scheidegger's adaptMCMC 
-#'   package. The only difference is that the function p can return a vector 
-#'   instead of a single numeric. The first element of this vector is the 
-#'   log-posterior, while the other elements can be any additional information 
-#'   such as the log-likelihood, or the root-value for that log-likelihood in 
-#'   the case of POUMM.
-#' @return Same list as the one returned from adaptMCMC::MCMC but the member 
-#'   log.p is a matrix instead of a vector.
-#' @importFrom utils setTxtProgressBar txtProgressBar   
-#' @importFrom Matrix nearPD
-MCMC <- function (p, n, init, scale = rep(1, length(init)), adapt = !is.null(acc.rate), 
-          acc.rate = NULL, gamma = 0.5, list = TRUE, n.start = 0,  ...) 
-{
-  if (adapt & !is.numeric(acc.rate)) 
-    stop("Argument \"acc.rate\" is missing!")
-  if (gamma < 0.5 | gamma > 1) 
-    stop("Argument \"gamma\" must be between 0.5 and 1!")
-  if (is.numeric(adapt)) 
-    n.adapt <- adapt
-  if (adapt == TRUE) 
-    n.adapt <- Inf
-  if (adapt == FALSE) 
-    n.adapt <- 0
-  d <- length(init)
-  X <- matrix(NA, ncol = d, nrow = n)
-  colnames(X) <- names(init)
-  X[1, ] <- init
-  
-  p.val.init <- p(X[1, ], ...)
-  
-  p.val <- matrix(NA, nrow = n, ncol=length(p.val.init))
-  p.val[1, ] <- p.val.init
-  
-  if (length(scale) == d) {
-    M <- diag(scale)
-  }
-  else {
-    M <- scale
-  }
-  if (ncol(M) != length(init)) {
-    stop(paste("Length or dimension of 'init' and 'scale' do not match!", 
-               "init:", toString(init), "scale:", toString(M)))
-  }
-  if (length(init) == 1) {
-    stop("One-dimensional sampling is not possible!")
-  }
-  S <- t(chol(M))
-  cat("  generate", n, "samples \n")
-  pb <- txtProgressBar(min = 0, max = n, style = 3)
-  update.step <- max(5, floor(n/100))
-  k <- 0
-  for (i in 2:n) {
-    if (i%%update.step == 0) {
-      setTxtProgressBar(pb, i)
-    }
-    U <- rnorm(d)
-    X.prop <- c(X[i - 1, ] + S %*% U)
-    names(X.prop) <- names(init)
-    p.val.prop <- p(X.prop, ...)
-    
-    alpha <- min(1, exp(p.val.prop[1] - p.val[i - 1, 1]))
-    if (!is.finite(alpha)) 
-      alpha <- 0
-    if (runif(1) < alpha) {
-      X[i, ] <- X.prop
-      p.val[i, ] <- p.val.prop
-      k <- k + 1
-    }
-    else {
-      X[i, ] <- X[i - 1, ]
-      p.val[i, ] <- p.val[i - 1, ]
-    }
-    ii <- i + n.start
-    if (ii < n.adapt) {
-      adapt.rate <- min(5, d * ii^(-gamma))
-      M <- S %*% (diag(d) + adapt.rate * (alpha - acc.rate) * 
-                    U %*% t(U)/sum(U^2)) %*% t(S)
-      eig <- eigen(M, only.values = TRUE)$values
-      tol <- ncol(M) * max(abs(eig)) * .Machine$double.eps
-      if (!isSymmetric(M) | is.complex(eig) | !all(Re(eig) > 
-                                                   tol)) {
-        M <- as.matrix(Matrix::nearPD(M)$mat)
-      }
-      S <- t(chol(M))
-    }
-  }
-  close(pb)
-  acceptance.rate <- round(k/(n - 1), 3)
-  if (list) {
-    return(list(samples = X, log.p = p.val, cov.jump = M, 
-                n.sample = n, acceptance.rate = acceptance.rate, 
-                adaption = adapt, sampling.parameters = list(acc.rate = acc.rate, gamma = gamma)))
-  }
-  else {
-    cat("Acceptance rate:", acceptance.rate, "\n")
-    return(X)
-  }
-}
+#' #' (Adaptive) Metropolis Sampler
+#' #' @param p function that returns the log probability density to sample from. 
+#' #'   Must have two or more dimensions. In this changed version the function can 
+#' #'   return a vector, the first element of which is the log-propbability.
+#' #' @param n number of samples.
+#' #' @param init vector with initial values.
+#' #' @param scale vector with the variances or covariance matrix of the jump
+#' #'   distribution.
+#' #' @param adapt if TRUE, adaptive sampling is used, if FALSE classic metropolis
+#' #'   sampling, if a positive integer the adaption stops after adapt iterations.
+#' #' @param acc.rate desired acceptance rate (ignored if adapt=FALSE)
+#' #' @param gamma controls the speed of adaption. Should be between 0.5 and 1. A
+#' #'   lower gamma leads to faster adaption.
+#' #' @param list logical. If TRUE a list is returned otherwise only a matrix with 
+#' #'   the samples.
+#' #' @param n.start teration where the adaption starts. Only internally used.
+#' #' @param ... further arguments passed to p.
+#' #' @description Copied and modified from Andreas Scheidegger's adaptMCMC 
+#' #'   package. The only difference is that the function p can return a vector 
+#' #'   instead of a single numeric. The first element of this vector is the 
+#' #'   log-posterior, while the other elements can be any additional information 
+#' #'   such as the log-likelihood, or the root-value for that log-likelihood in 
+#' #'   the case of POUMM.
+#' #' @return Same list as the one returned from adaptMCMC::MCMC but the member 
+#' #'   log.p is a matrix instead of a vector.
+#' #' @importFrom utils setTxtProgressBar txtProgressBar   
+#' #' @importFrom Matrix nearPD
+#' MCMC <- function(p, n, init, scale = rep(1, length(init)), 
+#'                   adapt = !is.null(acc.rate), 
+#'           acc.rate = NULL, gamma = 0.5, list = TRUE, n.start = 0,  ...) 
+#' {
+#'   if (adapt & !is.numeric(acc.rate)) 
+#'     stop("Argument \"acc.rate\" is missing!")
+#'   if (gamma < 0.5 | gamma > 1) 
+#'     stop("Argument \"gamma\" must be between 0.5 and 1!")
+#'   if (is.numeric(adapt)) 
+#'     n.adapt <- adapt
+#'   if (adapt == TRUE) 
+#'     n.adapt <- Inf
+#'   if (adapt == FALSE) 
+#'     n.adapt <- 0
+#'   d <- length(init)
+#'   X <- matrix(NA, ncol = d, nrow = n)
+#'   colnames(X) <- names(init)
+#'   X[1, ] <- init
+#'   
+#'   p.val.init <- p(X[1, ], ...)
+#'   
+#'   p.val <- matrix(NA, nrow = n, ncol=length(p.val.init))
+#'   p.val[1, ] <- p.val.init
+#'   
+#'   if (length(scale) == d) {
+#'     if(d == 1) {
+#'       M <- matrix(scale)
+#'     } else {
+#'       M <- diag(scale)
+#'     }
+#'   }
+#'   else {
+#'     M <- scale
+#'   }
+#' 
+#'   if (ncol(M) != length(init)) {
+#'     stop(paste("Length or dimension of 'init' and 'scale' do not match!", 
+#'                "init:", toString(init), "scale:", toString(M)))
+#'   }
+#'   #if (length(init) == 1) {
+#'   #  stop("One-dimensional sampling is not possible!")
+#'   #}
+#'   S <- t(chol(M))
+#'   cat("  generate", n, "samples \n")
+#'   pb <- txtProgressBar(min = 0, max = n, style = 3)
+#'   update.step <- max(5, floor(n/100))
+#'   k <- 0
+#'   for (i in 2:n) {
+#'     if (i%%update.step == 0) {
+#'       setTxtProgressBar(pb, i)
+#'     }
+#'     U <- rnorm(d)
+#'     X.prop <- c(X[i - 1, ] + S %*% U)
+#'     names(X.prop) <- names(init)
+#'     p.val.prop <- p(X.prop, ...)
+#'     
+#'     alpha <- min(1, exp(p.val.prop[1] - p.val[i - 1, 1]))
+#'     if (!is.finite(alpha)) 
+#'       alpha <- 0
+#'     if (runif(1) < alpha) {
+#'       X[i, ] <- X.prop
+#'       p.val[i, ] <- p.val.prop
+#'       k <- k + 1
+#'     }
+#'     else {
+#'       X[i, ] <- X[i - 1, ]
+#'       p.val[i, ] <- p.val[i - 1, ]
+#'     }
+#'     ii <- i + n.start
+#'     if (ii < n.adapt) {
+#'       adapt.rate <- min(5, d * ii^(-gamma))
+#'       M <- S %*% (diag(d) + adapt.rate * (alpha - acc.rate) * 
+#'                     U %*% t(U)/sum(U^2)) %*% t(S)
+#'       eig <- eigen(M, only.values = TRUE)$values
+#'       tol <- ncol(M) * max(abs(eig)) * .Machine$double.eps
+#'       if (!isSymmetric(M) | is.complex(eig) | !all(Re(eig) > 
+#'                                                    tol)) {
+#'         M <- as.matrix(Matrix::nearPD(M)$mat)
+#'       }
+#'       S <- t(chol(M))
+#'     }
+#'   }
+#'   close(pb)
+#'   acceptance.rate <- round(k/(n - 1), 3)
+#'   if (list) {
+#'     return(list(samples = X, log.p = p.val, cov.jump = M, 
+#'                 n.sample = n, acceptance.rate = acceptance.rate, 
+#'                 adaption = adapt, sampling.parameters = list(acc.rate = acc.rate, gamma = gamma)))
+#'   }
+#'   else {
+#'     cat("Acceptance rate:", acceptance.rate, "\n")
+#'     return(X)
+#'   }
+#' }

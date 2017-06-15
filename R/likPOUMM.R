@@ -4,8 +4,10 @@
 #' @param z0 Numeric value indicating the initial state at the root of the tree.
 #' @param alpha,theta,sigma Numeric values, parameters of the OU process.
 #' @param sigmae Numeric non-negative value (default 0). Specifies the standard
-#'   deviation of random environmental contribution (white noise) to be added to
-#'   the values. 
+#'   deviation of random environmental contribution and or measurement standard 
+#'   error to be added to the values (white noise). Note that if measurement standard
+#'   error, se, is known and needs to be added to the environmental contribution,
+#'   the right way to specify the parameter would be sqrt(sigmae^2+se^2).
 #' @param tree An object of class phylo (package ape).
 #' 
 #' @return A numeric vector containing the generated values at all nodes
@@ -29,8 +31,11 @@ rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
                          POUMM::rOU(n = 1, z0 = x, t = l, alpha = .a, theta = .t, sigma = .s)
                        }, root.value = z0, ancestor = TRUE, 
                        .a = alpha, .t = theta, .s = sigma)
-  if(sigmae > 0) {
-    g <- g + rnorm(length(g), 0, sigmae) 
+  if(any(sigmae > 0)) {
+    if(length(sigmae) < length(g))
+      sigmae <- rep(sigmae[1], length(g))
+    e <- rnorm(length(g), 0, sigmae) 
+    g <- g+e
   } 
   
   g
@@ -50,11 +55,16 @@ rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
 #'   representing the observed values at the tips, root and internal nodes.
 #' @param tree An object of class phylo.
 #' @param alpha,theta,sigma Numeric values, parameters of the OU model.
-#' @param sigmae Numeric non-negative value (default 0). Specifies the standard 
-#'   deviation of random environmental contribution (white noise) to be added to
-#'   the values.
+#' @param sigmae Numeric non-negative value or vector of length(z) elements 
+#' (default 0). Specifies the
+#'  standard deviation of random environmental contribution (and eventually 
+#'  measurement error) to be added to the values. Note that if measurement standard
+#'  error, se, is known and needs to be added to the environmental contribution,
+#'  the right way to specify the parameter would be sqrt(sigmae^2+se^2), not
+#'  sigmae+se.
 #' @param e Numeric vector of size length(z) representing exactly known 
-#'   measurement errors. Defaults to a vector of zeroes.
+#'   error (sum of environmental contribution and measurement error). 
+#'   Defaults to a vector of zeroes.
 #' @param log Logical indicating whether a log-likelihood should be returned 
 #'   instead of a likelihood. Default is TRUE.
 #'   
@@ -62,7 +72,8 @@ rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
 #'   given parameters.
 #' @export
 dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
-                                  e = rep(0, length(z)), log=TRUE) {
+                                  e = rep(0, length(z)),  
+                                  log=TRUE) {
   if (is.null(tree$edge.length)) {
     stop("tree has no branch length")
   }
@@ -97,18 +108,29 @@ loadModule( "IntegratorPOUMM", TRUE )
 #' @param tree a phylo object
 #' @param z Numeric vector with length(tree$tip.label) values corresponding to
 #' tree$tip.label.
+#' @param se Non-negative numerical or N-vector indicating known standard 
+#' measurement error.
 #' 
 #' @import Rcpp
 #' @return a list of objects used for likelihood evaluation
 #' 
 #' @export
-pruneTree <- function(tree, z) {
+pruneTree <- function(tree, z, se = 0) {
+  
   N <- length(tree$tip.label)                # number of tips
   M <- length(unique(as.vector(tree$edge)))  # number of all nodes 
   endingAt <- order(rbind(tree$edge, c(0, N+1))[, 2])
   
   edge <- tree$edge
   mode(tree$edge) <- "integer"
+  
+  if(length(se) != N) {
+    se <- rep(se[1], N)
+  }
+  
+  if(any(is.na(se) | se < 0)) {
+    stop("All elements of se should be non-negative numbers.")
+  }
   
   nonVisitedChildren <- rep(0, M)
   ee1 <- tree$edge[, 1]
@@ -172,11 +194,11 @@ pruneTree <- function(tree, z) {
   
   integrator <- Integrator$new()
   integrator$setPruningInfo(
-    z, tree$edge, tree$edge.length,
+    z, se, tree$edge, tree$edge.length,
     M, N, endingAt, nodesVector, nodesIndex, unVector, unIndex)
   
   list(M=M, N=N, 
-       z = z, tree = tree, 
+       z = z, se = se, tree = tree, 
        endingAt=endingAt, 
        nodesVector=nodesVector, nodesIndex=nodesIndex, 
        nLevels=length(nodesIndex)-1, 
@@ -184,8 +206,18 @@ pruneTree <- function(tree, z) {
        integrator = integrator)
 }
 
-#' Fast POUMM likelihood calculation based on the breadth-first pruning algorithm
-#' and Armadillo-library vector operations.
+#' @name likPOUMM_C
+#' 
+#' @title Fast POUMM likelihood calculation based on the breadth-first 
+#' pruning algorithm.
+#'  
+#' @description The function likPOUMMGivenTreeVTipsC is using elementwise 
+#'   vector operations from the Armadillo library. The function
+#'   likPOUMMGivenTreeVTipsC2 is using C++ for loops which benefit from
+#'   better vectorization of native algebraic expressions. The function 
+#'   likPOUMMGivenTreeVTipsC3 adds to likPOUMMGivenTreeVTipsC2 Open MP 
+#'   parallelization (mostly available on multi-core Linux systems). 
+#'
 #' @param integrator An object of the Integrator C++ class (see example).
 #'   trait values at the tip-nodes.
 #' @param alpha the strength of the selection
@@ -227,6 +259,9 @@ pruneTree <- function(tree, z) {
 #' likR
 #' }
 #' 
+NULL
+
+#' @describeIn likPOUMM_C using RcppArmadillo and simd vectorization
 #' @export
 likPOUMMGivenTreeVTipsC <- function(
   integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
@@ -238,13 +273,80 @@ likPOUMMGivenTreeVTipsC <- function(
             all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
   } else {
-    abc <- integrator$abc(alpha, theta, sigma, sigmae)
+    abc <- integrator$abc_arma(alpha, theta, sigma, sigmae)
     if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
       value <- NaN
       attr(value, "g0") <- g0
       attr(value, "g0LogPrior") <- NA
     } else {
-      resList <- loglik_abc_g0_g0Prior(abc, theta, sigma, g0, g0Prior)
+      resList <- loglik_abc_g0_g0Prior(abc, alpha, theta, sigma, g0, g0Prior)
+      loglik <- resList$loglik
+      g0 <- resList$g0
+      g0LogPrior <- resList$g0LogPrior
+      
+      value <- if(log) loglik else exp(loglik)
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- g0LogPrior
+    }
+    
+    value
+  }
+}
+
+#' @describeIn likPOUMM_C Using omp simd operations in C++ for-loops
+#' @export
+likPOUMMGivenTreeVTipsC2 <- function(
+  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
+  
+  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
+    warning('Some parameters are NA or NaN')
+    ifelse(log, -Inf, 0)
+  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
+    ifelse(log, -Inf, 0)
+  } else {
+    abc <- integrator$abc_omp_simd(alpha, theta, sigma, sigmae)
+    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
+      value <- NaN
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- NA
+    } else {
+      resList <- loglik_abc_g0_g0Prior(abc, alpha, theta, sigma, g0, g0Prior)
+      loglik <- resList$loglik
+      g0 <- resList$g0
+      g0LogPrior <- resList$g0LogPrior
+      
+      value <- if(log) loglik else exp(loglik)
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- g0LogPrior
+    }
+    
+    value
+  }
+}
+
+#' @describeIn likPOUMM_C Using OpenMP and SIMD parallelization if available on 
+#' the system. This implementation differs from likPOUMMGivenTreeVTipsC3 by
+#' the use of longer code-blocks in for-loops (better adapted for the Intel C++
+#' compiler). 
+#' @export
+likPOUMMGivenTreeVTipsC4 <- function(
+  integrator, alpha, theta, sigma, sigmae, g0 = NA, g0Prior = NULL, log = TRUE){
+  
+  if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
+    warning('Some parameters are NA or NaN')
+    ifelse(log, -Inf, 0)
+  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+            all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
+    ifelse(log, -Inf, 0)
+  } else {
+    abc <- integrator$abc_omp_for_simd(alpha, theta, sigma, sigmae)
+    if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
+      value <- NaN
+      attr(value, "g0") <- g0
+      attr(value, "g0LogPrior") <- NA
+    } else {
+      resList <- loglik_abc_g0_g0Prior(abc, alpha, theta, sigma, g0, g0Prior)
       loglik <- resList$loglik
       g0 <- resList$g0
       g0LogPrior <- resList$g0LogPrior
@@ -265,13 +367,12 @@ likPOUMMGivenTreeVTipsC <- function(
 #' 
 #' @param abc a vector of 3 numerical values denoting the corresponding 
 #'   coefficients in the POUMM likelihood presented as exp(a g0^2 + b g0 + c).
-#' @param theta parameter theta of the OU-process.
-#' @param sigma parameter sigma of the OU-process.
+#' @param alpha,theta,sigma parameters of the OU-process.
 #' @param g0 initial value at the root of the tree (can be NA). See argument
 #'   parMapping in ?specifyPOUMM.
 #' @param g0Prior list object. See parameter g0Prior in ?specifyPOUMM.
 #'   
-loglik_abc_g0_g0Prior <- function(abc, theta, sigma, g0, g0Prior) {
+loglik_abc_g0_g0Prior <- function(abc, alpha, theta, sigma, g0, g0Prior) {
   logpi <- log(pi)
   loge2 <- log(2)
   
@@ -349,14 +450,14 @@ loglik_abc_g0_g0Prior <- function(abc, theta, sigma, g0, g0Prior) {
       g0Var <- varOU(Inf, alpha, sigma)
     }
     
-    if(g0Var != 0) {
+    if(!is.na(g0Var) & g0Var != 0) {
       def <- c(-0.5 / g0Var, 0, - log(sqrt(g0Var)) - 0.5 * (loge2+logpi))
       abc <- abc + def
       loglik <- abc[3] + 0.5 * (logpi - log(-abc[1])) - abc[2]^2 / (4 * abc[1])
       g0 <- NaN
       g0LogPrior <- NaN
     } else {
-      #g0Var = 0, i.e. gr=g0Mean with probability 1
+      #g0Var = 0 or g0Var is NA or NaN: assume gr=g0Mean with probability 1
       loglik <- (abc[1] * (g0Mean[1]-theta) + abc[2]) * (g0Mean[1]-theta) + abc[3]
       
       g0 <- g0Mean
@@ -408,12 +509,17 @@ loglik_abc_g0_g0Prior <- function(abc, theta, sigma, g0, g0Prior) {
 #'   instead of likelihood, default is TRUE.
 #' @param pruneInfo list returned by pruneTree(tree) to be passed in explicit
 #'   calls to dVGivenTreeOU.
-#' @param usempfr,maxmpfr integer indicating if and how mpfr should be used for
-#'   small parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the
-#'   mpfr package can be forced by specifying an integer greater or equal to 2.
-#'   Setting usempfr=0 disables high precision likelihood calculation. Requires
-#'   the Rmpfr package. Note that when using mpfr, the time for one likelihood
-#'   calculation can increase more than 100-fold. Default (0).
+#' @param usempfr integer indicating if and how mpfr should be used for small 
+#'  parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the mpfr 
+#'  package can be forced by specifying an integer greater or equal to 2. 
+#'  Setting usempfr=0 (default) causes high precision likelihood 
+#'  calculation to be done on each encounter of parameters with at least 1 bigger
+#'  log-likelihood value than any of the currently found
+#'  maximum log-likelihood or the previously calculated log-likelihood value
+#'  Requires the Rmpfr package. Note that using mpfr may increase the time for 
+#'  one likelihood calculation more than 100-fold. Set usempfr to -1 or less
+#'  to completely disable Rmpfr functionality. 
+#' @param maxmpfr integer (not used)
 #' @param precbits integer specifying precision bits for mpfr. Default is 512.
 #' @param debug logical, if set to TRUE some debugging information is printed 
 #'   during likelihood calculation
@@ -424,7 +530,7 @@ loglik_abc_g0_g0Prior <- function(abc, theta, sigma, g0, g0Prior) {
 #' @aliases likPOUMMGivenTreeVTips dVTipsGivenTreePOUMM
 #' @export
 likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
-  z, tree, alpha, theta, sigma, sigmae = 0, g0 = NA, g0Prior = NULL,
+  z, tree, alpha, theta, sigma, sigmae = 0, g0 = NA, g0Prior = NULL, 
   log = TRUE, pruneInfo = pruneTree(tree, z), 
   usempfr = 0, maxmpfr = 2, precbits = 128, debug = FALSE) {
   
@@ -440,20 +546,12 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
   if(anyNA(c(alpha, theta, sigma, sigmae))) { # case 9 and 10
     warning('Some parameters are NA or NaN')
     ifelse(log, -Inf, 0)
-  } else if((alpha > 0 & sigma == 0 & sigmae == 0) |  # case 4
+  } else if((alpha > 0 & sigma == 0 & all(sigmae == 0)) |  # case 4
      all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
   } else {
     logpi <- log(pi)
     loge2 <- log(2)
-    
-    if(as.integer(usempfr) >= 2 |
-       (usempfr & ((as.double(alpha) != 0 & as.double(alpha) < 0.01) |
-                   (as.double(sigma) != 0 & as.double(sigma) < 0.01) |
-                   (as.double(sigmae) != 0 & as.double(sigmae) < 0.01)))) {
-      usempfr <- 2 # indicate for later code that we shall convert to mpfr!
-    }
-    
     
     N <- length(tree$tip.label)                # number of tips
     
@@ -470,7 +568,6 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
     nLevels <- pruneInfo$nLevels
     unVector <- pruneInfo$unVector
     unIndex <- pruneInfo$unIndex
-    unJ <- 1
     
     t <- pruneInfo$tree$edge.length
     
@@ -529,16 +626,18 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       pif <- rep(alpha*0, M*3)
       dim(pif) <- c(M, 3)
       
-      gutalphasigma2 <- e2talpha + ((-0.5 / sigmae2) * sigma2) / fe2talpha
+      gutalphasigma2 <- rep(alpha*0, M)
       
+      unJ <- 1
       
       for(i in 1:nLevels) {
         es <- endingAt[nodesVector[(nodesIndex[i] + 1):nodesIndex[i + 1]]]
         edgeEnds <- edge[es, 2]
         
         if(edge[es[1], 2] <= N) {
+          gutalphasigma2[es] <- e2talpha[es] + ((-0.5 / sigmae2) * sigma2) / fe2talpha[es]
           # all es pointing to tips
-          if(sigmae==0) {
+          if(all(sigmae==0)) {
             # no environmental deviation
             # (possibly reordered) shifted tip values
             g1 <- z[edgeEnds] - theta 
@@ -552,9 +651,6 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
             z1 <- z[edgeEnds] - theta 
             
             pif[edgeEnds, 3] <- -0.5 * log(gutalphasigma2[es]) -
-              
-              #pif[edgeEnds, 3] <- -0.5 * (2*talpha[es] + 
-              #     log1p(((-0.5 / sigmae2) * sigma2) / fe2talpha[es] / e2talpha[es])) -
               0.25 * sigma2 * (z1 / sigmae2)^2 / 
               (fe2talpha[es] - alpha + (-0.5 / sigmae2) * sigma2) +
               talpha[es] + (-0.5 * (loge2 + logpi  + z1 * (z1 / sigmae2)) - logsigmae)
@@ -589,6 +685,11 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
         
         while(lenUnAll != length(es)) {
           #while(length(es) > 0) {
+          # cat('unIndex: length:', length(unIndex), ", value:", toString(unIndex), '\n')
+          # cat('unJ:', unJ, "\n")
+          # cat('lenUnAll:', lenUnAll, ', length(es):', length(es), "\n")
+          # cat("=======")
+
           un <- unVector[(unIndex[unJ]+1):unIndex[unJ+1]]
           unJ <- unJ+1
           lenUnAll <- lenUnAll + length(un)
@@ -611,7 +712,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       done <- TRUE
     }
     
-    resList <- loglik_abc_g0_g0Prior(abc, theta, sigma, g0, g0Prior)
+    resList <- loglik_abc_g0_g0Prior(abc, alpha, theta, sigma, g0, g0Prior)
     
     loglik <- resList$loglik
     g0 <- resList$g0

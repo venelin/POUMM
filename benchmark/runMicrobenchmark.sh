@@ -1,0 +1,1 @@
+bsub -R beta -W 1:00 -n 2 -R "rusage[mem=6000]" -J j_2_cores  ' R --vanilla --slave -f microbenchmark.R --args gcc'  

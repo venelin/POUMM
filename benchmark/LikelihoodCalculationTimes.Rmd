@@ -1,0 +1,117 @@
+---
+title: "Likelihood Calculation Times"
+author: "Venelin Mitov"
+date: "10 April 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(scales)
+library(data.table)
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r transfer-scripts-to-euler, include=FALSE, eval=FALSE}
+system('rsync -cv -r --progress ~/Documents/Bio/Projects/POUMM_1.3.0.tar.gz vmitov@euler:~/')
+
+system('rsync -cv -r --progress ~/Documents/Bio/Projects/diversitree_0.9-9.tar.gz vmitov@euler:~/')
+
+system('rsync -cv -r --progress ~/Documents/Bio/Projects/poummBayesianValidation/DATA/Microbenchmark/microbenchmark.R vmitov@euler:~/POUMM2/src/microbenchmark.R ')
+
+system('rsync -cv -r --progress ~/Documents/Bio/Projects/POUMM/benchmark/runMicrobenchmark.sh vmitov@euler:~/POUMM2/src/')
+
+system('rsync -cv -r --progress vmitov@euler:~/POUMM2/src/Results_icpc-omp-*.RData ~/Documents/Bio/Projects/poummBayesianValidation/DATA/Microbenchmark/')
+
+system('rsync -cv -r --progress vmitov@euler:~/POUMM2/src/TreesAndValues.RData
+ ~/Documents/Bio/Projects/poummBayesianValidation/DATA/Microbenchmark/')
+
+```
+
+```{r read-data-files}
+# read RData files
+timeTable <- NULL
+valueTable <- NULL
+
+for(compiler in c("icpc-omp-for", "icpc-omp-simd", "icpc-omp-for-simd")) {
+  for(tryNo in 1:10) {
+    for(nCores in c(1, 2, 4, 6, 8, 10)) {
+      dataFile <- paste0("Results_", compiler, "_", nCores, "_cores_", tryNo, ".RData")
+
+      if(file.exists(dataFile)) {
+        load(dataFile)
+        if(is.null(values[['tryNo']])) {
+          values[, tryNo:=1]
+        } 
+        if(is.null(times[['tryNo']])) {
+          times[, tryNo:=1]
+        }
+        valueTable <- rbind(valueTable, values)
+        timeTable <- rbind(timeTable, times)
+      }
+    }
+  }
+}
+
+setkey(timeTable, compilerInfo, cpuInfo, nCores, treeType, N, expr)
+
+timeTable <- timeTable[expr != "gc"]
+
+# average the times over the four trees for each N
+# we remove the implementation "POUMM (C++/Arrays+SIMD)" 
+# since it only uses the default vectorization (not omp-simd)
+timeTable <- 
+  timeTable[
+    cpuInfo=="model name\t: Intel(R) Xeon(R) CPU E5-2697 v2 @ 2.70GHz", 
+            list(time_ms_per_try = mean(mean)),
+            by=list(cpuInfo, nCores, compilerInfo, expr, N, tryNo)]
+
+# pick the mins over the tries
+timeTable <- 
+  timeTable[, list(time_ms = min(time_ms_per_try)),
+            by=list(cpuInfo, nCores, compilerInfo, expr, N)]
+
+
+# take best single-core time as reference for omp-for-simd
+timeTable <- merge(
+  timeTable,
+  timeTable[expr == "POUMM: C++, omp" & 
+              compilerInfo == "icpc-omp-for-simd" & nCores == 1, 
+            list(ref_time_omp_for_simd = time_ms), keyby = N],
+  by = "N")
+
+#take best single-core time as reference for omp-for
+timeTable <- merge(
+  timeTable,
+  timeTable[expr == "POUMM: C++, omp" &
+              compilerInfo == "icpc-omp-for" & nCores == 1,
+            list(ref_time_omp_for = time_ms), keyby = N],
+  by = "N")
+
+timeTable[, rel_speedup_omp_for_simd:=ref_time_omp_for_simd/time_ms]
+timeTable[, rel_speedup_omp_for:=ref_time_omp_for/time_ms]
+
+
+timeTable[, compiler:='Intel v16.0.0']
+timeTable[, omp_for:= ((compilerInfo %in% c("icpc-omp-for", "icpc-omp-for-simd")) &
+                          expr == "POUMM: C++, omp")]
+timeTable[, omp_simd:= (compilerInfo != "icpc-omp-for" &
+                          expr == "POUMM: C++, omp")]
+
+timeTable[, Implementation:=expr]
+timeTable[compilerInfo == "icpc-omp-simd" & expr == "POUMM: C++, omp", 
+          Implementation := paste0(Implementation, "-simd")]
+timeTable[compilerInfo == "icpc-omp-for" & expr == "POUMM: C++, omp", 
+          Implementation := paste0(Implementation, "-for")]
+timeTable[compilerInfo == "icpc-omp-for-simd" & expr == "POUMM: C++, omp", 
+          Implementation := paste0(Implementation, "-for-simd")]
+
+timeTable[, Implementation := 
+            paste0(Implementation,' on ', 
+                   nCores, ifelse(nCores == 1," core"," cores"))]
+
+timeTable <- timeTable[N %in% 10^(5:2)]
+
+save(timeTable, file='timeTable.RData')
+```
+

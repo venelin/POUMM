@@ -8,4 +8,4 @@ There were no ERRORs, WARNINGs or NOTEs.
   
 
 ## Downstream dependencies
-Not applicable since this is the first release of the package.
+Not applicable.
