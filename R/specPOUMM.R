@@ -121,7 +121,7 @@
 #'    dexp(par[1], rate = tMean / 6.931, TRUE) + 
 #'      dnorm(par[2], zMean, 10 * zSD, TRUE) +
 #'      dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) + 
-#'      dexp(par[4], rate = .01, TRUE)
+#'      dexp(par[4], rate = 2 / zSD, TRUE)
 #'  }
 #' }
 #' 
@@ -235,7 +235,7 @@ specifyPOUMM <- function(
       dexp(par[1], rate = tMean / 6.931, TRUE) + 
         dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) + 
-        dexp(par[4], rate = .1, TRUE)  
+        dexp(par[4], rate = 2 / zSD, TRUE)  
       
     },
     
@@ -558,7 +558,7 @@ specifyPOUMM_ATSSeG0 <- function(
       dexp(par[1], rate = tMean / 6.931, log = TRUE) +
         dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dexp(par[3],  rate = sqrt(tMean / (zVar * 0.6931)), TRUE) +
-        dexp(par[4], rate = .1, log = TRUE) + 
+        dexp(par[4], rate = 2 / zSD, log = TRUE) + 
         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
     },
     
@@ -661,8 +661,8 @@ specifyPMM <- function(
       sigmae = 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1],  rate = .1, log = TRUE) +
-        dexp(par[2], rate = .1, log = TRUE)
+      dexp(par[1],  rate = sqrt(tMean / (zVar * 0.6931)), log = TRUE) +
+        dexp(par[2], rate = 2 / zSD, log = TRUE)
     },
 
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -761,8 +761,8 @@ specifyPMM_SSeG0 <- function(
       sigmae = 2 * zSD, g0 = zMax + 2 * zSD),
     
     parPriorMCMC = function(par) {
-      dexp(par[1],  rate = .1, log = TRUE) +
-        dexp(par[2], rate = .1, log = TRUE) + 
+      dexp(par[1],  rate = sqrt(tMean / (zVar * 0.6931)), log = TRUE) +
+        dexp(par[2], rate = 2 / zSD, log = TRUE) + 
         dnorm(par[3], zMean, 2 * zSD, log = TRUE)
     },
     
@@ -871,7 +871,7 @@ specifyPOUMM_ATH2tMeanSe <- function(
       dexp(par[1], rate = tMean / 6.931, log = TRUE) +
         dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dunif(par[3], min = 0, max = 1, log = TRUE) +
-        dexp(par[4], rate = .1, log = TRUE)
+        dexp(par[4], rate = 2 / zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -980,7 +980,7 @@ specifyPOUMM_ATH2tMeanSeG0 <- function(
       dexp(par[1], rate = tMean / 6.931, log = TRUE) +
         dnorm(par[2], zMean, 2 * zSD, TRUE) +
         dunif(par[3], min = 0, max = 1, log = TRUE) +
-        dexp(par[4], rate = .1, log = TRUE) + 
+        dexp(par[4], rate = 2 / zSD, log = TRUE) + 
         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
     },
     
@@ -1088,7 +1088,7 @@ specifyPMM_H2tMeanSe <- function(
     
     parPriorMCMC = function(par) {
       dunif(par[1], min = 0, max = 1, log = TRUE) +
-        dexp(par[2], rate = .1, log = TRUE)
+        dexp(par[2], rate = 2 / zSD, log = TRUE)
     },
     
     parInitMCMC = function(chainNo, fitML = NULL) {
@@ -1194,7 +1194,7 @@ specifyPMM_H2tMeanSeG0 <- function(
     
     parPriorMCMC = function(par) {
       dunif(par[1], min = 0, max = 1, log = TRUE) +
-        dexp(par[2], rate = .1, log = TRUE) + 
+        dexp(par[2], rate = 2 / zSD, log = TRUE) + 
         dnorm(par[3], zMean, 2 * zSD)
       
     },

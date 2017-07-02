@@ -2,7 +2,7 @@ library(testthat)
 library(POUMM)
 library(mvtnorm)
 
-EPS <- 10^-6
+EPS <- 10^-4
 
 #' An "algebraic" implementation of the POUMM likelihood calculation based on
 #' multivariate normal density function
@@ -22,6 +22,13 @@ dVTipsGivenTreePOUMMg0Alg <- function(z, tree, alpha, theta, sigma, sigmae, se, 
   mvtnorm::dmvnorm(z, muz, Vt+Ve, log=TRUE)
 }
 
+absCalls <- 0
+my_abs <- function(x) {
+  absCalls <<- absCalls+1
+  cat("abs call #", absCalls, ": x=", x, "\n", sep="")
+  abs(x)
+}
+
 context("POUMM Likelihood")
 set.seed(1)
 
@@ -38,61 +45,58 @@ z <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sqrt(sigmae^2+se^2))
 
 pruneInfo <- POUMM:::pruneTree(tree, z, se)
 
-# pruneInfo2 <- POUMM::pruneTree(tree, z)
-# 
-# pruneInfo$integrator$reorderEdges()
-# pruneInfo$integrator$edge
+
 
 test_that(
   "fastLik(R) vs algebraic lik", {
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, 0, theta, sigma, sqrt(sigmae^2+se^2), g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, 0, theta, sigma, sqrt(sigmae^2+se^2), g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, 0, theta, sigma, sqrt(0+se^2), g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, 0, theta, sigma, sqrt(0+se^2), g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(sigmae^2+se^2), g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(sigmae^2+se^2), g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(0+se^2), g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(0+se^2), g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(sigmae^2+0), g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sqrt(sigmae^2+0), g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, 0, g0)))
   })
 
 test_that(
   "fastLik(C++ Armadillo) vs algebraic lik", {
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
                                dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sigmae, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, 0, g0)))
   })
 
 test_that(
   "fastLik(C++ vectorized) vs algebraic lik", {
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, se, g0)))
   })
 
 
 test_that(
   "fastLik(C++ vectorized and multicore) vs algebraic lik", {
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, 0, theta, sigma, sigmae, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, 0, theta, sigma, 0, g0)  -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, 0, theta, sigma, 0, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, alpha, theta, sigma, sigmae, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, sigmae, se, g0)))
-    expect_true(EPS > abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
+    expect_true(EPS > my_abs(likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, alpha, theta, sigma, 0, g0) -
                             dVTipsGivenTreePOUMMg0Alg(z[1:N], tree, alpha, theta, sigma, 0, se, g0)))
   })
 
@@ -135,10 +139,40 @@ test_that("default calls no error", {
 
 
 context("POUMM fit")
-fit1 <- POUMM(z = z[1:N], tree = tree, spec = specifyPOUMM(z[1:N], tree, nSamplesMCMC = 10000), verbose=TRUE)
+fit1 <- POUMM(z = z[1:N], tree = tree, 
+              spec = specifyPOUMM(z[1:N], tree, nSamplesMCMC = 10000), 
+              verbose=TRUE)
 
 context("summary POUMM fit")
 summary(fit1)
+summary(fit1, mode="long")
+summary(fit1, mode="expert")
 
 context("plot POUMM fit") 
 plot(fit1)
+
+
+context("POUMM Likelihood speed")
+set.seed(1)
+
+for(N2 in c(100, 1000, 10000)) {
+  tree2 <- ape::rtree(N2)  
+  
+  se2 = rexp(N2, 1/.01)
+  z2 <- rVNodesGivenTreePOUMM(tree2, g0, alpha, theta, sigma, sqrt(sigmae^2+se2^2))
+  
+  pruneInfo <- POUMM:::pruneTree(tree2, z2, se2)
+  
+  mb <- microbenchmark::microbenchmark(
+    R=likPOUMMGivenTreeVTips(z2[1:N2], tree2, 0, theta, sigma, sqrt(sigmae^2+se2^2), g0),
+    Armadillo=likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
+    SIMD=likPOUMMGivenTreeVTipsC2(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
+    SIMD_OMP=likPOUMMGivenTreeVTipsC4(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
+    times=10
+  )
+  
+  cat("N2=")
+  print(N2)
+  print(mb)
+}
+

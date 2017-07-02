@@ -163,17 +163,17 @@ if(!useCachedResults) {
   
   # delete some of the slots to make cach-file smaller :-(.
   fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
-  fitPOUMM$loglik <- fitPOUMM2$loglik <- fitH2tMean$loglik <- NULL
-  fitPOUMM$fitMCMC$post <- fitPOUMM2$fitMCMC$post <- fitH2tMean$fitMCMC$post <- NULL
-  fitPOUMM$spec$parPriorMCMC <- fitPOUMM2$spec$parPriorMCMC <- fitH2tMean$spec$parPriorMCMC <- NULL
-  fitPOUMM$spec$parInitMCMC <- fitPOUMM2$spec$parInitMCMC <- fitH2tMean$spec$parInitMCMC <- NULL
+  #fitPOUMM$loglik <- fitPOUMM2$loglik <- fitH2tMean$loglik <- NULL
+  #fitPOUMM$fitMCMC$post <- fitPOUMM2$fitMCMC$post <- fitH2tMean$fitMCMC$post <- NULL
+  #fitPOUMM$spec$parPriorMCMC <- fitPOUMM2$spec$parPriorMCMC <- fitH2tMean$spec$parPriorMCMC <- NULL
+  #fitPOUMM$spec$parInitMCMC <- fitPOUMM2$spec$parInitMCMC <- fitH2tMean$spec$parInitMCMC <- NULL
   
   save(g, z, tree, e, 
        fitPOUMM2, fitPOUMM, fitH2tMean,
        file="UserGuideCache.RData")
 } 
 # restore the pruneInfo since it is needed afterwards.
-fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- POUMM::pruneTree(tree, z[1:N])
+fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- POUMM::pruneTree(tree, z[1:length(tree$tip.label)])
 ```
 
 
@@ -190,11 +190,18 @@ The strategy of executing three MCMC chains instead of one allows to assess:
 
 We plot traces and posterior sample densities from the MCMC fit:
 
-```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, fig.cap="MCMC traces and posterior density plots from a POUMM MCMC-fit. Black dots on the x-axis indicate the ML-fit.", results="hide", eval=TRUE}
-plot(fitPOUMM, showUnivarDensityOnDiag = TRUE)
+```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, fig.cap="MCMC traces from a POUMM MCMC-fit.", results="hide", eval=TRUE}
+
+# get a list of plots 
+plotList <- plot(fitPOUMM, showUnivarDensityOnDiag = TRUE, doPlot = FALSE)
+plotList$traceplot
 ```
 
-A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, H2tMean, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
+```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, fig.cap="MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit."}
+plotList$densplot
+```
+
+A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, $H_{\bar{t}}^2$, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:
 
 ```{r, warning=FALSE, eval=TRUE}
 summary(fitPOUMM)
@@ -209,8 +216,8 @@ fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
 
 ```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE, results="hide", eval=TRUE}
-pl <- plot(fitPOUMM2, doPlot = FALSE, doZoomIn = TRUE)
-pl$densplot
+plotList <- plot(fitPOUMM2, doPlot = FALSE)
+plotList$densplot
 ```
 
 
@@ -244,7 +251,7 @@ Finally, we compare the ratio of empirical genotypic to total phenotypic varianc
 
 ```{r, warning=FALSE}
 c(H2empirical = var(g[1:N])/var(z[1:N]))
-summary(fitPOUMM2)["H2tMean"==stat, unlist(HPD)]
+summary(fitPOUMM2)["H2e"==stat, unlist(HPD)]
 ```
 
 ## Parallelization
@@ -362,7 +369,7 @@ plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"),
 summary(fitH2tMean)[stat %in% c("H2tMean", "H2e", "H2tInf", "sigmae")]
 ```
 
-Now we see that the density for `H2tMean` is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for `H2tMean` and `H2tInf` are nearly the same. Notice, though, that the estimate for the empirical heritability `H2e` is shifted towards 1 compared to `H2tMean` and `H2tInf`. This shows an important difference between `H2e` and the time-dependent formulae for phylogenetic heritability: `H2e` takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:
+Now we see that the prior density for `H2tMean` is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for `H2tMean` and `H2tInf` are nearly the same. Notice, though, that the estimate for the empirical heritability `H2e` is shifted towards 1 compared to `H2tMean` and `H2tInf`. This shows an important difference between `H2e` and the time-dependent formulae for phylogenetic heritability: `H2e` takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:
 
 ```{r}
 # Compare global empirical heritability

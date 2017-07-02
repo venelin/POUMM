@@ -159,12 +159,6 @@ convertToMCMC <- function(obj, thinMCMC=1) {
   
   log.p <- obj$log.p
   
-  # if(!is.null(obj$extra.values)) {
-  #   log.p <- cbind(log.p, 
-  #                           do.call(rbind, lapply(obj$extra.values, unlist)))
-  #   colnames(log.p) <- c('log.p', 'loglik', 'g0', 'g0LogPrior')
-  # }
-  # 
   log.p <- window(mcmc(log.p, 
                        start = start(codaobj), 
                        end = end(codaobj), 
@@ -384,8 +378,6 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
   
   samplePriorMCMC <- c(samplePriorMCMC, rep(FALSE, nChainsMCMC - 1))
   
-  #oldAdaptMCMCVersion <- packageVersion('adaptMCMC') == "1.1"
-  
   if(!is.null(list(...)$debug)) {
     debug <- list(...)$debug
   } else {
@@ -405,16 +397,8 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
     }
     if(is.nan(pr) | is.na(pr)) {
       warning(paste0("NA or NaN prior for ", toString(par)))
-      # res <- list(log.density = -Inf, 
-      #             c(loglik = as.double(NA), 
-      #               g0 = as.double(NA), 
-      #               g0LogPrior = as.double(NA)))
       -Inf
     } else if(is.infinite(pr)) {
-      # res <- list(log.density = pr, 
-      #             c(loglik = as.double(NA), 
-      #               g0 = as.double(NA), 
-      #               g0LogPrior = as.double(NA)))
       pr
     } else {
       if(samplePriorMCMC[chainNo]) {
@@ -434,17 +418,8 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
         cat("\n")
       }
       
-      #res <- list(log.density = pr + ll, 
-      #     c(loglik = ll, g0 = as.double(attr(ll, "g0")), 
-      #                g0LogPrior = as.double(attr(ll, "g0LogPrior"))))
       pr + ll
     }
-    
-    # if(oldAdaptMCMCVersion) {
-    #   res[[1]]
-    # } else {
-    #   res
-    # }
   }
   
   doMCMC <- function(i, pruneInfo) {

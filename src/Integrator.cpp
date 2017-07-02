@@ -361,17 +361,17 @@ public:
     vec& zReord = this->zReord;
     vec& tReord = this->tReord;
     
-    vec talpha(M);
-    vec etalpha(M);
-    vec e2talpha(M);
-    vec fe2talpha(M);
-    vec gutalphasigma2(M);
+    vec talpha(M - 1);
+    vec etalpha(M - 1);
+    vec e2talpha(M - 1);
+    vec fe2talpha(M - 1);
+    vec gutalphasigma2(M - 1);
     vec z1(N);
     vec z1z1(N);
     
     if(alpha != 0) {
       _PRAGMA_OMP_SIMD
-      for(int i = 0; i < M; i++) {
+      for(int i = 0; i < M - 1; i++) {
         talpha[i] = tReord[i] * alpha;
         etalpha[i] = exp(talpha[i]);
         e2talpha[i] = etalpha[i] * etalpha[i];
@@ -379,7 +379,7 @@ public:
       }
     } else {
       _PRAGMA_OMP_SIMD
-      for(int i = 0; i < M; i++) {
+      for(int i = 0; i < M - 1; i++) {
         talpha[i] = tReord[i] * alpha;
         etalpha[i] = exp(talpha[i]);
         e2talpha[i] = etalpha[i] * etalpha[i];
@@ -492,11 +492,11 @@ public:
     vec& zReord = this->zReord;
     vec& tReord = this->tReord;
     
-    vec talpha(M);
-    vec etalpha(M);
-    vec e2talpha(M);
-    vec fe2talpha(M);
-    vec gutalphasigma2(M);
+    vec talpha(M - 1);
+    vec etalpha(M - 1);
+    vec e2talpha(M - 1);
+    vec fe2talpha(M - 1);
+    vec gutalphasigma2(M - 1);
     vec z1(N);
     vec z1z1(N);
     
@@ -511,7 +511,7 @@ public:
   
   if(alpha != 0) {
     _PRAGMA_OMP_FOR_SIMD
-    for(int i = 0; i < M; i++) {
+    for(int i = 0; i < M - 1; i++) {
       talpha[i] = tReord[i] * alpha;
       etalpha[i] = exp(talpha[i]);
       e2talpha[i] = etalpha[i] * etalpha[i];
@@ -519,7 +519,7 @@ public:
     }
   } else {
     _PRAGMA_OMP_FOR_SIMD
-    for(int i = 0; i < M; i++) {
+    for(int i = 0; i < M - 1; i++) {
       talpha[i] = tReord[i] * alpha;
       etalpha[i] = exp(talpha[i]);
       e2talpha[i] = etalpha[i] * etalpha[i];

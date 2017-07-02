@@ -26,20 +26,6 @@
 #'  with caution since specifying a small number of digits, i.e. 2 or 3 can
 #'  result in an infinite loop during optim. Specify a negative number
 #'  to disable rounding.
-#'@param ... additional arguments passed to the likPOUMMGivenTreeVTips function 
-#'  (?dVGivenTreeOU for details).
-#'@param spec A named list specifying how the ML and MCMC fit should be done. 
-#'  See ?specifyPOUMM.
-#'@param doMCMC Deprecated - use nSamplesMCMC = 0 instead. 
-#'  logical: should a MCMC fit be performed. An MCMC fit provides a 
-#'  sample from the posterior distribution of the parameters given a prior 
-#'  distribution and the data. Unlike the ML-fit, it allows to estimate 
-#'  confidence intervals for the estimated parameters. This argument is TRUE by 
-#'  default. The current implementation uses a modified version of the adaptive 
-#'  Metropolis sampler from the package "adaptMCMC" written by Andreas 
-#'  Scheidegger. To obtain meaningful estimates MCMC may need to run for several
-#'  millions of iterations (parameter nSamplesMCMC set to 1e5 by default). See 
-#'  parameters ending at MCMC in ?specifyPOUMM for details.
 #'  
 #'@param usempfr integer indicating if and how mpfr should be used for small 
 #'  parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the mpfr 
@@ -56,6 +42,32 @@
 #'  used for faster vector operations. Defaults to TRUE. Since the C++ likelihood
 #'  implementation does not support mpfr, useCpp gets disabled when usempfr is 
 #'  bigger than 0.
+#'
+#'@param ... additional arguments passed to the likPOUMMGivenTreeVTips function 
+#'  (?dVGivenTreeOU for details).
+#'  
+#'@param spec A named list specifying how the ML and MCMC fit should be done. 
+#'  See ?specifyPOUMM.
+#'  
+#'@param doMCMC Deprecated - use nSamplesMCMC = 0 instead. 
+#'  logical: should a MCMC fit be performed. An MCMC fit provides a 
+#'  sample from the posterior distribution of the parameters given a prior 
+#'  distribution and the data. Unlike the ML-fit, it allows to estimate 
+#'  confidence intervals for the estimated parameters. This argument is TRUE by 
+#'  default. The current implementation uses a modified version of the adaptive 
+#'  Metropolis sampler from the package "adaptMCMC" written by Andreas 
+#'  Scheidegger. To obtain meaningful estimates MCMC may need to run for several
+#'  millions of iterations (parameter nSamplesMCMC set to 1e5 by default). See 
+#'  parameters ending at MCMC in ?specifyPOUMM for details.
+#'
+#'@param likPOUMM_lowLevelFun the low-level function used for POUMM - likelihood 
+#'calculation. Default value is POUMM::likPOUMMGivenTreeVTipsC2, which would be 
+#'the fastest on most SIMD-enabled systems and on trees of less than 1000 tips. 
+#'For bigger trees it may be of benefit to set this parameter to 
+#'POUMM::likPOUMMGivenTreeVTipsC4, which uses OMP parallelization (best parallel
+#'speedup achieved on Linux systems with Intel processor and Intel compiler). See
+#'also the Parallelization section in the package user guide.
+#'
 #'@param verbose,debug Logical flags indicating whether to print informative 
 #'  and/or debug information on the standard output (both are set to to FALSE by
 #'  default).
@@ -111,6 +123,7 @@ POUMM <- function(
   parDigits = 6, usempfr = 0, useCpp = TRUE,
   ..., 
   spec = NULL, doMCMC = TRUE,
+  likPOUMM_lowLevelFun = POUMM::likPOUMMGivenTreeVTipsC2,
   verbose = FALSE, debug=FALSE) {
   
   ###### Verify input data ######
@@ -177,12 +190,6 @@ POUMM <- function(
                  spec = spec, 
                  ...)
   
-  
-  likPOUMM_lowLevelFun <- likPOUMMGivenTreeVTipsC4;
-  if(pruneInfo$N < 1000) {
-    likPOUMM_lowLevelFun <- likPOUMMGivenTreeVTipsC2;
-  }
-    
   # define a loglik function to be called during likelihood maximization as well
   # as MCMC-sampling. 
   # The argument par is a named numeric vector. This vector is mapped to the 

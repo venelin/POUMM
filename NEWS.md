@@ -1,9 +1,14 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "15 June 2017"
+date: "02 July 2017"
 output: html_document
 ---
+
+# POUMM 1.3.2
+* Fixing test-errors on r-patched-solaris-x86 and notes on r-devel-linux-x86_64-fedora-clang.
+* Fixed memory errors reported by ASAN and valgrind.
+* Improved default values for the parameter sigmae.
 
 # POUMM 1.3
 * Parallel likelihood calculation: (tested on Linux using Intel complier v16.0.0).
