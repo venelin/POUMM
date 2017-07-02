@@ -157,12 +157,20 @@ convertToMCMC <- function(obj, thinMCMC=1) {
   winmcmc <- window(codaobj, start = start(codaobj), end = end(codaobj), 
                     thin = thinMCMC)
   
-  log.p <- window(mcmc(obj$log.p, 
+  log.p <- obj$log.p
+  
+  # if(!is.null(obj$extra.values)) {
+  #   log.p <- cbind(log.p, 
+  #                           do.call(rbind, lapply(obj$extra.values, unlist)))
+  #   colnames(log.p) <- c('log.p', 'loglik', 'g0', 'g0LogPrior')
+  # }
+  # 
+  log.p <- window(mcmc(log.p, 
                        start = start(codaobj), 
                        end = end(codaobj), 
                        thin = 1), 
                   start = start(codaobj), end = end(codaobj), thin = thinMCMC)
-  
+
   list(
     mcmc = winmcmc, log.p = log.p, 
     accRateMCMC = obj$acceptance.rate, 
@@ -369,11 +377,14 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #' @aliases mcmcPOUMMGivenPriorTreeVTips mcmc.poumm
 mcmcPOUMMGivenPriorTreeVTips <- function(
   loglik, fitML = NULL,
-  parMapping, parInitMCMC, parPriorMCMC, parScaleMCMC, nSamplesMCMC, nAdaptMCMC, thinMCMC, accRateMCMC, 
+  parMapping, parInitMCMC, parPriorMCMC, parScaleMCMC, 
+  nSamplesMCMC, nAdaptMCMC, thinMCMC, accRateMCMC, 
   gammaMCMC, nChainsMCMC, samplePriorMCMC, pruneInfo, ..., 
   verbose = FALSE, parallelMCMC = FALSE) {
   
   samplePriorMCMC <- c(samplePriorMCMC, rep(FALSE, nChainsMCMC - 1))
+  
+  #oldAdaptMCMCVersion <- packageVersion('adaptMCMC') == "1.1"
   
   if(!is.null(list(...)$debug)) {
     debug <- list(...)$debug
@@ -394,9 +405,17 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
     }
     if(is.nan(pr) | is.na(pr)) {
       warning(paste0("NA or NaN prior for ", toString(par)))
-      c(-Inf, NA, NA, NA)
+      # res <- list(log.density = -Inf, 
+      #             c(loglik = as.double(NA), 
+      #               g0 = as.double(NA), 
+      #               g0LogPrior = as.double(NA)))
+      -Inf
     } else if(is.infinite(pr)) {
-      c(pr, NA, NA, NA)
+      # res <- list(log.density = pr, 
+      #             c(loglik = as.double(NA), 
+      #               g0 = as.double(NA), 
+      #               g0LogPrior = as.double(NA)))
+      pr
     } else {
       if(samplePriorMCMC[chainNo]) {
         ll <- 0
@@ -404,7 +423,8 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
         attr(ll, "g0LogPrior") <- NA
       } else {
         ll <- memoiseMax(
-          loglik, par = par, pruneInfo = pruneInfo, memo = memoMaxLoglik, verbose = verbose)
+          loglik, par = par, pruneInfo = pruneInfo, 
+          memo = memoMaxLoglik, verbose = verbose)
         
         if(debug) {
           cat("par: ", toString(round(par, 6)), ";", "ll:", ll)
@@ -413,8 +433,18 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
       if(debug) {
         cat("\n")
       }
-      c(pr + ll, ll, attr(ll, "g0"), attr(ll, "g0LogPrior"))
+      
+      #res <- list(log.density = pr + ll, 
+      #     c(loglik = ll, g0 = as.double(attr(ll, "g0")), 
+      #                g0LogPrior = as.double(attr(ll, "g0LogPrior"))))
+      pr + ll
     }
+    
+    # if(oldAdaptMCMCVersion) {
+    #   res[[1]]
+    # } else {
+    #   res
+    # }
   }
   
   doMCMC <- function(i, pruneInfo) {
@@ -488,125 +518,3 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
        valueMaxLoglik = max(maxLogliksFromChains)
        )
 }
-
-#' #' (Adaptive) Metropolis Sampler
-#' #' @param p function that returns the log probability density to sample from. 
-#' #'   Must have two or more dimensions. In this changed version the function can 
-#' #'   return a vector, the first element of which is the log-propbability.
-#' #' @param n number of samples.
-#' #' @param init vector with initial values.
-#' #' @param scale vector with the variances or covariance matrix of the jump
-#' #'   distribution.
-#' #' @param adapt if TRUE, adaptive sampling is used, if FALSE classic metropolis
-#' #'   sampling, if a positive integer the adaption stops after adapt iterations.
-#' #' @param acc.rate desired acceptance rate (ignored if adapt=FALSE)
-#' #' @param gamma controls the speed of adaption. Should be between 0.5 and 1. A
-#' #'   lower gamma leads to faster adaption.
-#' #' @param list logical. If TRUE a list is returned otherwise only a matrix with 
-#' #'   the samples.
-#' #' @param n.start teration where the adaption starts. Only internally used.
-#' #' @param ... further arguments passed to p.
-#' #' @description Copied and modified from Andreas Scheidegger's adaptMCMC 
-#' #'   package. The only difference is that the function p can return a vector 
-#' #'   instead of a single numeric. The first element of this vector is the 
-#' #'   log-posterior, while the other elements can be any additional information 
-#' #'   such as the log-likelihood, or the root-value for that log-likelihood in 
-#' #'   the case of POUMM.
-#' #' @return Same list as the one returned from adaptMCMC::MCMC but the member 
-#' #'   log.p is a matrix instead of a vector.
-#' #' @importFrom utils setTxtProgressBar txtProgressBar   
-#' #' @importFrom Matrix nearPD
-#' MCMC <- function(p, n, init, scale = rep(1, length(init)), 
-#'                   adapt = !is.null(acc.rate), 
-#'           acc.rate = NULL, gamma = 0.5, list = TRUE, n.start = 0,  ...) 
-#' {
-#'   if (adapt & !is.numeric(acc.rate)) 
-#'     stop("Argument \"acc.rate\" is missing!")
-#'   if (gamma < 0.5 | gamma > 1) 
-#'     stop("Argument \"gamma\" must be between 0.5 and 1!")
-#'   if (is.numeric(adapt)) 
-#'     n.adapt <- adapt
-#'   if (adapt == TRUE) 
-#'     n.adapt <- Inf
-#'   if (adapt == FALSE) 
-#'     n.adapt <- 0
-#'   d <- length(init)
-#'   X <- matrix(NA, ncol = d, nrow = n)
-#'   colnames(X) <- names(init)
-#'   X[1, ] <- init
-#'   
-#'   p.val.init <- p(X[1, ], ...)
-#'   
-#'   p.val <- matrix(NA, nrow = n, ncol=length(p.val.init))
-#'   p.val[1, ] <- p.val.init
-#'   
-#'   if (length(scale) == d) {
-#'     if(d == 1) {
-#'       M <- matrix(scale)
-#'     } else {
-#'       M <- diag(scale)
-#'     }
-#'   }
-#'   else {
-#'     M <- scale
-#'   }
-#' 
-#'   if (ncol(M) != length(init)) {
-#'     stop(paste("Length or dimension of 'init' and 'scale' do not match!", 
-#'                "init:", toString(init), "scale:", toString(M)))
-#'   }
-#'   #if (length(init) == 1) {
-#'   #  stop("One-dimensional sampling is not possible!")
-#'   #}
-#'   S <- t(chol(M))
-#'   cat("  generate", n, "samples \n")
-#'   pb <- txtProgressBar(min = 0, max = n, style = 3)
-#'   update.step <- max(5, floor(n/100))
-#'   k <- 0
-#'   for (i in 2:n) {
-#'     if (i%%update.step == 0) {
-#'       setTxtProgressBar(pb, i)
-#'     }
-#'     U <- rnorm(d)
-#'     X.prop <- c(X[i - 1, ] + S %*% U)
-#'     names(X.prop) <- names(init)
-#'     p.val.prop <- p(X.prop, ...)
-#'     
-#'     alpha <- min(1, exp(p.val.prop[1] - p.val[i - 1, 1]))
-#'     if (!is.finite(alpha)) 
-#'       alpha <- 0
-#'     if (runif(1) < alpha) {
-#'       X[i, ] <- X.prop
-#'       p.val[i, ] <- p.val.prop
-#'       k <- k + 1
-#'     }
-#'     else {
-#'       X[i, ] <- X[i - 1, ]
-#'       p.val[i, ] <- p.val[i - 1, ]
-#'     }
-#'     ii <- i + n.start
-#'     if (ii < n.adapt) {
-#'       adapt.rate <- min(5, d * ii^(-gamma))
-#'       M <- S %*% (diag(d) + adapt.rate * (alpha - acc.rate) * 
-#'                     U %*% t(U)/sum(U^2)) %*% t(S)
-#'       eig <- eigen(M, only.values = TRUE)$values
-#'       tol <- ncol(M) * max(abs(eig)) * .Machine$double.eps
-#'       if (!isSymmetric(M) | is.complex(eig) | !all(Re(eig) > 
-#'                                                    tol)) {
-#'         M <- as.matrix(Matrix::nearPD(M)$mat)
-#'       }
-#'       S <- t(chol(M))
-#'     }
-#'   }
-#'   close(pb)
-#'   acceptance.rate <- round(k/(n - 1), 3)
-#'   if (list) {
-#'     return(list(samples = X, log.p = p.val, cov.jump = M, 
-#'                 n.sample = n, acceptance.rate = acceptance.rate, 
-#'                 adaption = adapt, sampling.parameters = list(acc.rate = acc.rate, gamma = gamma)))
-#'   }
-#'   else {
-#'     cat("Acceptance rate:", acceptance.rate, "\n")
-#'     return(X)
-#'   }
-#' }
