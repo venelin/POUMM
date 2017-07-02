@@ -105,7 +105,7 @@ summary.POUMM <- function(object, ...,
     an.MCMC[, samplePriorMCMC:=c(object$spec$samplePriorMCMC, 
                                  rep(FALSE, object$spec$nChainsMCMC - 1))]
     
-    if(mode[1]!='expert') {
+    if(mode[1] != 'expert') {
       an.MCMC <- an.MCMC[, 
                          list(
                            PostMean = mean(unlist(Mean)),
@@ -121,7 +121,7 @@ summary.POUMM <- function(object, ...,
                              as.double(NA)
                            },
                            nChains = length(mcs),
-                           mcmc = mcmc.list(mcmc(do.call(rbind, mcs), thin=thin(mcs)))),
+                           mcmc = mcmc.list(mcmc(do.call(rbind, mcs)))),
                          by=list(stat, samplePriorMCMC)]
     }
     
@@ -136,7 +136,7 @@ summary.POUMM <- function(object, ...,
              thin = thinMCMC, ESS, G.R., nChains, mcmc)]
     } else if(mode[1] == 'expert') {
       an.MCMC <- an.MCMC[, list(stat, samplePriorMCMC, 
-                                PostMean, HPD, HPD50, start, end, thin = thinMCMC,
+                                PostMean = Mean, HPD, HPD50, start, end, thin = thinMCMC,
                                 ESS, mcmc = mcs, chain)]
     } else {
       warning(paste('mode should be one of "short", "long" or "expert", but was', mode[1], '.'))
