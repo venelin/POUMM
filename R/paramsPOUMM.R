@@ -363,6 +363,8 @@ H2 <- function(alpha, sigma, sigmae, t = Inf, tm = 0) {
 #' @param tau A non-negative number or vector indicating the phylogenetic 
 #'   distance between two tips, each of them located at time t from the root. 
 #'   If a vector, the evaluation is done on each couple (row) from cbind(t, tau).
+#' @param tanc A non-negative number or vector indication the root-mrca distance
+#' for a couple of tips. Defaults to t-tau/2 corresponding to an ultrametric tree.
 #' @param corr Logical indicating whether correlation should be returned instead
 #' of covariance.
 #' @param as.matrix Logical indicating if a variance-covariance matrix should be
@@ -376,11 +378,12 @@ H2 <- function(alpha, sigma, sigmae, t = Inf, tm = 0) {
 #'   numbers or a list of matrices.
 #' 
 #' @export
-covPOUMM <- function(alpha, sigma, sigmae, t, tau, corr = FALSE, as.matrix = FALSE) {
-  if(length(t) == 1 & length(tau) == 1) {
+covPOUMM <- function(alpha, sigma, sigmae, t, tau, tanc = t - tau/2, 
+                     corr = FALSE, as.matrix = FALSE) {
+  if(length(t) == 1 & length(tau) == 1 & length(tanc) == 1) {
     covMat <- covVTipsGivenTreePOUMM(
       tree = NULL, alpha = alpha, sigma = sigma, sigmae = sigmae,
-      tanc = rbind(c(t, t-tau/2), c(t-tau/2, t)), 
+      tanc = rbind(c(t, tanc), c(tanc, t)), 
       tauij = rbind(c(0, tau), c(tau, 0)), corr = corr)
     if(as.matrix) {
       covMat
@@ -388,13 +391,14 @@ covPOUMM <- function(alpha, sigma, sigmae, t, tau, corr = FALSE, as.matrix = FAL
       covMat[1,2]
     }
   } else {
-    ttau <- cbind(t, tau)
+    ttau <- cbind(t, tau, tanc)
     apply(ttau, 1, function(.) {
       t <- .[1]
       tau <- .[2]
+      tanc <- .[3]
       covMat <- covVTipsGivenTreePOUMM(
         tree = NULL, alpha = alpha, sigma = sigma, sigmae = sigmae,
-        tanc = rbind(c(t, t-tau/2), c(t-tau/2, t)), 
+        tanc = rbind(c(t, tanc), c(tanc, t)), 
         tauij = rbind(c(0, tau), c(tau, 0)), corr = corr)
       if(as.matrix) {
         covMat

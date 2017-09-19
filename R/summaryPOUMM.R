@@ -625,6 +625,7 @@ statistics.POUMM <- function(object) {
     theta = function(par) object$spec$parMapping(par)[, 'theta'],
     sigma = function(par) object$spec$parMapping(par)[, 'sigma'],
     sigmae = function(par) object$spec$parMapping(par)[, 'sigmae'],
+    g0 = function(par) object$spec$parMapping(par)[, 'g0'],
     
     sigmaG2tMean = function(par) varOU(alpha = object$spec$parMapping(par)[, 'alpha'],
                                        sigma = object$spec$parMapping(par)[, 'sigma'],

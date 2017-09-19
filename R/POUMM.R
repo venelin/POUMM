@@ -49,7 +49,8 @@
 #'@param spec A named list specifying how the ML and MCMC fit should be done. 
 #'  See ?specifyPOUMM.
 #'  
-#'@param doMCMC Deprecated - use nSamplesMCMC = 0 instead. 
+#'@param doMCMC Deprecated - replaced by specifying nSamplesMCMC = 0 as a member
+#'  of spec instead. 
 #'  logical: should a MCMC fit be performed. An MCMC fit provides a 
 #'  sample from the posterior distribution of the parameters given a prior 
 #'  distribution and the data. Unlike the ML-fit, it allows to estimate 
@@ -622,22 +623,27 @@ plot.POUMM <-
 #' @param object an S3 object of class POUMM
 #' @param corr logical indicating if an expected correlation function 
 #' should be returned
+#' @param t numerical indicating the time from the root to the tips of the tree. 
+#'   For non-ultrametric trees, usually the mean root-tip distance is used.
 #' 
-#' @return a function of a numerical parameter x denoting the phylogenetic distance
-#' between a couple of tips.
+#' @return a function of a numerical parameter tau denoting the phylogenetic distance
+#' between a two tips and a numerical parameter tanc denoting the distance from
+#' the root to their most recent common ancestor.
 #' 
 #' @export
-covFunPOUMM <- function(object, corr=FALSE) {
+covFunPOUMM <- function(object, corr=FALSE, 
+                        t = mean(nodeTimes(object$pruneInfo$tree, 
+                                            tipsOnly = TRUE))) {
   if("POUMM" %in% class(object)) {
-    tMean <- mean(nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE))
-    function(x) {
+    function(tau, tanc) {
       par <- object$spec$parMapping(coef(object))
       covPOUMM(par['alpha'], par['sigma'], par['sigmae'], 
-               t = tMean,
-               tau = x, corr = corr)
+               t = t,
+               tau = tau, 
+               tanc = tanc, corr = corr)
     } 
   } else {
-    stop("In corrFunPOUMM: object should be of S3 class POUMM.")
+    stop("In covFunPOUMM: object should be of S3 class POUMM.")
   }
 }
 
@@ -680,4 +686,36 @@ covHPDFunPOUMM <- function(object, prob = .95, corr = FALSE, ...) {
   } else {
     stop("In corrFunPOUMM: object should be of S3 class POUMM.")
   }
+}
+
+#' Simulate a trait on a tree under a ML fit of the POUMM model
+#' 
+#' @description Use the maximum likelihood parameters of the model to simulate
+#' trait values on a phylogenetic tree. 
+#' 
+#' @details This function is a shortcut to calling
+#' \code{\link{rVNodesGivenTreePOUMM}}, which will map the inferred parameters 
+#' of the model back to the original POUMM parameters alpha, theta, sigma, sigmae,
+#' and g0. 
+#' 
+#' @param object an S3 object of class POUMM
+#' @param tree a phylo object. If NULL (default) the trait is simulated on the
+#' tree, on which the POUMM object has been fit.
+#' 
+#' 
+#' @return a numerical vector containing the simulated trait value for each tip 
+#' in the tree.
+#' 
+#' @seealso \code{\link{rVNodesGivenTreePOUMM}}
+#' @export
+simulate <- function(object, tree = NULL) {
+  if(is.null(tree)) {
+    tree <- object$pruneInfo$tree
+  }
+  
+  
+  par <- object$spec$parMapping(coef(object))
+  rVNodesGivenTreePOUMM(tree, z0 = par['g0'], alpha = par['alpha'], 
+                        theta = par['theta'], sigma = par['sigma'],
+                        par['sigmae'])
 }
