@@ -243,19 +243,20 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
         
       }))
     names(mcs) <- names(chains)
-  } else if(statName == 'g0') {
-    mcs <- as.mcmc.list(
-      lapply(1:length(log.ps), function(i) {
-        if(is.matrix(log.ps[[i]])) {
-          log.ps[[i]][, 3, drop = FALSE]  
-        } else {
-          mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
-               start = start(log.ps[[i]]),
-               end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
-        }
-      }))
-    names(mcs) <- names(chains)
-  } else {
+  # } else if(statName == 'g0') {
+  #   mcs <- as.mcmc.list(
+  #     lapply(1:length(log.ps), function(i) {
+  #       if(is.matrix(log.ps[[i]])) {
+  #         log.ps[[i]][, 3, drop = FALSE]  
+  #       } else {
+  #         mcmc(matrix(as.double(NA), length(log.ps[[i]])), 
+  #              start = start(log.ps[[i]]),
+  #              end = end(log.ps[[i]]), thin = thin(log.ps[[i]]))
+  #       }
+  #     }))
+  #   names(mcs) <- names(chains)
+  # } 
+    } else {
     mcs <- as.mcmc.list(lapply(mcmcs, function(mc) {
       winmcmc <- window(mc$mcmc, start = start, end = end, thin = thinMCMC)
       data <- matrix(stat(winmcmc, ...), nrow = nrow(winmcmc), byrow = TRUE)
