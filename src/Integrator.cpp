@@ -33,8 +33,6 @@
 #endif // #ifdef _OPENMP
 
 
-
-
 // [[Rcpp::plugins(openmp)]]
 // [[Rcpp::depends(RcppArmadillo)]]
 using namespace Rcpp;
@@ -544,7 +542,7 @@ public:
         0.25 * sigma2 * z1z1[i - eFirst] / (sum_se2_sigmae2[i]*sum_se2_sigmae2[i]) /
           (fe2talpha[i] - alpha + (-0.5 / sum_se2_sigmae2[i]) * sigma2) +
             talpha[i] + (-0.5 * (M_LN_2PI  + z1z1[i-eFirst] / sum_se2_sigmae2[i]) - log_se_total[i]);
-      b[i] = (etalpha[i] * (z1[i] / sum_se2_sigmae2[i])) / gutalphasigma2[i];
+      b[i] = (etalpha[i] * (z1[i - eFirst] / sum_se2_sigmae2[i])) / gutalphasigma2[i];
       a[i] = (-0.5 / sum_se2_sigmae2[i]) / gutalphasigma2[i];  
     }
   } else {
@@ -555,7 +553,7 @@ public:
       z1z1[i - eFirst] = z1[i - eFirst] * z1[i - eFirst];
       // integration over g1 including e1 = 0
       a[i] = fe2talpha[i] / sigma2;  
-      b[i] = -2 * etalpha[i] * z1[i] * a[i];
+      b[i] = -2 * etalpha[i] * z1[i - eFirst] * a[i];
       c[i] = talpha[i] + 0.5 * log(-fe2talpha[i]) -
         M_LN_SQRT_PI - logsigma + e2talpha[i] * z1z1[i-eFirst] * a[i];
     }
@@ -628,7 +626,7 @@ return res;
   }
 };
 
-RCPP_MODULE(IntegratorPOUMM) {
+RCPP_MODULE(Integrator) {
   class_<Integrator>( "Integrator" )
   .constructor()
   .method( "setPruningInfo", &Integrator::setPruningInfo )
@@ -636,7 +634,7 @@ RCPP_MODULE(IntegratorPOUMM) {
   .method( "abc_omp_simd", &Integrator::abc_omp_simd )
   .method( "abc_omp_for_simd", &Integrator::abc_omp_for_simd )
   .method( "check_OPENMP", &Integrator::check_OPENMP )
-  .property("count_abc_calls", &Integrator::get_count_abc_calls )
+  .property( "count_abc_calls", &Integrator::get_count_abc_calls )
   ;
 }
 

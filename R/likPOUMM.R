@@ -100,16 +100,16 @@ dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
 }
 
 # loading the IntegratorPOUMM C++ module
-loadModule( "IntegratorPOUMM", TRUE )
+loadModule( "Integrator", TRUE )
 
-#' Extract information for fast likelihood calculation using the breadth-first
-#' pruning algorithm. 
+#' Extract information for fast likelihood calculation using the
+#'  breadth-first pruning algorithm. 
 #' 
 #' @param tree a phylo object
-#' @param z Numeric vector with length(tree$tip.label) values corresponding to
-#' tree$tip.label.
-#' @param se Non-negative numerical or N-vector indicating known standard 
-#' measurement error.
+#' @param z Numeric vector with length(tree$tip.label) values 
+#' corresponding to tree$tip.label.
+#' @param se Non-negative numerical or N-vector indicating known
+#'  standard measurement error.
 #' 
 #' @import Rcpp
 #' @return a list of objects used for likelihood evaluation
@@ -137,7 +137,8 @@ pruneTree <- function(tree, z, se = 0) {
   while(length(ee1)) {
     matchp <- match((N+1):M, ee1)
     matchp <- matchp[!is.na(matchp)]
-    nonVisitedChildren[ee1[matchp]] <- nonVisitedChildren[ee1[matchp]] + 1
+    nonVisitedChildren[ee1[matchp]] <- 
+      nonVisitedChildren[ee1[matchp]] + 1
     ee1 <- ee1[-matchp]
   }
   
@@ -151,40 +152,50 @@ pruneTree <- function(tree, z, se = 0) {
   nodes <- as.integer(1:N)
   
   while(nodes[1] != N+1) {
-    nodesIndex <- c(nodesIndex, nodesIndex[length(nodesIndex)] + length(nodes))
+    nodesIndex <- 
+      c(nodesIndex, nodesIndex[length(nodesIndex)] + length(nodes))
+    
     nodesVector <- c(nodesVector, nodes)
     
-    # indices in the edge-matrix of the edges pointing to the to be pruned nodes
+    # indices in the edge-matrix of the edges pointing to the to be
+    # pruned nodes
     es <- endingAt[nodes]
     
     nodes <- as.integer(c())
     edgeEnds <- tree$edge[es, 2]
     
     
-    # start with a un-vector that doesn't contain indices in es, so es[-un] returns es intact.
+    # start with a un-vector that doesn't contain indices in es, so 
+    # es[-un] returns es intact.
     unAll <- length(es)+1
     lenUnAll <- 0L
     
     #update parent pifs
     while(lenUnAll != length(es)) {
-      #while(length(es) > 0) {
-      # indices in current es of the edges not yet added to their parent node.
+      # indices in current es of the edges not yet added to 
+      # their parent node.
       un <- match(unique(tree$edge[es[-unAll], 1]), tree$edge[es, 1])
-      # un <- match(unique(tree$edge[es, 1]), tree$edge[es, 1])
+      
       unAll <- c(unAll, un)
       lenUnAll <- lenUnAll + length(un)
       
       # attach to the vector of such indices
       unVector <- c(unVector, un)
-      # attach the index of the current last element of unVector to unIndex
+      
+      # attach the index of the current last element of unVector 
+      # to unIndex
       unIndex <- c(unIndex, unIndex[length(unIndex)]+length(un))
       
-      #pif[tree$edge[es[un], 1], ] <- pif[tree$edge[es[un], 1], ] + pif[tree$edge[es[un], 2], ]
+      # For the parent nodes, decrement the amount of non-visited
+      # children
+      nonVisitedChildren[tree$edge[es[un], 1]] <- 
+        nonVisitedChildren[tree$edge[es[un], 1]] - 1
       
-      # For the parent nodes, decrement the amount of non-visited children
-      nonVisitedChildren[tree$edge[es[un], 1]] <- nonVisitedChildren[tree$edge[es[un], 1]] - 1
-      # those parent nodes with no more non-visited children will be pruned next
-      nodes <- c(nodes, tree$edge[es[un][nonVisitedChildren[tree$edge[es[un], 1]] == 0], 1])
+      # those parent nodes with no more non-visited children will be
+      # pruned next
+      nodes <- 
+        c(nodes, 
+          tree$edge[es[un][nonVisitedChildren[tree$edge[es[un], 1]] == 0], 1])
       
       es[un] <- NA
     }
@@ -197,7 +208,7 @@ pruneTree <- function(tree, z, se = 0) {
     z, se, tree$edge, tree$edge.length,
     M, N, endingAt, nodesVector, nodesIndex, unVector, unIndex)
   
-  list(M=M, N=N, 
+  list(M = M, N = N, 
        z = z, se = se, tree = tree, 
        endingAt=endingAt, 
        nodesVector=nodesVector, nodesIndex=nodesIndex, 
