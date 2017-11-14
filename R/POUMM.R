@@ -626,16 +626,17 @@ plot.POUMM <-
 #' @param t numerical indicating the time from the root to the tips of the tree. 
 #'   For non-ultrametric trees, usually the mean root-tip distance is used.
 #' 
-#' @return a function of a numerical parameter tau denoting the phylogenetic distance
-#' between a two tips and a numerical parameter tanc denoting the distance from
-#' the root to their most recent common ancestor.
+#' @return a function of three numerical parameters:
+#'  tau - the phylogenetic distance between a two tips;
+#'  tanc - the distance from the root to their most recent common ancestor.
+#'  t - the root-tip distance (assuming that the two tips are at equal distance from the root)
 #' 
 #' @export
-covFunPOUMM <- function(object, corr=FALSE, 
-                        t = mean(nodeTimes(object$pruneInfo$tree, 
-                                            tipsOnly = TRUE))) {
+covFunPOUMM <- function(object, corr=FALSE) {
   if("POUMM" %in% class(object)) {
-    function(tau, tanc) {
+    function(tau, tanc, t) {
+             #t = mean(nodeTimes(object$pruneInfo$tree, 
+            #                    tipsOnly = TRUE))) {
       par <- object$spec$parMapping(coef(object))
       covPOUMM(par['alpha'], par['sigma'], par['sigmae'], 
                t = t,
@@ -656,6 +657,10 @@ covFunPOUMM <- function(object, corr=FALSE,
 #' function should be returned.
 #' @param ... additional parameters passed to summary.POUMM
 #' 
+#' @return a function of a numerica matrix x with 3 columns corresponding to
+#'  tau, tanc and t (see covFunPOUMM). The function reteruns a two-colun matrix
+#'  with the lower and upper limit of the HPD for each row in the input matrix.
+#'  
 #' @import coda
 #' @export
 covHPDFunPOUMM <- function(object, prob = .95, corr = FALSE, ...) {
@@ -670,11 +675,10 @@ covHPDFunPOUMM <- function(object, prob = .95, corr = FALSE, ...) {
     tMean <- mean(nodeTimes(object$pruneInfo$tree, tipsOnly = TRUE))
     
     function(x) {
-      t(sapply(x, function(xi) {
+      t(apply(x, 1, function(xi) {
         covars <- apply(asse, 1, function(asse) {
           covPOUMM(asse[1], asse[2], asse[3], 
-                   t = tMean, 
-                   tau = xi, corr = corr)
+                   tau = xi[1], tanc = xi[2], t = xi[3], corr = corr)
         })  
         covars_mcmc <- mcmc(covars, start = start(mcmc_asse[[1]]), 
                             end = end(mcmc_asse[[1]]), 
