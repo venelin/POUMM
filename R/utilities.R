@@ -217,7 +217,7 @@ simulatePOUMMLikelihoodMainLoop <- function(tree) {
   }
 }
 
-#' Node indices of the direct descendants of n in the phylogeny tree.
+#' Node indices of the direct descendants of n in the phylogeny.
 #' 
 #' @param tree an object of class phylo
 #' @param n an index of a node (root, internal or tip) in tree

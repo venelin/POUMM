@@ -100,7 +100,7 @@ dVNodesGivenTreePOUMM <- function(z, tree, alpha, theta, sigma, sigmae=0,
 }
 
 # loading the IntegratorPOUMM C++ module
-loadModule( "Integrator", TRUE )
+loadModule( "POUMM_AbcPOUMM", TRUE )
 
 #' Extract information for fast likelihood calculation using the
 #'  breadth-first pruning algorithm. 
@@ -203,10 +203,16 @@ pruneTree <- function(tree, z, se = 0) {
   
   # create an Integrator object and initialize it with the pruning informaiton
   
-  integrator <- Integrator$new()
-  integrator$setPruningInfo(
-    z, se, tree$edge, tree$edge.length,
-    M, N, endingAt, nodesVector, nodesIndex, unVector, unIndex)
+  #integrator <- Integrator$new()
+  #integrator$setPruningInfo(
+  #  z, se, tree$edge, tree$edge.length,
+  #  M, N, endingAt, nodesVector, nodesIndex, unVector, unIndex)
+  
+  integrator <- POUMM_AbcPOUMM$new(tree, z[1:N], if(length(se) != N) {
+                                         rep(se[1], N)
+                                       } else {
+                                         se
+                                       })
   
   list(M = M, N = N, 
        z = z, se = se, tree = tree, 
@@ -284,7 +290,8 @@ likPOUMMGivenTreeVTipsC <- function(
             all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
   } else {
-    abc <- integrator$abc_arma(alpha, theta, sigma, sigmae)
+    #abc <- integrator$abc_arma(alpha, theta, sigma, sigmae)
+    abc <- integrator$DoPruning(c(alpha, theta, sigma, sigmae), 3)
     if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
       value <- NaN
       attr(value, "g0") <- g0
@@ -316,7 +323,8 @@ likPOUMMGivenTreeVTipsC2 <- function(
             all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
   } else {
-    abc <- integrator$abc_omp_simd(alpha, theta, sigma, sigmae)
+    #abc <- integrator$abc_omp_simd(alpha, theta, sigma, sigmae)
+    abc <- integrator$DoPruning(c(alpha, theta, sigma, sigmae), 3)
     if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
       value <- NaN
       attr(value, "g0") <- g0
@@ -351,7 +359,8 @@ likPOUMMGivenTreeVTipsC4 <- function(
             all(c(alpha, sigma, sigmae) == 0) ) {        # case 8
     ifelse(log, -Inf, 0)
   } else {
-    abc <- integrator$abc_omp_for_simd(alpha, theta, sigma, sigmae)
+    #abc <- integrator$abc_omp_for_simd(alpha, theta, sigma, sigmae)
+    abc <- integrator$DoPruning(c(alpha, theta, sigma, sigmae), 3)
     if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
       value <- NaN
       attr(value, "g0") <- g0
