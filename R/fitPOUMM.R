@@ -459,16 +459,23 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
     chains <- foreach(
       i = 1:nChainsMCMC, .packages = c('coda', 'POUMM', 'adaptMCMC')) %dopar% {
         # need to reinitialize the integrator since it is a C++ object
-        pruneInfo$integrator <- Integrator$new()
-        
-        pruneInfo$integrator$setPruningInfo(
-          pruneInfo$z,  pruneInfo$se, 
-          pruneInfo$tree$edge,
-          pruneInfo$tree$edge.length, 
-          pruneInfo$M, pruneInfo$N, 
-          pruneInfo$endingAt, 
-          pruneInfo$nodesVector, pruneInfo$nodesIndex, 
-          pruneInfo$unVector, pruneInfo$unIndex)
+        # pruneInfo$integrator <- Integrator$new()
+        # 
+        # pruneInfo$integrator$setPruningInfo(
+        #   pruneInfo$z,  pruneInfo$se, 
+        #   pruneInfo$tree$edge,
+        #   pruneInfo$tree$edge.length, 
+        #   pruneInfo$M, pruneInfo$N, 
+        #   pruneInfo$endingAt, 
+        #   pruneInfo$nodesVector, pruneInfo$nodesIndex, 
+        #   pruneInfo$unVector, pruneInfo$unIndex)
+        # 
+        pruneInfo$integrator <- POUMM_AbcPOUMM$new(pruneInfo$tree, pruneInfo$z[1:pruneInfo$N], 
+                                             if(length(pruneInfo$se) != pruneInfo$N) {
+                                               rep(pruneInfo$se[1], pruneInfo$N)
+                                             } else {
+                                               pruneInfo$se
+                                             })
         
         chain <- try(doMCMC(i, pruneInfo = pruneInfo), silent = TRUE)
       }
