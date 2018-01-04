@@ -25,7 +25,7 @@ library(POUMM)
 useCachedResults <- file.exists("UserGuideCache.RData") & TRUE
 ```
 
-Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku;@Mitov235739]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./articles/InterpretingPOUMM.html).
+Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku;@Mitov235739]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./InterpretingPOUMM.html).
 
 But before we start, we need to install and load a few R-packages from CRAN:
 
