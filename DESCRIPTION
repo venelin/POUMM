@@ -48,8 +48,8 @@ Suggests:
     parallel,
     doParallel,
     microbenchmark
-RoxygenNote: 5.0.1
+RoxygenNote: 6.0.1
 VignetteBuilder: knitr
 ByteCompile: yes
 NeedsCompilation: yes
-
+SystemRequirements: C++11
