@@ -199,16 +199,16 @@ rTrajectoryOU <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #'   parameters
 #' @examples 
 #' # At POUMM stationary state (equilibrium, t=Inf)
-#' H2 <- POUMM::H2(alpha = 0.75, sigma = 1, sigmae = 1, t = Inf)     # 0.4
-#' alpha <- POUMM::alpha(H2 = H2, sigma = 1, sigmae = 1, t = Inf)    # 0.75
-#' sigma <- POUMM::sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
-#' sigmae <- POUMM::sigmae(H2 = H2, alpha = 0.75, sigma = 1, t = Inf) # 1
+#' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = Inf)     # 0.4
+#' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = Inf)    # 0.75
+#' sigma <- sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = Inf) # 1
+#' sigmae <- sigmae(H2 = H2, alpha = 0.75, sigma = 1, t = Inf) # 1
 #' 
 #' # At finite time t = 0.2
-#' H2 <- POUMM::H2(alpha = 0.75, sigma = 1, sigmae = 1, t = 0.2)     # 0.1473309
-#' alpha <- POUMM::alpha(H2 = H2, sigma = 1, sigmae = 1, t = 0.2)    # 0.75
-#' sigma <- POUMM::sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
-#' sigmae <- POUMM::sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
+#' H2 <- H2(alpha = 0.75, sigma = 1, sigmae = 1, t = 0.2)     # 0.1473309
+#' alpha <- alpha(H2 = H2, sigma = 1, sigmae = 1, t = 0.2)    # 0.75
+#' sigma <- sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
+#' sigmae <- sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
 #' 
 #' # Comparing with the empirical H2e from a simulation
 #' N <- 20 
@@ -238,7 +238,7 @@ NULL
 #' @export
 alpha <- function(H2, sigma, sigmae, t = Inf) {
   # if(!all(H2>=0 & H2 <=1 & sigma >= 0 & sigmae >=0 & t>=0)) {
-  #   warning(paste0("Function POUMM::alpha was called on invalid parameters. ", 
+  #   warning(paste0("Function `alpha()` was called on invalid parameters. ", 
   #                  "Check that H2>=0 & H2 <=1 & sigma >= 0 & sigmae >=0 & t>=0.",
   #                  "Parameter values were: ", 
   #                  toString(c(H2=H2, sigma=sigma, sigmae=sigmae, t=t))))

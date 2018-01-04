@@ -1,7 +1,6 @@
 ---
 title: "A User Guide to the POUMM R-package"
 author: "Venelin Mitov"
-date: "`r Sys.Date()`"
 output: 
   rmarkdown::html_vignette:
     fig_caption: yes
@@ -11,47 +10,58 @@ vignette: >
   %\VignetteIndexEntry{A User Guide to The POUMM R-package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
-bibliography: ../inst/REFERENCES.bib
+bibliography: REFERENCES.bib
 ---
 
 ```{r setup, include = FALSE}
 # Make results reproducible
 set.seed(1)
-library(ggplot2)
-library(data.table)
 knitr::opts_chunk$set(cache = FALSE)
 options(digits = 4)
 
+library(POUMM)
+
 # set this to FALSE to disable cache and run all MCMC-fits.
 useCachedResults <- file.exists("UserGuideCache.RData") & TRUE
-
 ```
 
-Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku]. Whenever presented with data consisting of a rooted phylogenetic tree with observed trait-values at its tips, the **POUMM** package can be used to answer the following questions:
+Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku;@Mitov235739]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./articles/InterpretingPOUMM.html).
 
-* Is the POUMM an appropriate model for the data?
-* Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
-* What is the long-term equilibrium distribution of the trait values in the population?
-* To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
+But before we start, we need to install and load a few R-packages from CRAN:
 
-<!--
-TODO
-* What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
-* What are the maximum-likelihood genotypic values of the root and tips of the tree?
--->
-
-In the first two sections, we demonstrate how the package works. To that end, we run a toy-simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. In the third section we use variants of the toy-simulation to show how the  POUMM can be used to answer each of the questions stated above. 
-
-But before we start, we install the needed packages:
-
-```{r install, eval=FALSE}
-install.packages('POUMM')
+```{r install-CRAN-packages, eval=FALSE}
 install.packages("TreeSim")
 install.packages("data.table")
 install.packages("ggplot2")
 install.packages("lmtest")
+install.packages("ape")
+```
+```{r load-CRAN-packages, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, results="hide"}
+library(TreeSim)
+library(ggplot2)
+library(data.table)
+library(lmtest)
+library(ape)
 ```
 
+# Installing the POUMM R-package {#Installing}
+You can install the most recent version of the package from github:
+```{r, eval=FALSE, echo=TRUE}
+devtools::install_github(repo="venelin/POUMM")
+```
+The above command will install the HEAD version from the master git-branch. This  is the package branch, which evolves the fastest and gets the quickest bug-fixes.
+
+A more stable version of the package can be installed from CRAN:
+```{r, eval=FALSE, echo=TRUE}
+install.packages("POUMM")
+```
+
+The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as "Suggests" in POUMM's DESCRIPTION, since it's installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp [FAQ](https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-FAQ.pdf).
+
+Bear in mind that, for CRAN compliance, some of the functionality of the package
+might not be enabled on some systems, in particular, parallel likelihood calculation on 
+Mac OS X El Capitan using clang compiler (see the section [Parallel execution](#Parallel) 
+below).
 
 # Simulating trait evolution under the POUMM 
 
@@ -70,19 +80,19 @@ sigmae <- 0.2
 load("UserGuideCache.RData")
 ```
 
-We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `POUMM::rTrajectoryOU`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
+We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `rTrajectoryOU()`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
 
 ```{r, echo=FALSE, fig.height=4.6, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
 tStep <- 0.025
 t <- seq(0, 6, by = tStep)
 
-plot(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
-lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
+plot(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
+lines(t, rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
 
-lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
-lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha*2, theta, 0, length(t)), lty = 2, col = "magenta")
+lines(t, rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
+lines(t, rTrajectoryOU(g0, tStep, alpha*2, theta, 0, length(t)), lty = 2, col = "magenta")
 
-lines(t, POUMM::rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue")
+lines(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue")
 
 abline(h=theta, lty = 3, col = "darkgrey")
 
@@ -107,8 +117,12 @@ Once the POUMM parameters are specified, we use the **TreeSim** R-package [@R-Tr
 
 ```{r simulate-tree, results="hide", eval=!useCachedResults}
 # Number of tips
-tree <- TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6, 
-                               timesky=c(0, Inf), sampprobsky = 1)[[1]]
+tree <- ladderize(
+  TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6, 
+                         timesky=c(0, Inf), sampprobsky = 1)[[1]]
+)
+
+plot(tree, show.tip.label = FALSE)
 ```
 
 ## Simulating trait evolution on the phylogeny
@@ -117,7 +131,7 @@ Starting from the root value $g_0$, we simulate the genotypic values, $g$, and t
 
 ```{r simulate-gez-OU, eval=!useCachedResults}
 # genotypic (heritable) values
-g <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
+g <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma)
 
 # environmental contributions
 e <- rnorm(length(g), 0, sigmae)
@@ -132,7 +146,7 @@ In most real situations, only the phenotypic value, at the tips, i.e. \code{z[1:
 ```{r violin-plots, fig.show = "hold", fig.height=4, fig.width=7, fig.cap="Distributions of the trait-values grouped according to their root-tip distances."}
 # This is easily done using the nodeTimes utility function in combination with
 # the cut-function from the base package.
-data <- data.table(z = z[1:N], t = POUMM::nodeTimes(tree, tipsOnly = TRUE))
+data <- data.table(z = z[1:N], t = nodeTimes(tree, tipsOnly = TRUE))
 data <- data[, group := cut(t, breaks = 5, include.lowest = TRUE)]
 
 ggplot(data = data, aes(x = t, y = z, group = group)) + 
@@ -141,7 +155,7 @@ ggplot(data = data, aes(x = t, y = z, group = group)) +
 
 
 # Fitting the POUMM
-Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the POUMM function: 
+Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the function `POUMM()`: 
 
 ```{r MaintainCache, echo=FALSE, warning=FALSE, results="hide", message=FALSE, eval=TRUE}
 if(!useCachedResults) {
@@ -150,20 +164,20 @@ if(!useCachedResults) {
   cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
   doParallel::registerDoParallel(cluster)
   
-  fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(thinMCMC = 1000, parallelMCMC=TRUE), verbose = TRUE)
-  fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5, thinMCMC = 1000, parallelMCMC=TRUE))
+  fitPOUMM <- POUMM(z[1:N], tree, spec=list(thinMCMC = 1000, parallelMCMC=TRUE), verbose = TRUE)
+  fitPOUMM2 <- POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5, thinMCMC = 1000, parallelMCMC=TRUE))
   
-  specH2tMean <- POUMM::specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, 
+  specH2tMean <- specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, 
                                                    nSamplesMCMC = 4e5, 
                                                    thinMCMC = 1000, parallelMCMC=TRUE)
-  fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
+  fitH2tMean <- POUMM(z[1:N], tree, spec = specH2tMean)
   
   
   # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
   parallel::stopCluster(cluster)
   
   # delete some of the slots to make cach-file smaller :-(.
-  fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
+  # fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
   #fitPOUMM$loglik <- fitPOUMM2$loglik <- fitH2tMean$loglik <- NULL
   #fitPOUMM$fitMCMC$post <- fitPOUMM2$fitMCMC$post <- fitH2tMean$fitMCMC$post <- NULL
   #fitPOUMM$spec$parPriorMCMC <- fitPOUMM2$spec$parPriorMCMC <- fitH2tMean$spec$parPriorMCMC <- NULL
@@ -174,15 +188,15 @@ if(!useCachedResults) {
        file="UserGuideCache.RData")
 } 
 # restore the pruneInfo since it is needed afterwards.
-fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- POUMM::pruneTree(tree, z[1:length(tree$tip.label)])
+fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- pruneTree(tree, z[1:length(tree$tip.label)])
 ```
 
 
 ```{r fitPOUMM-1, results="hide", message=FALSE, warning=FALSE, eval=FALSE}
-fitPOUMM <- POUMM::POUMM(z[1:N], tree)
+fitPOUMM <- POUMM(z[1:N], tree)
 ```
 
-The above code runs for about 5 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in detail in the help-page for the function specifyPOUMM (see \code{?specifyPOUMM}). 
+The above code runs for about 5 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for $10^5$ iterations. This and other default POUMM settings are described in the help-page for the function `specifyPOUMM()`. 
 
 The strategy of executing three MCMC chains instead of one allows to assess: 
 
@@ -211,7 +225,7 @@ summary(fitPOUMM)
 The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for $4 \times 10^5$ iterations:
 
 ```{r fitPOUMM-2, results="hide", eval=FALSE}
-fitPOUMM2 <- POUMM::POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))  
+fitPOUMM2 <- POUMM(z[1:N], tree, spec=list(nSamplesMCMC = 4e5))  
 ```
 
 Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one. 
@@ -230,21 +244,21 @@ summary(fitPOUMM2)
 The 95% high posterior density (HPD) intervals contain the true values for all five POUMM parameters ($\alpha$, $\theta$, $\sigma$, $\sigma_e$ and $g_0$). This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:
 
 ```{r}
-tMean <- mean(POUMM::nodeTimes(tree, tipsOnly = TRUE))
-tMax <- max(POUMM::nodeTimes(tree, tipsOnly = TRUE))
+tMean <- mean(nodeTimes(tree, tipsOnly = TRUE))
+tMax <- max(nodeTimes(tree, tipsOnly = TRUE))
 
 c(# phylogenetic heritability at mean root-tip distance: 
-  H2tMean = POUMM::H2(alpha, sigma, sigmae, t = tMean),
+  H2tMean = H2(alpha, sigma, sigmae, t = tMean),
   # phylogenetic heritability at long term equilibirium:
-  H2tInf = POUMM::H2(alpha, sigma, sigmae, t = Inf),
+  H2tInf = H2(alpha, sigma, sigmae, t = Inf),
   # empirical (time-independent) phylogenetic heritability, 
-  H2e = POUMM::H2e(z[1:N], sigmae),
+  H2e = H2e(z[1:N], sigmae),
   # genotypic variance at mean root-tip distance: 
-  sigmaG2tMean = POUMM::varOU(t = tMean, alpha, sigma),
+  sigmaG2tMean = varOU(t = tMean, alpha, sigma),
   # genotypic variance at max root-tip distance: 
-  sigmaG2tMean = POUMM::varOU(t = tMax, alpha, sigma),
+  sigmaG2tMean = varOU(t = tMax, alpha, sigma),
   # genotypic variance at long-term equilibrium:
-  sigmaG2tInf = POUMM::varOU(t = Inf, alpha, sigma)
+  sigmaG2tInf = varOU(t = Inf, alpha, sigma)
   )
 ```
 
@@ -255,27 +269,25 @@ c(H2empirical = var(g[1:N])/var(z[1:N]))
 summary(fitPOUMM2)["H2e"==stat, unlist(HPD)]
 ```
 
-## Parallel execution
-On multi-core systems, it is possible to speed-up the POUMM-fit by parallelization. The POUMM package supports parallelization on two levels:
+# Parallel execution {#Parallel}
+On computers with multiple core processors, it is possible to speed-up the POUMM-fit by parallelization. The POUMM package supports parallelization on two levels:
 
-* parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLiTTree library for parallel lineage traversal [@Mitov:2017ku]. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical CPU cores. Parallelization on multiple cores becomes beneficial on trees of exceeding several hundreds of tips. [@Mitov:2017ku]. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++ and Intel-icpc, but not the current version of the clang compiler. We have tested the package on Linux and MacOS X El Capitan using the Intel compiler v16.0.0. To that end, before installing the package from source, we modify the global ```Makevars``` file found in the directory ```.R``` under the user's home directory:
+* parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLiTTree library for parallel lineage traversal [@Mitov235739]. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical cores. Parallelization on multiple cores becomes beneficial on trees exceeding several hundreds tips. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++ and Intel-icpc, but not the current version of the `clang` compiler. We have tested the package on Linux and MacOS X El Capitan using the Intel compiler v16.0.0. To that end, before installing the package from source, we modify the global ```Makevars``` file found in the directory ```.R``` under the user's home directory:
 
 ```
-CFLAGS +=        -std=c++11 -fopenmp -Wall -O2 -march=native
-CXXFLAGS +=      -std=c++11 -fopenmp -Wall -O2 -march=native
-
-FC=gfortran
-F77=gfortran
-MAKE=make -j8
-
 CPP=cpp
 CXX=icpc
 CC=icc
 SHLIB_CXXLD=icpc -qopenmp
 ```
 
-Then, before starting R, we can define the maximum number of cores (defaults to all physical cores on the system) by specifying the environment variable OMP_NUM_THREADS, e.g.:
+Note that if you are installing the POUMM package from CRAN, on Mac OS X, the above modification of the global ```Makevars``` file might still be overwritten by the R-package builder. This is because, for CRAN compliance, the package DESCRIPTION file needs a directive:
+```
+SystemRequirements: C++11
+```
+On my Mac OS X El Capitan, the above directive forces the use of the `clang` compiler, which does not support Open MP. Therefore, to enbable using the icpc and the Open MP, I recommend installing the package from github.
 
+To control the maximum number of threads (defaults to all physical or virtual cores on the system) by specifying the environment variable OMP_NUM_THREADS, before starting R e.g.:
 ```
 export OMP_NUM_THREADS=4
 ```
@@ -287,163 +299,13 @@ export OMP_NUM_THREADS=4
 cluster <- parallel::makeCluster(parallel::detectCores(logical = FALSE))
 doParallel::registerDoParallel(cluster)
 
-fitPOUMM <- POUMM::POUMM(z[1:N], tree, spec=list(parallelMCMC = TRUE))
+fitPOUMM <- POUMM(z[1:N], tree, spec=list(parallelMCMC = TRUE))
 
 # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
 parallel::stopCluster(cluster)
 ```
 
 It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLiTTree library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.
-
-# Interpreting the POUMM parameters. Parametrizations.
-From a modeling perspective, the POUMM can be regarded as a combination of two of its widely used nested models:
-
-* The non-mixed phylogenetic Ornstein-Uhlenbeck (POU) model, (also referred to as the 'Hansen model' \cite{Butler:2004ce}), which has been used to infer local phenotypic optima in different phylogenetic clades or across discrete categories of phylogeneticall related species \cite{Butler:2004ce}, and to prove the presence of stabilizing selection towards a single stationary peak (SSP) \cite{Harmon:2010gh}.
-* The phylogenetic mixed model (PMM) \cite{Lynch:1991db,Housworth:2004gj}, which has been used to measure phylogenetic heritability \cite{Hodcroft:2014es};
-
-Thus, the POUMM combines the applications of the above two models. Besides inferring its parameters, the POUMM has several useful properties helping the interpretation of the data and allowing to make predictions about the future trait evolution of the considered population. The properties which we consider represent bijective functions of some of the POUMM parameters. Thus, it is possible to reparametrize the POUMM, so that the model inference is done directly on properties of interest, e.g. the phylogenetic heritability. This is particularly useful for Bayesian inference, since for Bayesian inference priors should be specified for the properties of interest rather than the default POUMM parameters. We call a *parametrization* any numerical bijective function mapping its argument into the default POUMM parameter-space ($<g_M,\alpha,\theta,\sigma,\sigma_e>$). 
-
-## Trait distribution at equilibrium
-An interesting property of the POUMM is that, in the limit $t\to\infty$, it defines a stationary normal distribution for the heritable component ($g$) at the tips with mean $\theta$ and a variance-covariance matrix:
-
-\begin{multline}\label{eq:SigmaOUEquilibrium}
-\begin{array}{lll}
-\Sigma_{ii}  = \sigma_{\infty}^2 & = & \frac{\sigma^2}{2\alpha} \\
-\Sigma_{ij} =  \Sigma_{ij,\infty} & = & \sigma_{\infty}^2\,e^{-\alpha{d}_{ij}}, \\
-\end{array}
-\end{multline}
-
-\noindent where ${d}_{ij}$ denotes the phylogenetic distance between the tips $i$ and $j$.
-The above property proves useful when there is a prior knowledge that the observed population is at equilibrium, because one can use the trait variance in the population, $\sigma_z^2=\sigma_{\infty}^2+\sigma_e^2$ as model parameter. The corresponding parametrization is:
-
-\begin{align}
-<g_M, \alpha,\theta,\sigma_z^2,\sigma_e> & \to<g_M, \alpha,\theta,\sigma=\sqrt{2\alpha(\sigma_{z}^2-\sigma_e^2)},\sigma_e>
-\end{align}
-
-With this parametrization, one can specify an informed prior for $\sigma_z^2$ based on empirical estimates on similar data. 
-
-Another important aspect of the above property is that it helps to better understand the selection stregnth parameter $\alpha$. As it turns out, $\alpha$ can have two different biological interpretations. On the one hand, $\alpha$ defines the rate of convergence of the population mean towards the long-term optimum $\theta$. This rate is bigger for bigger values of $\alpha$ and for bigger deviations from $\theta$. Thus, $\alpha$ is considered as selection strength or rate of adaptation under stabilizing selection. On the other hand, it is possible to assume that the majority of the tips and their mrca's are far enough from the root, so that $\Sigma_{ij}$ can be viewed as an exponentially decreasing function of the phylogenetic distance ${d}_{ij}$. Seen from that angle, the parameter $\alpha$ can be interpreted as the rate of phenotypic decorrelation between tips, due to genetic drift. When interpreting the results of a model fit, it is important to be aware of this dual interpretation of $\alpha$. In many cases (e.g. in ultrametric macro-evolutionary tree), the only source of information for inferring $\alpha$ are the observed differences between the tips in the tree. Thus, in the absence of additional evidence, it can be erronous to assume that the inferred value of $\alpha$ informs stabilizing selection and an adaptation rate towards $\theta$.  
-
-\venelin{A likelihood ratio test between the ML POUMM and PMM fits can be used to test if the inferred parameter $\alpha$ is significantly above 0. As pointed out in the previous paragraph, a significantly positive $\alpha$ does not necessarily imply stabilizing selection towards $\theta$. Further, it is important to note that the value of $\alpha$ can only be interpreted with respect to the time scale of the phylogeny. It can be more intuitive to consider the phylogenetic half-life, $t_{1/2}=\frac{\ln(2)}{\alpha}$, which equals the time it takes for a species entering a new niche to evolve halfway toward its new expected optimum} \cite{Hansen:1997ek}.
-
-## Phylogenetic heritability
-The term *phylogenetic heritability*, introduced with the phylogenetic mixed model (PMM) \cite{Housworth:2004gj}, measures the proportion of phenotypic variance in a population attributable to heritable factors, such as genes, as opposed to non-heritable factors, such as environment and measurement error. Although this concept has been applied mostly in the context of the original PMM, i.e. under the assumption of Brownian motion, the same concept applies to any evolutionary model allowing for the estimation of measurement error (ME) \cite{Hansen:2012et}. The *phylogenetic heritability* is defined as the expected proportion of phenotypic variance attributable to $g$ at the tips of the tree, $\sigma^2(g)/\left[\sigma^2(g)+\sigma_e^2\right]$ \cite{Housworth:2004gj}. This definition is a phylogenetic variant of the definition of broad-sense heritability, $H^2$, from quantitative genetics \cite{Lynch:1998vx}. However, in the case of a trait evolving along a phylogeny, the expected genotypic variance, $\sigma^2(g)$, and, therefore, the phylogenetic heritability, are functions of time. Depending on the applicaiton, the following three types of phylogenetic heritability might all be of interest:
-
-* Expectation at the mean height ($\bar{h}$): $H_{\bar{h}}^2:=\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{h}}\right)}{2\alpha}\right]/\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{h}}\right)}{2\alpha}+\sigma_e^2\right]$. \venelin{This definition gives rize to three parametrizations where $H_{\bar{h}}^2$ is a free model parameter, while one of the parameters $\alpha$, $\sigma$ or $\sigma_e$ is a function of $H_{\bar{h}}^2$ and the two other parameters. These parametrizations can be expressed as: 
-\begin{align}
-<g_M, \alpha, \theta, H_{\bar{h}}^2, \sigma_e> & \to<g_M, \alpha, \theta, \sigma=\sqrt{\frac{2\alpha H_{\bar{h}}^2 \sigma_e^2}{(1-e^{-2\alpha t})(1-H_{\bar{h}}^2)}}, \sigma_e>\label{eq:sigmaH2alphasigmae} \\
-<g_M, H_{\bar{h}}^2, \theta, \sigma, \sigma_e> & \to<g_M, \alpha=\frac{y+W(y e^{-y})}{2\bar{h}}, \theta, \sigma, \sigma_e>\label{eq:alphaH2sigmasigmae} \\
-<g_M, \alpha, \theta, \sigma, H_{\bar{h}}^2> & \to<g_M, \alpha, \theta, \sigma, \sigma_e=\sqrt{\frac{\sigma^2(1-e^{-2\alpha \bar{h}})}{2 \alpha}(\frac{1}{H_{\bar{h}}^2} - 1)}>,\label{eq:sigmaeH2alphasigma}
-\end{align}
-where $y=\frac{\bar{h}\sigma^2}{\sigma_e^2 H_{\bar{h}}^2} - \frac{\bar{h}\sigma^2}{\sigma_e^2}$ and $W$ is the Lambert-W function.}
-* Expectation at equilibrium of the OU-process ($t\to\infty$): $H_{\infty}^2:=\lim_{\bar{h}\to\infty}H_{\bar{h}}^2=\frac{\sigma^2}{\sigma^2+2\alpha\sigma_e^2}$. \venelin{By taking the limit $\bar{h}\to\infty$ in equations \ref{eq:sigmaH2alphasigmae}, \ref{eq:alphaH2sigmasigmae} and \ref{eq:sigmaeH2alphasigma}, we obtain the corresponding parametrizations:
-\begin{align}
-<g_M, \alpha, \theta, H_{\infty}^2, \sigma_e> & \to<g_M, \alpha, \theta, \sigma=\sqrt{\frac{2\alpha H_{\infty}^2 \sigma_e^2}{1-H_{\infty}^2}}, \sigma_e>\label{eq:sigmaH2alphasigmaetInf} \\
-<g_M, H_{\infty}^2, \theta, \sigma, \sigma_e> & \to<g_M, \alpha=\frac{\sigma^2 (1-H_{\infty}^2)}{2H_{\infty}^2\sigma_e^2}, \theta, \sigma, \sigma_e>\label{eq:alphaH2sigmasigmaetInf} \\
-<g_M, \alpha, \theta, \sigma, H_{\infty}^2> & \to<g_M, \alpha, \theta, \sigma, \sigma_e=\sqrt{\frac{\sigma^2}{2 \alpha}(\frac{1}{H_{\infty}^2} - 1)}>,\label{eq:sigmaeH2alphasigmatInf}
-\end{align}}
-* Empirical (time-independent) version of the heritability based on the sample phenotypic variance $s^2(\textbf{z})$ : $H_e^2:=1-\sigma_e^2/s^2(\textbf{z})$. This definition is useful when the tree is non-ultrametric but there is sufficient evidence that the empirical distribution of the trait is stationary along the tree. \venelin{In this case, $s^2(\textbf{z})$ coincides with the sum of the OU variance at equilibrium and $\sigma_e^2$. The corresponding parametrization is:
-\begin{align}
-<g_M, \alpha, \theta, \sigma, H_{e}^2> & \to<g_M, \alpha, \theta, \sigma, \sigma_e=\sqrt{s^2(\textbf{z})(1-H_e^2)}>
-\label{eq:sigmaeH2e}
-\end{align}}
-
-To learn about different parametrizations supported by the POUMM package, read the documentation page `?POUMM::specifyPOUMM`. 
-
-# Using the POUMM fit to answer biological questions
-
-## Is the POUMM an appropriate model for the data?
-The first step to answering that question is to visualize the data and check for obvious violations of the POUMM assumptions. The POUMM method expects that the trait-values at the tips are a sample from a multivariate normal distribution. With an ultrametric species tree, where all tips are equally distant from the root, this assumption translates in having all trait-values be realizations of identically distributed normal random variables. In the case of a non-ultrametric tree, it is far more useful to look at a sequence of box-whisker or violin plots of the trait-values, gouped by their root-tip distance. 
-
-Once visualizing the data has confirmed its normality, we recommend comaparing the POUMM-fit with a fit from a NULL-model such as the phylogenetic mixed model (PMM) [@Housworth:2004gj]. Since the PMM is nested in the POUMM, i.e. in the limit $\alpha\to0$, the POUMM model is equivalent to a PMM model with the same initial genotypic value $g_0$ and unit-time variance $\sigma$, it is easy to fit a PMM model to the data by fixing the value of the parameter $\alpha$ to 0:
-
-```{r}
-specPMM <- POUMM::specifyPMM(z[1:N], tree)
-fitPMM <- POUMM::POUMM(z[1:N], tree, spec = specPMM, doMCMC=FALSE)
-```
-
-Now a likelihood-ratio test between the maximum likelihood fits clearly shows that the POUMM fits significantly better to the data:
-
-```{r}
-lmtest::lrtest(fitPMM, fitPOUMM2)
-```
-
-Since `lrtest` only uses the ML-fit, to save time, we desabled the MCMC fit by specifying `doMCMC = FALSE`. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit.
-
-As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:
-
-```{r}
-gBM <- POUMM::rVNodesGivenTreePOUMM(tree, g0, alpha = 0, theta = 0, sigma = sigma)
-zBM <- gBM + e
-
-fitPMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, spec = specPMM, doMCMC = FALSE)
-fitPOUMM_on_zBM <- POUMM::POUMM(zBM[1:N], tree, doMCMC = FALSE)
-
-lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM)
-```
-
-
-## Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?
-To answer this question, consider the estimated values of the POUMM-parameters $\theta$ and
-$\alpha$. Note that the parameter $\theta$ is relevant only if the value of the parameter $\alpha$ is 
-significantly positive. One could accept that the ML-estimate for $\alpha$ is significantly positive
-if a likelihood ratio test between a ML PMM and POUMM fits gives a p-value below a critical level 
-(see the question above for an example). An inisignificant value of $\alpha$ reveals that the hypothesis
-of neutral drift (Brownian motion) cannot be rejected.
-
-## What is the long-term equilibrium normal distribution of the trait values in the population?
-The long-term mean is given by the estimated parameter `theta`. The long-term variance is given by the sum `sigmaG2tInf+sigmae^2` taken from the summary table of a POUMM-fit.
-
-## To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
-In other words, what is the proportion of observable phenotypic variance attributable to the phylogeny? To answer this question, the POUMM package allows to estimate the phylogenetic heritability of the trait. Assuming that the tree represents the genetic relationship between individuals in a population, $H_\bar{t}^2$ provides an estimate for the broad-sense heritability $H^2$ of the trait in the population. 
-
-When the goal is to estimate $H_{\bar{t}}^2$ (`H2tMean`), it is imortant to specify an uninformed prior for it. Looking at the densities for chain 1 (red) on the previous figures, it becomes clear that the default prior favors values of `H2tMean`, which are either close to 0 or close to 1. Since by definition $H_{\bar{t}}^2\in[0,1]$, a reasonable uninformed prior for it is the standard uniform distribution. We set this prior by using the `POUMM::specifyPOUMM_ATH2tMeanSeG0` function. This specifies that the POUMM fit should be done on a parametrization $<\alpha,\theta,H_{\bar{t}}^2,\sigma_e,g_0>$ rather than the standard parametrization $<\alpha,\theta,\sigma,\sigma_e,g_0>$. It also specifies a uniform prior for $H_{\bar{t}}^2$. You can explore the members of the specification list to see the different settings: 
-
-```{r, message=FALSE, warning=FALSE, eval=TRUE}
-specH2tMean <- POUMM::specifyPOUMM_ATH2tMeanSeG0(z[1:N], tree, nSamplesMCMC = 4e5)
-# Mapping from the sampled parameters to the standard POUMM parameters:
-specH2tMean$parMapping
-# Prior for the MCMC sampling
-specH2tMean$parPriorMCMC
-# Bounds for the maximum likelihood search
-specH2tMean$parLower
-specH2tMean$parUpper
-```
-
-Then we fit the model:
-```{r eval=FALSE}
-fitH2tMean <- POUMM::POUMM(z[1:N], tree, spec = specH2tMean)
-```
-
-```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE}
-plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), 
-     showUnivarDensityOnDiag = TRUE, 
-     doZoomIn = TRUE, doPlot = TRUE)
-```
-
-```{r, warning=FALSE}
-summary(fitH2tMean)[stat %in% c("H2tMean", "H2e", "H2tInf", "sigmae")]
-```
-
-Now we see that the prior density for `H2tMean` is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for `H2tMean` and `H2tInf` are nearly the same. Notice, though, that the estimate for the empirical heritability `H2e` is shifted towards 1 compared to `H2tMean` and `H2tInf`. This shows an important difference between `H2e` and the time-dependent formulae for phylogenetic heritability: `H2e` takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:
-
-```{r}
-# Compare global empirical heritability
-H2eGlobal <- POUMM::H2e(z[1:N], sigmae = coef(fitH2tMean)['sigmae'])
-# versus recent empirical heritability
-H2eRecent <- POUMM::H2e(z[1:N], tree, sigmae = coef(fitH2tMean)['sigmae'], tFrom = 5)
-print(c(H2eGlobal, H2eRecent))
-```
-
-
-To learn more about different ways to specify the POUMM fit, read the documentation page `?POUMM::specifyPOUMM_ATH2tMeanSeG0`. 
-<!--
-TODO
-## What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
-
-
-## What are the maximum-likelihood genotypic values of the root and tips of the tree?
--->
 
 # Packages used
 ```{r create-references, echo=FALSE, include=FALSE, eval=TRUE}

@@ -41,6 +41,7 @@ RCPP_MODULE(POUMM_AbcPOUMM) {
   Rcpp::class_<ParallelPruningAbcPOUMM::TreeType::Tree> ( "POUMM_Tree" )
   .property("num_nodes", &ParallelPruningAbcPOUMM::TreeType::Tree::num_nodes )
   .property("num_tips", &ParallelPruningAbcPOUMM::TreeType::Tree::num_tips )
+  .property("map_id_to_node", &ParallelPruningAbcPOUMM::TreeType::Tree::map_id_to_node )
   .method("LengthOfBranch", &ParallelPruningAbcPOUMM::TreeType::Tree::LengthOfBranch )
   .method("FindNodeWithId", &ParallelPruningAbcPOUMM::TreeType::Tree::FindNodeWithId )
   .method("FindIdOfNode", &ParallelPruningAbcPOUMM::TreeType::Tree::FindIdOfNode )
@@ -51,8 +52,8 @@ RCPP_MODULE(POUMM_AbcPOUMM) {
     .derives<ParallelPruningAbcPOUMM::TreeType::Tree> ( "POUMM_Tree" )
     .method("RangeIdPruneNode", &ParallelPruningAbcPOUMM::TreeType::RangeIdPruneNode )
     .method("RangeIdVisitNode", &ParallelPruningAbcPOUMM::TreeType::RangeIdVisitNode )
-    .method("CalculateHeights", &ParallelPruningAbcPOUMM::TreeType::CalculateHeights )
     .property("num_levels", &ParallelPruningAbcPOUMM::TreeType::num_levels )
+    .property("num_parallel_ranges_prune", &ParallelPruningAbcPOUMM::TreeType::num_parallel_ranges_prune )
     .property("ranges_id_visit", &ParallelPruningAbcPOUMM::TreeType::ranges_id_visit )
     .property("ranges_id_prune", &ParallelPruningAbcPOUMM::TreeType::ranges_id_prune )
   ;
