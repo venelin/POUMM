@@ -15,6 +15,7 @@
 #define ABC_POUMM_H_
 
 #include "./splittree.h"
+#include <iostream>
 
 namespace splittree {
 template<class NameType>

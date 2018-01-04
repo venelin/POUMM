@@ -36,6 +36,7 @@
 #include <numeric>
 #include <chrono>
 #include <unordered_map>
+//#include <map>
 #include <mutex>
 #include <condition_variable>
 
@@ -231,7 +232,6 @@ public:
     // corresponds to the root node, to which no branch points.
     this->num_nodes_ = branch_start_nodes.size() + 1;
 
-
     // we distinguish three types of nodes:
     enum NodeRole { ROOT, INTERNAL, TIP };
 
@@ -248,11 +248,10 @@ public:
 
     uvec branch_starts_temp(branch_start_nodes.size(), NA_UINT);
     uvec branch_ends_temp(branch_start_nodes.size(), NA_UINT);
-    uvec ending_at(num_nodes_ - 1, NA_UINT);
+    uvec ending_at(num_nodes_, NA_UINT);
 
     std::vector<typename MapType::iterator> it_map_node_to_id_;
     it_map_node_to_id_.reserve(num_nodes_);
-
 
     for(uint i = 0; i < branch_start_nodes.size(); ++i) {
       if(branch_start_nodes[i] == branch_end_nodes[i]) {
@@ -261,7 +260,6 @@ public:
           branch_start_nodes[i]<<"). Not allowed. ";
         throw std::logic_error(oss.str());
       }
-
 
       auto it1 = map_node_to_id_.insert(
         std::pair<NodeType, uint>(branch_start_nodes[i], node_id_temp));
@@ -286,8 +284,8 @@ public:
         branch_starts_temp[i] = it1.first->second;
       }
 
-
       auto it2 = map_node_to_id_.insert(std::pair<NodeType, uint>(branch_end_nodes[i], node_id_temp));
+
 
       if(it2.second) {
         // node encountered for the first time and inserted in the map_node_to_id
@@ -297,11 +295,13 @@ public:
           // not known if the node has descendants, so we set its type to TIP.
           node_types[node_id_temp] = TIP;
         }
+        
         branch_ends_temp[i] = node_id_temp;
         ending_at[node_id_temp] = i;
+        
         it_map_node_to_id_.push_back(it2.first);
         node_id_temp++;
-
+        
       } else {
         // node has been previously encountered
         if(ending_at[it2.first->second] != NA_UINT) {
@@ -328,7 +328,7 @@ public:
         ") should equal the number-of-branches+1 ("<<num_nodes_<<").";
       throw std::logic_error(oss.str());
     }
-
+    
     auto num_roots = count(node_types.begin(), node_types.end(), ROOT);
     if(num_roots != 1) {
       std::ostringstream oss;
@@ -351,6 +351,7 @@ public:
     // root is numbered num_nodes_ - 1;
     std::vector<uint> node_ids(num_nodes_, NA_UINT);
     uint tip_no = 0, internal_no = num_tips_;
+    
     for(uint i = 0; i < num_nodes_; i++) {
       if(node_types[i] == TIP) {
         node_ids[i] = tip_no;
@@ -362,10 +363,10 @@ public:
         // Here node_types[i] == ROOT should be true
         node_ids[i] = num_nodes_ - 1;
       }
+      
       //map_node_to_id_[map_id_to_node_[i]] = node_ids[i];
       it_map_node_to_id_[i]->second = node_ids[i];
     }
-
 
     this->map_id_to_node_ = At(map_id_to_node_, SortIndices(node_ids));
 
@@ -379,7 +380,6 @@ public:
         num_nodes_-1<<") but is "<<branch_lengths.size()<<"."<<std::endl;
       throw std::invalid_argument(oss.str());
     }
-
 
     if(HasBranchLengths()) {
       for(uint i = 0; i < num_nodes_ - 1; i++) {
@@ -513,6 +513,11 @@ public:
     }
   }
 
+  // return the internally stored order of all nodes
+  std::vector<NodeType> map_id_to_node() const{
+    return map_id_to_node_;
+  }
+  
   // returns a vector of positions in nodes in the order of their internally stored ids.
   uvec OrderNodes(std::vector<NodeType> const& nodes) const {
     return OrderNodesPosType(nodes, NA_UINT);
@@ -681,15 +686,6 @@ public:
     return std::array<uint, 2> {{ranges_id_prune_[i_step],
                                  ranges_id_prune_[i_step+1] - 1}};
   }
-
-  // A root-to-node distance vector in the order of pruning processing
-  std::vector<LengthType> CalculateHeights(Length const& zero) const {
-    std::vector<LengthType> h(this->num_nodes_, zero);
-    for(int i = this->num_nodes_ - 2; i >= 0; i--) {
-      h[i] = h[this->id_parent_[i]] + this->lengths_[i];
-    }
-    return h;
-  }
 };
 
 enum PostOrderMode {
@@ -767,7 +763,6 @@ public:
     } else {
       // algorithm thread continues to check for new node to visit
       // should never execute this
-      //std::cout<<"Error returning NA_UINT from VisitQueue."<<std::endl;
       return NA_UINT;
     }
   }

@@ -12,17 +12,32 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Why should I use it?
-The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to estimate the phylogenetic heritability of continuous traits, to test hypotheses of neutral evolution versus stabilizing selection, to quantify the strength of stabilizing selection, to estimate measurement error and to make predictions about the evolution of a phenotype and phenotypic variation in a population. The POUMM package provides an easy and efficient way to perform this variety of analyses on large macro-evolutionary or epidemic trees. It implements a fast-likelihood calculation algorithm that makes it possible to perform MCMC-sampling with millions of iterations within an hour. Then, it provides a number of standard generic functions such as logLik, plot, summary allowing to quickly assess the quality of the model fit and to answer relevant biological questions about the data.
+# The Phylogenetic Ornstein-Uhlenbeck Mixed Model
+The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to estimate the phylogenetic heritability of a continuous trait, to test hypotheses of neutral evolution versus stabilizing selection, to quantify the strength of stabilizing selection, to estimate measurement error and to make predictions about the evolution of a phenotype and phenotypic variation in a population. The POUMM package provides an easy and efficient way to perform this variety of analyses on large macro-evolutionary or epidemic trees. It implements a fast-likelihood calculation algorithm enabling MCMC-sampling with millions of iterations within minutes on contemporary multiple core processors. The package provides functions for configuring the fit of the model and a number of standard generic functions such as logLik, plot, summary, allowing a visual and a statistical assessment of the goodness of fit. This is an important step before using the model fit to answer relevant biological questions.
 
-# How do I use it?
+# Using the R-package
 Here is a quick example on how to use the package on a simulated tree and data:
 
 ```{r, results="hide", eval=FALSE, echo=TRUE}
-N <- 500
+# number of tips
+N <- 500 
+
+# phylogeny
 tr <- ape::rtree(N)
-z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
-fit <- POUMM::POUMM(z, tr, spec = POUMM::specifyPOUMM(nSamplesMCMC = 5e4))
+
+# for the example, simulate trait values on the tree according to a POUMM model.
+z <- rVNodesGivenTreePOUMM(
+  tree = tr,   
+  z0 = 0,      # fixed value at the root
+  alpha = 2,   # selection strength of the OU process
+  theta = 3,   # long term mean of the OU process
+  sigma = 1,   # unit-time standard deviation of the OU process
+  sigmae = 1   # standard deviation of the non-heritable component
+)[1:N]         # only the values at the N tips will be available in reality
+
+# A combined ML and MCMC fit of the model with default parameter settings.
+fit <- POUMM(z, tr)
+
 plot(fit)
 summary(fit)
 AIC(fit)
@@ -34,18 +49,11 @@ plot(resid(fit))
 abline(h=0)
 
 # fit PMM to the same data and do a likelihood ratio test
-fitPMM <- POUMM::POUMM(z, tr, spec = POUMM::specifyPMM(nSamplesMCMC = 5e4))
+fitPMM <- POUMM(z, tr)
 lmtest::lrtest(fitPMM, fit)
 ```
 
-You can find more examples in the package vignette entitled "A User Guide to The POUMM R-package" and in the help-pages, i.e. ?POUMM, ?specifyPOUMM, ?summary.POUMM, ?plot.POUMM.
+For a basic introduction to the model parameters and the package, read the vignette [Get started](./articles/UserGuide.html). More advanced topics, such as parametrizations and interpretations of the model fit are covered in the other package [vignettes](./articles/index.html) and in the package  help-pages, e.g. `?POUMM`, `?specifyPOUMM`, `?summary.POUMM`, `?plot.POUMM`.
 
-# How do I get it?
-Install the newest package version from CRAN. 
-
-```{r, eval=FALSE, echo=TRUE}
-install.packages("POUMM")
-```
-
-This will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as "Suggests" in POUMM's DESCRIPTION, since it's installation has been problematic on some systems (i.e. Linux).
-
+# Installing the R-package
+Read the section [Installing the POUMM R-package](./articles/UserGuide.html#Installing) in [Get started](./articles/UserGuide.html).

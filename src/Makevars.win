@@ -1,3 +1,2 @@
-CXX_STD = CXX11
-CFLAGS +=        -std=c++11 -fopenmp -Wall -O2 -march=native
-CXXFLAGS +=      -std=c++11 -fopenmp -Wall -O2 -march=native
+CFLAGS=`${CFLAGS} -std=c++11 -fopenmp -Wall -O2 -march=native`
+CXXFLAGS=`${CXXFLAGS} -std=c++11 -fopenmp -Wall -O2 -march=native`
