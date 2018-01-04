@@ -28,7 +28,7 @@
 #'  to disable rounding.
 #'  
 #'@param usempfr integer indicating if and how mpfr should be used for small 
-#'  parameter values (any(c(alpha, sigma, sigmae) < 0.01)). Using the mpfr 
+#'  parameter values (`any(c(alpha, sigma, sigmae) < 0.01)`). Using the mpfr 
 #'  package can be forced by specifying an integer greater or equal to 2. 
 #'  Setting usempfr=0 (default) causes high precision likelihood 
 #'  calculation to be done on each encounter of parameters with at least 1 bigger
@@ -43,31 +43,26 @@
 #'  implementation does not support mpfr, useCpp gets disabled when usempfr is 
 #'  bigger than 0.
 #'
-#'@param ... additional arguments passed to the likPOUMMGivenTreeVTips function 
-#'  (?dVGivenTreeOU for details).
+#'@param ... additional arguments passed to the `likPOUMMGivenTreeVTips()` function 
+#'  (`?dVGivenTreeOU` for details).
 #'  
 #'@param spec A named list specifying how the ML and MCMC fit should be done. 
-#'  See ?specifyPOUMM.
+#'  See `?specifyPOUMM`.
 #'  
-#'@param doMCMC Deprecated - replaced by specifying nSamplesMCMC = 0 as a member
-#'  of spec instead. 
+#'@param doMCMC Deprecated - replaced by specifying nSamplesMCMC as a member
+#'  of spec instead (see `?specifyPOUMM`). 
 #'  logical: should a MCMC fit be performed. An MCMC fit provides a 
 #'  sample from the posterior distribution of the parameters given a prior 
 #'  distribution and the data. Unlike the ML-fit, it allows to estimate 
 #'  confidence intervals for the estimated parameters. This argument is TRUE by 
-#'  default. The current implementation uses a modified version of the adaptive 
-#'  Metropolis sampler from the package "adaptMCMC" written by Andreas 
+#'  default. The current implementation uses the adaptive 
+#'  Metropolis sampler from the package `adaptMCMC` written by Andreas 
 #'  Scheidegger. To obtain meaningful estimates MCMC may need to run for several
 #'  millions of iterations (parameter nSamplesMCMC set to 1e5 by default). See 
-#'  parameters ending at MCMC in ?specifyPOUMM for details.
+#'  parameters ending at MCMC in `?specifyPOUMM` for details.
 #'
 #'@param likPOUMM_lowLevelFun the low-level function used for POUMM - likelihood 
-#'calculation. Default value is POUMM::likPOUMMGivenTreeVTipsC2, which would be 
-#'the fastest on most SIMD-enabled systems and on trees of less than 1000 tips. 
-#'For bigger trees it may be of benefit to set this parameter to 
-#'POUMM::likPOUMMGivenTreeVTipsC4, which uses OMP parallelization (best parallel
-#'speedup achieved on Linux systems with Intel processor and Intel compiler). See
-#'also the Parallelization section in the package user guide.
+#'calculation. Default value is likPOUMMGivenTreeVTipsC.
 #'
 #'@param verbose,debug Logical flags indicating whether to print informative 
 #'  and/or debug information on the standard output (both are set to to FALSE by
@@ -86,8 +81,8 @@
 #' # Please, read the package vignette for more detailed examples.
 #' N <- 500
 #' tr <- ape::rtree(N)
-#' z <- POUMM::rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
-#' fit <- POUMM::POUMM(z, tr, spec = POUMM::specifyPOUMM(nSamplesMCMC = 5e4))
+#' z <- rVNodesGivenTreePOUMM(tr, 0, 2, 3, 1, 1)[1:N]
+#' fit <- POUMM(z, tr, spec = specifyPOUMM(nSamplesMCMC = 5e4))
 #' plot(fit)
 #' summary(fit)
 #' AIC(fit)
@@ -99,14 +94,14 @@
 #' abline(h=0)
 #' 
 #' # fit PMM to the same data and do a likelihood ratio test
-#' fitPMM <- POUMM::POUMM(z, tr, spec = POUMM::specifyPMM(nSamplesMCMC = 5e4))
+#' fitPMM <- POUMM(z, tr, spec = specifyPMM(nSamplesMCMC = 5e4))
 #' lmtest::lrtest(fitPMM, fit)
 #' }
 #' 
 #'@references 
 #'  Mitov, V., and Stadler, T. (2017). Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation. bioRxiv, 115089. 
 #'  https://doi.org/10.1101/115089
-#'  
+#'  Mitov, V., & Stadler, T. (2017). Fast Bayesian Inference of Phylogenetic Models Using Parallel Likelihood Calculation and Adaptive Metropolis Sampling. Systematic Biology, 235739. http://doi.org/10.1101/235739  
 #'  Vihola, M. (2012). Robust adaptive Metropolis algorithm with coerced 
 #'  acceptance rate. Statistics and Computing, 22(5), 997-1008. 
 #'  http://doi.org/10.1007/s11222-011-9269-5 
@@ -119,12 +114,13 @@
 #'@useDynLib POUMM
 #' 
 #' @export
+#'
 POUMM <- function(
   z, tree, se = 0, zName = 'z', treeName = 'tree', 
   parDigits = 6, usempfr = 0, useCpp = TRUE,
   ..., 
   spec = NULL, doMCMC = TRUE,
-  likPOUMM_lowLevelFun = POUMM::likPOUMMGivenTreeVTipsC2,
+  likPOUMM_lowLevelFun = likPOUMMGivenTreeVTipsC,
   verbose = FALSE, debug=FALSE) {
   
   ###### Verify input data ######
@@ -296,7 +292,8 @@ POUMM <- function(
   
   if(defaultRmpfr) {
     if(verbose) {
-      cat('Checking the max-loglik value with Rmpfr, current: val = ', fitML$value)
+      cat('Checking the max-loglik value with Rmpfr, current: val = ', 
+          fitML$value, ", par=(", toString(fitML$par), ")")
     }
     usempfr = 2
     valLoglikRmpfr <- loglik(fitML$par, pruneInfo)
@@ -361,14 +358,7 @@ POUMM <- function(
         
         spec[["parInitML"]] <- parInitML
         
-        # fitML2 <- do.call(
-        #   maxLikPOUMMGivenTreeVTips, 
-        #   c(list(loglik = loglik, verbose = verbose,
-        #          debug = debug, pruneInfo = pruneInfo), spec))
-        # 
-        
         if(defaultRmpfr) {
-          # something smaller than here
           usempfr <- -.5
         }
         fitML2 <- do.call(
@@ -461,6 +451,10 @@ coef.POUMM <- function(object, mapped = FALSE, ...) {
     g0 <- attr(object$fitML$value, "g0")
     if(mapped) {
       pars <- object$spec$parMapping(pars)
+    } else {
+      if(is.null(names(pars))) {
+        names(pars) <- names(object$spec$parLower)
+      }
     }
     if("g0" %in% names(pars)) {
       pars["g0"] <- g0
@@ -623,7 +617,6 @@ plot.POUMM <-
 #' @param object an S3 object of class POUMM
 #' @param corr logical indicating if an expected correlation function 
 #' should be returned
-#' @param t numerical indicating the time from the root to the tips of the tree. 
 #'   For non-ultrametric trees, usually the mean root-tip distance is used.
 #' 
 #' @return a function of three numerical parameters:

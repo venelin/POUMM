@@ -1,0 +1,7 @@
+urls:
+  reference: http://venelin.github.io/POUMM/reference
+  article: http://venelin.github.io/POUMM/articles
+articles:
+  InterpretingPOUMM: InterpretingPOUMM.html
+  UserGuide: UserGuide.html
+

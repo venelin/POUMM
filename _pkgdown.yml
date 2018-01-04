@@ -1,0 +1,25 @@
+url: http://venelin.github.io/POUMM
+
+navbar:
+  title: POUMM
+  type: default
+  left:
+  - icon: fa-home fa-lg
+    href: index.html
+  - text: Get started
+    href: articles/UserGuide.html
+  - text: Reference
+    href: reference/index.html
+  - text: Articles
+    menu:
+    - text: Interpreting the POUMM
+      href: articles/InterpretingPOUMM.html
+  - text: News
+    href: news/index.html
+  right: []
+
+articles:
+- title: All vignettes
+  desc: ~
+  contents:
+  - '`InterpretingPOUMM`'

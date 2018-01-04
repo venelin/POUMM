@@ -6,3 +6,5 @@
 ^NEWS\.md$
 ^cran-comments\.md$
 ^benchmark$
+^docs$
+^_pkgdown\.yml$
