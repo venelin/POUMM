@@ -1,15 +1,15 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "04 January, 2017"
+date: "05 January, 2018"
 output: html_document
 ---
 
-# POUMM 2.0
+# POUMM 2.0.0
 * Using SPLiTTree for the pruning likelihood calculation.
 * Automatic web-site generation using the R-package pkgdown.
 * Project source-code published on github: https://github.com/venelin/POUMM.git.
-* Written vignette "Interpreting the POUMM".
+* Written a new vignette "Interpreting the POUMM".
 
 # POUMM 1.3.2
 * Fixing test-errors on r-patched-solaris-x86 and notes on r-devel-linux-x86_64-fedora-clang.
