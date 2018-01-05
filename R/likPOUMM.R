@@ -28,11 +28,12 @@
 #' @importFrom ape rTraitCont
 #' @export
 rVNodesGivenTreePOUMM <- function(tree, z0, alpha, theta, sigma, sigmae = 0) {
-  g <- rTraitCont(tree, 
-                       function(x, l, .a, .t, .s) {
-                         rOU(n = 1, z0 = x, t = l, alpha = .a, theta = .t, sigma = .s)
-                       }, root.value = z0, ancestor = TRUE, 
-                       .a = alpha, .t = theta, .s = sigma)
+  g <- rTraitCont(
+    tree, 
+    function(x, l, .a, .t, .s) {
+      POUMM::rOU(n = 1, z0 = x, t = l, alpha = .a, theta = .t, sigma = .s)
+    }, root.value = z0, ancestor = TRUE, 
+    .a = alpha, .t = theta, .s = sigma)
   if(any(sigmae > 0)) {
     if(length(sigmae) < length(g))
       sigmae <- rep(sigmae[1], length(g))
@@ -447,7 +448,7 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
     N <- pruneInfo$N  # number of tips
     M <- pruneInfo$M  # total number of nodes (tips+internal+root)
     
-    if(length(sigmae == 1)) {
+    if(length(sigmae) == 1) {
       sigmae <- rep(sigmae, N)
       sigmaeorig <- rep(sigmaeorig, N)
     }
@@ -521,8 +522,10 @@ likPOUMMGivenTreeVTips <- dVTipsGivenTreePOUMM <- function(
       gutalphasigma2 <- rep(alpha*0, M)
       
       for(i in 1:(length(rangesIdPrune)-1)) {
+      #for(i in 1:(M-1)) {
         rangeIdPrune <- c(rangesIdPrune[i], rangesIdPrune[i+1] - 1)
         edgeEnds <- orderedNodes[(rangeIdPrune[1]:rangeIdPrune[2]) + 1]
+        #edgeEnds <- orderedNodes[i]
         es <- endingAt[edgeEnds]
         edgeParents <- edge[es, 1]
         
