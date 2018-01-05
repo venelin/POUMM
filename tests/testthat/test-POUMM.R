@@ -45,10 +45,6 @@ z <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sqrt(sigmae^2+se^2))
 
 pruneInfo <- POUMM:::pruneTree(tree, z[1:N], se)
 
-likPOUMMGivenTreeVTips(z[1:N], tree, alpha, theta, sigma, sigmae, usempfr = 2)
-
-likPOUMMGivenTreeVTips(z[1:N], tree, 0.3, theta, sigma, sqrt(sigmae^2+se^2), g0, usempfr = 2)
-
 test_that(
   "fastLik(R) vs algebraic lik", {
     expect_true(EPS > my_abs(likPOUMMGivenTreeVTips(z[1:N], tree, 0, theta, sigma, sqrt(sigmae^2+se^2), g0) -
@@ -141,11 +137,14 @@ for(N2 in c(100, 1000, 10000)) {
   pruneInfo <- POUMM:::pruneTree(tree2, z2, se2)
   
   mbR <- microbenchmark::microbenchmark(
-    R=likPOUMMGivenTreeVTips(z2[1:N2], tree2, 0, theta, sigma, sqrt(sigmae^2+se2^2), g0), 
+    R=likPOUMMGivenTreeVTips(
+      z2[1:N2], tree2, alpha = 0, theta = theta, sigma = sigma, 
+      sigmae = sqrt(sigmae^2+se2^2), g0 = g0, pruneInfo = pruneInfo, usempfr = 2), 
     times=10)
+  
   mbCpp <- microbenchmark::microbenchmark(
     Cpp=likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
-    times=1000
+    times=100
   )
   
   cat("N2=")
@@ -153,4 +152,3 @@ for(N2 in c(100, 1000, 10000)) {
   print(mbR)
   print(mbCpp)
 }
-
