@@ -53,7 +53,13 @@ fitPMM <- POUMM(z, tr)
 lmtest::lrtest(fitPMM, fit)
 ```
 
-For a basic introduction to the model parameters and the package, read the vignette [Get started](./articles/UserGuide.html). More advanced topics, such as parametrizations and interpretations of the model fit are covered in the other package [vignettes](./articles/index.html) and in the package  help-pages, e.g. `?POUMM`, `?specifyPOUMM`, `?summary.POUMM`, `?plot.POUMM`.
+For an introduction to the model parameters and the package, read the [User guide](https://venelin.github.io/POUMM/articles/UserGuide.html). More advanced topics, such as parametrizations and interpretations of the model fit are covered in the other package [vignettes](https://venelin.github.io/POUMM/articles/index.html) and in the package  help-pages, e.g. `?POUMM`, `?specifyPOUMM`, `?summary.POUMM`, `?plot.POUMM`.
 
 # Installing the R-package
-Read the section [Installing the POUMM R-package](./articles/UserGuide.html#Installing) in [Get started](./articles/UserGuide.html).
+Read the section [Installing the POUMM R-package](https://venelin.github.io/POUMM/articles/UserGuide.html#Installing) in [Get started](https://venelin.github.io/POUMM/articles/UserGuide.html).
+
+# Package source-code
+The package source-code is available on [github](https://github.com/venelin/POUMM.git).
+
+# Package web-page
+Check-out the package [web-page](https://venelin.github.io/POUMM/index.html) for the latest news and further documentation.
