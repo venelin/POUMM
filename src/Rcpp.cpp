@@ -14,6 +14,7 @@ void R_init_POUMM(DllInfo *info) {
   R_useDynamicSymbols(info, TRUE);
 }
 
+
 void R_unload_POUMM(DllInfo *info) {
   /* Release resources. */
 }

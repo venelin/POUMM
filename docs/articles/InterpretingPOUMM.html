@@ -77,7 +77,7 @@
     
 <div class="contents">
 <p>Here, we consider the POUMM from the point of view of its biological interpretation. Before we begin, we need to make an important cautionary note:</p>
-<p>One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to <span class="citation">(Mitov and Stadler 2016)</span>. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates, such as sample mean, variance and covariance for sub-populations (e.g. stratifications) of the data <span class="citation">(Mitov and Stadler 2016)</span>.</p>
+<p>One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals for the modeled population properties can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to <span class="citation">(Mitov and Stadler 2016)</span>. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates, such as sample mean, variance and covariance for sub-populations (e.g. stratifications) of the data <span class="citation">(Mitov and Stadler 2016)</span>.</p>
 <div id="parametrizing-the-poumm" class="section level1">
 <h1 class="hasAnchor">
 <a href="#parametrizing-the-poumm" class="anchor"></a>Parametrizing the POUMM</h1>
@@ -145,11 +145,19 @@
 <li>What is the long-term equilibrium distribution of the trait values in the population?</li>
 <li>To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</li>
 </ul>
+<p>In the following subsections, we use our example simulation from the vignette vignette <a href="./UserGuide.html">A User Guide to the POUMM R-package</a>. Let us quickly remind the true POUMM parameters for this simulation:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">N &lt;-<span class="st"> </span><span class="dv">500</span>
+g0 &lt;-<span class="st"> </span><span class="dv">0</span>           
+alpha &lt;-<span class="st"> </span>.<span class="dv">5</span>        
+theta &lt;-<span class="st"> </span><span class="dv">2</span>        
+sigma &lt;-<span class="st"> </span><span class="fl">0.2</span>     
+sigmae &lt;-<span class="st"> </span><span class="fl">0.2</span> </code></pre></div>
 <!--
 TODO
 * What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
 * What are the maximum-likelihood genotypic values of the root and tips of the tree?
---><div id="is-the-poumm-an-appropriate-model-for-the-data" class="section level2">
+-->
+<div id="is-the-poumm-an-appropriate-model-for-the-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#is-the-poumm-an-appropriate-model-for-the-data" class="anchor"></a>Is the POUMM an appropriate model for the data?</h2>
 <p>The first step to answering that question is to visualize the data and check for obvious violations of the POUMM assumptions. The POUMM method expects that the trait-values at the tips are a sample from a multivariate normal distribution. With an ultrametric species tree, where all tips are equally distant from the root, this assumption translates in having all trait-values be realizations of identically distributed normal random variables. In the case of a non-ultrametric tree, it is far more useful to look at a sequence of box-whisker or violin plots of the trait-values, gouped by their root-tip distance.</p>
@@ -167,7 +175,7 @@ fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUM
 ## 2   5  -53.3  2   119     &lt;2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
-<p>Since <code>lrtest</code> only uses the ML-fit, to save time, we disabled the MCMC fit by specifying <code>doMCMC = FALSE</code>. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit.</p>
+<p>Since <code>lrtest</code> only uses the ML-fit, to save time, we disabled the MCMC fit by specifying <code>doMCMC = FALSE</code>. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit. Moreover, comparing posterior samples for the PMM and POUMM fit can, in principle, be more informative and a likelihood-ratio test.</p>
 <p>As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">gBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(tree, g0, <span class="dt">alpha =</span> <span class="dv">0</span>, <span class="dt">theta =</span> <span class="dv">0</span>, <span class="dt">sigma =</span> sigma)
 zBM &lt;-<span class="st"> </span>gBM <span class="op">+</span><span class="st"> </span>e
@@ -204,33 +212,29 @@ lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentat
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">specH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPOUMM_ATH2tMeanSeG0</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>)
 <span class="co"># Mapping from the sampled parameters to the standard POUMM parameters:</span>
 specH2tMean<span class="op">$</span>parMapping</code></pre></div>
-<pre><code>## function (par) 
-## {
-##     if (is.matrix(par)) {
+<pre><code>## function(par) {
+##       if(is.matrix(par)) {
 ##         par[, 3] &lt;- sigmaOU(par[, 3], par[, 1], par[, 4], tMean)
-##         colnames(par) &lt;- c("alpha", "theta", "sigma", "sigmae", 
-##             "g0")
-##     }
-##     else {
+##         
+##         colnames(par) &lt;- c("alpha", "theta", "sigma", "sigmae", "g0")
+##       } else {
 ##         par[3] &lt;- sigmaOU(par[3], par[1], par[4], tMean)
-##         names(par) &lt;- c("alpha", "theta", "sigma", "sigmae", 
-##             "g0")
+##         
+##         names(par) &lt;- c("alpha", "theta", "sigma", "sigmae", "g0")
+##       }
+##       par
 ##     }
-##     par
-## }
-## &lt;bytecode: 0x7faa6c531df0&gt;
-## &lt;environment: 0x7faa6c546868&gt;</code></pre>
+## &lt;environment: 0x7ff55e899920&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
-<pre><code>## function (par) 
-## {
-##     dexp(par[1], rate = tMean/6.931, log = TRUE) + dnorm(par[2], 
-##         zMean, 2 * zSD, TRUE) + dunif(par[3], min = 0, max = 1, 
-##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
+<pre><code>## function(par) {
+##       dexp(par[1], rate = tMean / 6.931, log = TRUE) +
+##         dnorm(par[2], zMean, 2 * zSD, TRUE) +
+##         dunif(par[3], min = 0, max = 1, log = TRUE) +
+##         dexp(par[4], rate = 2 / zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
-## }
-## &lt;bytecode: 0x7faa6c53b3f8&gt;
-## &lt;environment: 0x7faa6c546868&gt;</code></pre>
+##     }
+## &lt;environment: 0x7ff55e899920&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
@@ -243,7 +247,7 @@ specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(fitH2tMean, <span class="dt">stat =</span> <span class="kw">c</span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>), 
      <span class="dt">showUnivarDensityOnDiag =</span> <span class="ot">TRUE</span>, 
      <span class="dt">doZoomIn =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">TRUE</span>)</code></pre></div>
-<p><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-7-1.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-7-2.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-7-3.png" width="691.2"></p>
+<p><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-1.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-2.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-3.png" width="691.2"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</code></pre></div>
 <pre><code>##       stat   N    MLE PostMean           HPD   ESS  G.R.
 ## 1: H2tMean 500 0.4991   0.5024 0.3214,0.6865 644.7 1.001
@@ -257,7 +261,7 @@ H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/P
 H2eRecent &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">sigmae =</span> <span class="kw">coef</span>(fitH2tMean)[<span class="st">'sigmae'</span>], <span class="dt">tFrom =</span> <span class="dv">5</span>)
 <span class="kw">print</span>(<span class="kw">c</span>(H2eGlobal, H2eRecent))</code></pre></div>
 <pre><code>## [1] 0.6411 0.5010</code></pre>
-<p>To learn more about different ways to specify the POUMM fit, read the documentation page <code><a href="../reference/specPOUMM.html">?specifyPOUMM_ATH2tMeanSeG0</a></code>. <!--
+<p>To learn more about different ways to specify the POUMM fit, read the documentation page <code><a href="../reference/specPOUMM.html">?specifyPOUMM</a></code>. <!--
 TODO
 ## What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
 
