@@ -40,7 +40,7 @@ load("UserGuideCache.RData")
 
 Here, we consider the POUMM from the point of view of its biological interpretation. Before we begin, we need to make an important cautionary note:
 
-One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to [@Mitov:2016kd]. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates, such as sample mean, variance and covariance for sub-populations (e.g. stratifications) of the data [@Mitov:2016kd].
+One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals for the modeled population properties can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to [@Mitov:2016kd]. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates, such as sample mean, variance and covariance for sub-populations (e.g. stratifications) of the data [@Mitov:2016kd]. 
 
 # Parametrizing the POUMM
 From a modeling perspective, the POUMM can be regarded as a combination of two of its widely used nested models:
@@ -108,6 +108,19 @@ Whenever presented with data consisting of a rooted phylogenetic tree with obser
 * What is the long-term equilibrium distribution of the trait values in the population?
 * To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
 
+In the following subsections, we use our example simulation from the vignette vignette [A User Guide to the POUMM R-package](./UserGuide.html). Let us quickly
+remind the true POUMM parameters for this simulation:
+
+
+```{r, include=TRUE, eval=TRUE, echo=TRUE}
+N <- 500
+g0 <- 0           
+alpha <- .5        
+theta <- 2        
+sigma <- 0.2     
+sigmae <- 0.2 
+```
+
 <!--
 TODO
 * What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
@@ -129,7 +142,9 @@ Now a likelihood-ratio test between the maximum likelihood fits clearly shows th
 lmtest::lrtest(fitPMM, fitPOUMM2)
 ```
 
-Since `lrtest` only uses the ML-fit, to save time, we disabled the MCMC fit by specifying `doMCMC = FALSE`. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit.
+Since `lrtest` only uses the ML-fit, to save time, we disabled the MCMC fit by specifying `doMCMC = FALSE`. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit. 
+Moreover, comparing posterior samples for the PMM and POUMM fit can, in principle,
+be more informative and a likelihood-ratio test.
 
 As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:
 
@@ -197,7 +212,7 @@ print(c(H2eGlobal, H2eRecent))
 ```
 
 
-To learn more about different ways to specify the POUMM fit, read the documentation page `?specifyPOUMM_ATH2tMeanSeG0`. 
+To learn more about different ways to specify the POUMM fit, read the documentation page `?specifyPOUMM`. 
 <!--
 TODO
 ## What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
