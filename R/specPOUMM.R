@@ -139,8 +139,7 @@
 #' @param accRateMCMC numeric between 0 and 1 indicating the target 
 #'   acceptance rate of the  adaptive Metropolis sampling (see details in ?POUMM). 
 #'   Default 0.01.
-#' @param gammaMCMC controls the speed of adaption. Should be between 0.5 and
-#'   1. A lower gamma leads to faster adaption. Default value is 0.5.
+#' @param gammaMCMC controls the speed of adaption. Should be in the interval (0.5,1]. A lower gamma leads to faster adaption. Default value is 0.5.
 #' @param nChainsMCMC integer indicating the number of chains to run. 
 #'   Defaults to 3 chains, from which the first one is a sample from the prior 
 #'   distribution (see samplePriorMCMC).
@@ -178,7 +177,7 @@ specifyPOUMM <- function(
   parScaleMCMC = NULL,
   nSamplesMCMC = 1e5, nAdaptMCMC = nSamplesMCMC, 
   thinMCMC = 100, 
-  accRateMCMC = .01, gammaMCMC = 0.5, nChainsMCMC = 3, 
+  accRateMCMC = .01, gammaMCMC = 2/3, nChainsMCMC = 3, 
   samplePriorMCMC = TRUE,
   parallelMCMC = FALSE,
   validateSpec=TRUE) {

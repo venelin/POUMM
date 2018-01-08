@@ -128,27 +128,29 @@ plot(fit1)
 context("POUMM Likelihood speed")
 set.seed(1)
 
-for(N2 in c(100, 1000, 10000)) {
-  tree2 <- ape::rtree(N2)  
-  
-  se2 = rexp(N2, 1/.01)
-  z2 <- rVNodesGivenTreePOUMM(tree2, g0, alpha, theta, sigma, sqrt(sigmae^2+se2^2))
-  
-  pruneInfo <- POUMM:::pruneTree(tree2, z2, se2)
-  
-  mbR <- microbenchmark::microbenchmark(
-    R=likPOUMMGivenTreeVTips(
-      z2[1:N2], tree2, alpha = 0, theta = theta, sigma = sigma, 
-      sigmae = sqrt(sigmae^2+se2^2), g0 = g0, pruneInfo = pruneInfo, usempfr = 2), 
-    times=10)
-  
-  mbCpp <- microbenchmark::microbenchmark(
-    Cpp=likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
-    times=100
-  )
-  
-  cat("N2=")
-  print(N2)
-  print(mbR)
-  print(mbCpp)
+if(require(microbenchmark)) {
+  for(N2 in c(100, 1000, 10000)) {
+    tree2 <- ape::rtree(N2)  
+    
+    se2 = rexp(N2, 1/.01)
+    z2 <- rVNodesGivenTreePOUMM(tree2, g0, alpha, theta, sigma, sqrt(sigmae^2+se2^2))
+    
+    pruneInfo <- POUMM:::pruneTree(tree2, z2, se2)
+    
+    mbR <- microbenchmark::microbenchmark(
+      R=likPOUMMGivenTreeVTips(
+        z2[1:N2], tree2, alpha = 0, theta = theta, sigma = sigma, 
+        sigmae = sqrt(sigmae^2+se2^2), g0 = g0, pruneInfo = pruneInfo, usempfr = 2), 
+      times=10)
+    
+    mbCpp <- microbenchmark::microbenchmark(
+      Cpp=likPOUMMGivenTreeVTipsC(pruneInfo$integrator, 0, theta, sigma, sigmae, g0),
+      times=100
+    )
+    
+    cat("N2=")
+    print(N2)
+    print(mbR)
+    print(mbCpp)
+  }
 }
