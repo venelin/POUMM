@@ -345,8 +345,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
 #' @param thinMCMC integer indicating the thinning interval of the mcmc-chain
 #' @param accRateMCMC (MCMC) numeric between 0 and 1 indicating the target 
 #'   acceptance rate Passed on to adaptMCMC::MCMC.
-#' @param gammaMCMC (MCMC) controls the speed of adaption. Should be between 0.5
-#'   and 1. A lower gammaMCMC leads to faster adaption. Passed on to 
+#' @param gammaMCMC (MCMC) controls the speed of adaption. Should be in the interval (0.5,1]. A lower gammaMCMC leads to faster adaption. Passed on to 
 #'   adaptMCMC::MCMC.
 #' @param nChainsMCMC integer indicating the number of chains to run. Defaults 
 #'   to 1.
