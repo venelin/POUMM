@@ -150,7 +150,9 @@ pruneTree <- function(tree, z, se = 0) {
   
   treeCpp <- integrator$tree
   
-  orderedNodes <- treeCpp$map_id_to_node
+  #orderedNodes <- sapply(0:(M-1), function(i) treeCpp$FindNodeWithId(i))#map_id_to_node
+  
+  orderedNodes <- (1:M)[treeCpp$OrderNodes(1:M) + 1]
   rangesIdPrune <- treeCpp$ranges_id_prune
   
   list(M = M, N = N, 
@@ -162,7 +164,7 @@ pruneTree <- function(tree, z, se = 0) {
        )
 }
 
-#' @title Fast (parallel) POUMM likelihood calculation using the SPLiTTree 
+#' @title Fast (parallel) POUMM likelihood calculation using the SPLITT 
 #' library
 #'
 #' @description Fast (log-)likelihood calculation using C++
@@ -196,8 +198,8 @@ pruneTree <- function(tree, z, se = 0) {
 #'  (aliased also as likPOUMMGivenTreeVTips). Currently, the function does not 
 #'  support multiple precision floating point operations (supported in 
 #'  dVTipsGivenTreePOUMM). The C++ implementation is based on the library for
-#'  parallel tree traversal "SPLiTTree" 
-#'  (https://github.com/venelin/SPLiTTree.git).
+#'  parallel tree traversal "SPLITT" 
+#'  (https://github.com/venelin/SPLITT.git).
 #'  
 #' @seealso dVTipsGivenTreePOUMM  
 #' @return A numeric with attributes "g0" and "g0LogPrior".
@@ -234,7 +236,7 @@ likPOUMMGivenTreeVTipsC <- function(
     ifelse(log, -Inf, 0)
   } else {
     #abc <- integrator$abc_arma(alpha, theta, sigma, sigmae)
-    abc <- integrator$DoPruning(c(alpha, theta, sigma, sigmae), 0)
+    abc <- integrator$DoPruning(c(alpha, theta, sigma, sigmae), getOption("SPLITT.postorder.mode", 0))
     if(any(is.nan(abc)) | abc[1]==0 | is.infinite(abc[3])) {
       value <- NaN
       attr(value, "g0") <- g0
