@@ -20,7 +20,7 @@ specifyPOUMM(z = NULL, tree = NULL, zMin = -10, zMean = 0, zMax = 10,
   parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE, validateSpec = TRUE)
 
 specifyPOUMM_ATS(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -29,7 +29,7 @@ specifyPOUMM_ATS(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE, sigmaeFixed = 0)
 
 specifyPOUMM_ATSG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -38,7 +38,7 @@ specifyPOUMM_ATSG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE, sigmaeFixed = 0)
 
 specifyPOUMM_ATSSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -47,7 +47,7 @@ specifyPOUMM_ATSSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPMM(z = NULL, tree = NULL, zMin = -10, zMean = 0, zMax = 10,
@@ -56,7 +56,7 @@ specifyPMM(z = NULL, tree = NULL, zMin = -10, zMean = 0, zMax = 10,
   parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPMM_SSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -65,7 +65,7 @@ specifyPMM_SSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPOUMM_ATH2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -74,7 +74,7 @@ specifyPOUMM_ATH2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPOUMM_ATH2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -83,7 +83,7 @@ specifyPOUMM_ATH2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPMM_H2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -92,7 +92,7 @@ specifyPMM_H2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
 specifyPMM_H2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
@@ -101,7 +101,7 @@ specifyPMM_H2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
   parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 0.5, nChainsMCMC = 3, samplePriorMCMC = TRUE,
+  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 }
 \arguments{
@@ -248,8 +248,7 @@ Defaults to 100.}
 acceptance rate of the  adaptive Metropolis sampling (see details in ?POUMM). 
 Default 0.01.}
 
-\item{gammaMCMC}{controls the speed of adaption. Should be between 0.5 and
-1. A lower gamma leads to faster adaption. Default value is 0.5.}
+\item{gammaMCMC}{controls the speed of adaption. Should be in the interval (0.5,1]. A lower gamma leads to faster adaption. Default value is 2/3.}
 
 \item{nChainsMCMC}{integer indicating the number of chains to run. 
 Defaults to 3 chains, from which the first one is a sample from the prior 
