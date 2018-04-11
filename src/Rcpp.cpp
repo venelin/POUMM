@@ -20,7 +20,7 @@ void R_unload_POUMM(DllInfo *info) {
 }
 // END Needed for r-devel (R 3.4)
 
-using namespace splittree;
+using namespace SPLITT;
 
 ParallelPruningAbcPOUMM* CreateParallelPruningAbcPOUMM(
     Rcpp::List const& tree, vec const& z, vec const& se) {
@@ -42,7 +42,6 @@ RCPP_MODULE(POUMM_AbcPOUMM) {
   Rcpp::class_<ParallelPruningAbcPOUMM::TreeType::Tree> ( "POUMM_Tree" )
   .property("num_nodes", &ParallelPruningAbcPOUMM::TreeType::Tree::num_nodes )
   .property("num_tips", &ParallelPruningAbcPOUMM::TreeType::Tree::num_tips )
-  .property("map_id_to_node", &ParallelPruningAbcPOUMM::TreeType::Tree::map_id_to_node )
   .method("LengthOfBranch", &ParallelPruningAbcPOUMM::TreeType::Tree::LengthOfBranch )
   .method("FindNodeWithId", &ParallelPruningAbcPOUMM::TreeType::Tree::FindNodeWithId )
   .method("FindIdOfNode", &ParallelPruningAbcPOUMM::TreeType::Tree::FindIdOfNode )
