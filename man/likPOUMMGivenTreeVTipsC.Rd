@@ -2,7 +2,7 @@
 % Please edit documentation in R/likPOUMM.R
 \name{likPOUMMGivenTreeVTipsC}
 \alias{likPOUMMGivenTreeVTipsC}
-\title{Fast (parallel) POUMM likelihood calculation using the SPLiTTree 
+\title{Fast (parallel) POUMM likelihood calculation using the SPLITT 
 library}
 \usage{
 likPOUMMGivenTreeVTipsC(integrator, alpha, theta, sigma, sigmae, g0 = NA,
@@ -52,8 +52,8 @@ This function is the C++ equivalent of dVTipsGivenTreePOUMM
  (aliased also as likPOUMMGivenTreeVTips). Currently, the function does not 
  support multiple precision floating point operations (supported in 
  dVTipsGivenTreePOUMM). The C++ implementation is based on the library for
- parallel tree traversal "SPLiTTree" 
- (https://github.com/venelin/SPLiTTree.git).
+ parallel tree traversal "SPLITT" 
+ (https://github.com/venelin/SPLITT.git).
 }
 \examples{
 \dontrun{

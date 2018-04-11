@@ -39,8 +39,7 @@ used for adaptation of the jump-distribution matrix}
 \item{accRateMCMC}{(MCMC) numeric between 0 and 1 indicating the target 
 acceptance rate Passed on to adaptMCMC::MCMC.}
 
-\item{gammaMCMC}{(MCMC) controls the speed of adaption. Should be between 0.5
-and 1. A lower gammaMCMC leads to faster adaption. Passed on to 
+\item{gammaMCMC}{(MCMC) controls the speed of adaption. Should be in the interval (0.5,1]. A lower gammaMCMC leads to faster adaption. Passed on to 
 adaptMCMC::MCMC.}
 
 \item{nChainsMCMC}{integer indicating the number of chains to run. Defaults 

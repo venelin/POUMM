@@ -14,10 +14,10 @@
 #ifndef ABC_POUMM_H_
 #define ABC_POUMM_H_
 
-#include "./splittree.h"
+#include "./SPLITT.h"
 #include <iostream>
 
-namespace splittree {
+namespace SPLITT {
 template<class NameType>
 struct NumericTraitData {
   // use const references to avoid copying of long vectors
