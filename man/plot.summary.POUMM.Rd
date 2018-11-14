@@ -13,8 +13,7 @@
   "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
   "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
   palette = c("#999999", "#0072B2", "#CC79A7", "#E69F00", "#D55E00",
-  "#56B4E9", "#009E73", "#F0E442"), prettyNames = TRUE,
-  showUnivarDensityOnDiag = FALSE, ...)
+  "#56B4E9", "#009E73", "#F0E442"), prettyNames = TRUE, ...)
 }
 \arguments{
 \item{x}{An object of class POUMM.}
@@ -57,10 +56,6 @@ which is a color-blind friendly.}
 
 \item{prettyNames}{A logical indicating if greek letters and sub/superscripts 
 should be used for the names of columns in the posterior density pairs-plot.}
-
-\item{showUnivarDensityOnDiag}{A logical indicating if univariate density 
-plots should be displaied on the main diagonal in the bivariate posterior plot.
-Defaults to FALSE, in which case the column names are displayed on the diagonal.}
 
 \item{...}{Not used; included for compatibility with the generic function plot.}
 }
