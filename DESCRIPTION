@@ -34,7 +34,6 @@ Imports:
     coda,
     foreach,
     ggplot2,
-    GGally,
     gsl,
     adaptMCMC,
     utils
@@ -47,7 +46,8 @@ Suggests:
     knitr,
     rmarkdown,
     parallel,
-    doParallel
+    doParallel,
+    covr
 RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 ByteCompile: no

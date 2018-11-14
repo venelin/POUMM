@@ -1,9 +1,21 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "05 January, 2018"
+date: "14 November, 2018"
 output: html_document
 ---
+
+# POUMM 2.1.1
+
+* Temporarily removed bivariate posterior density plotting functionality; univariate posterior density plotting still 
+available. 
+* Removed dependency to RcppArmadillo 
+* Fixed a bug in the C++ likelihood calculation for the case when both sigmae = 0 and se = 0.
+* Refactored unit tests. 
+* Enabled test-coverage report with inserted badge in the README.Rmd.
+* Enabled travis continuous integration with a status badge in the README.Rmd.
+# POUMM 2.1.0
+* SPLiTTree dependency is renamed to SPLITT
 
 # POUMM 2.0.0
 * Using SPLiTTree for the pruning likelihood calculation.
