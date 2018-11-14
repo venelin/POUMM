@@ -27,6 +27,20 @@ Maintainer: ‘Venelin Mitov <vmitov@gmail.com>’
     libs   5.5Mb
 ```
 
+### devtools::check_win_release()
+
+1 Note
+
+### devtools::check_win_devel() 
+
+1 Note
+
+### travis ci:
+
+1 Note
+
+Results available here: https://travis-ci.org/venelin/POUMM
+
 ### devtools::check_rhub()
 - 1 NOTE on Windows server (same as above)
 - 1 Note on Ubuntu (same as above)
