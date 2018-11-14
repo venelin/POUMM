@@ -39,7 +39,6 @@ Imports:
     utils
 Suggests:
     testthat,
-    TreeSim (>= 2.2),
     Rmpfr,
     mvtnorm,
     lmtest,
