@@ -1,8 +1,8 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 2.0.0
-Date: 2018-01-05
+Version: 2.1.1
+Date: 2018-11-14
 Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
                  role = c("aut", "cre", "cph"))
 Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to 
@@ -20,13 +20,14 @@ Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to
     examples and use-cases are provided in the vignette 
     "A User Guide to The POUMM R-package".
 License: GPL (>= 3.0)
+Encoding: UTF-8
 LazyData: true
 Depends:
     R (>= 3.1.0),
     stats,
     Rcpp,
     methods
-LinkingTo: Rcpp, RcppArmadillo
+LinkingTo: Rcpp
 Imports:
     ape,
     data.table(>= 1.10.4),
@@ -38,7 +39,6 @@ Imports:
     adaptMCMC,
     utils
 Suggests:
-    RcppArmadillo,
     testthat,
     TreeSim (>= 2.2),
     Rmpfr,
@@ -47,9 +47,8 @@ Suggests:
     knitr,
     rmarkdown,
     parallel,
-    doParallel,
-    microbenchmark
-RoxygenNote: 6.0.1
+    doParallel
+RoxygenNote: 6.1.1
 VignetteBuilder: knitr
 ByteCompile: no
 NeedsCompilation: yes
