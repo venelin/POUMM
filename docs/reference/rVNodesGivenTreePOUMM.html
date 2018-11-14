@@ -162,20 +162,6 @@ the right way to specify the parameter would be sqrt(sigmae^2+se^2).</p></td>
   (internal and tips) of the phylogenetic tree.</p>
     
 
-    <h2 class="hasAnchor" id="examples"><a class="anchor" href="#examples"></a>Examples</h2>
-    <pre class="examples"><div class='input'>  
-</div><span class='co'># NOT RUN {</span>
-  <span class='no'>N</span> <span class='kw'>&lt;-</span> <span class='fl'>20</span>
-  <span class='no'>tree</span> <span class='kw'>&lt;-</span> <span class='kw pkg'>TreeSim</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/TreeSim/topics/sim.bd.taxa'>sim.bd.taxa</a></span>(<span class='no'>N</span>, <span class='fl'>1</span>, <span class='kw'>lambda</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>mu</span> <span class='kw'>=</span> <span class='fl'>1</span>, <span class='kw'>complete</span> <span class='kw'>=</span>
-  <span class='fl'>FALSE</span>)<span class='kw'>[[</span><span class='fl'>1</span>]]
-  <span class='no'>z</span> <span class='kw'>&lt;-</span> <span class='fu'>rVNodesGivenTreePOUMM</span>(<span class='no'>tree</span>, <span class='fl'>8</span>, <span class='fl'>2</span>, <span class='fl'>2</span>, <span class='fl'>1</span>)
-
-  <span class='kw pkg'>phytools</span><span class='kw ns'>::</span><span class='fu'>plotBranchbyTrait</span>(<span class='no'>tree</span>, <span class='no'>z</span>, <span class='kw'>mode</span> <span class='kw'>=</span> <span class='st'>"nodes"</span>, <span class='kw'>show.tip.label</span> <span class='kw'>=</span>
-  <span class='fl'>FALSE</span>, <span class='kw'>show.node.label</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
-  <span class='kw pkg'>ape</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/ape/topics/nodelabels'>nodelabels</a></span>(<span class='fu'>round</span>(<span class='no'>z</span>[-(<span class='fl'>1</span>:<span class='no'>N</span>)], <span class='fl'>2</span>))
-  <span class='kw pkg'>ape</span><span class='kw ns'>::</span><span class='fu'><a href='http://www.rdocumentation.org/packages/ape/topics/nodelabels'>tiplabels</a></span>(<span class='fu'>round</span>(<span class='no'>z</span>[(<span class='fl'>1</span>:<span class='no'>N</span>)], <span class='fl'>2</span>))
-<span class='co'># }</span><div class='input'>
-</div></pre>
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
@@ -183,9 +169,7 @@ the right way to specify the parameter would be sqrt(sigmae^2+se^2).</p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
-      
-      <li><a href="#examples">Examples</a></li>
-    </ul>
+          </ul>
 
   </div>
 </div>
