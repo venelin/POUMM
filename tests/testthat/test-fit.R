@@ -18,16 +18,23 @@ context("POUMM fit")
   se = rep(0, N) #rexp(N, 1/.01)
   z <- rVNodesGivenTreePOUMM(tree, g0, alpha, theta, sigma, sqrt(sigmae^2+se^2))
   
-  fit1 <- POUMM(z = z[1:N], tree = tree, 
-                spec = specifyPOUMM(z[1:N], tree, nSamplesMCMC = 10000), 
-                verbose=TRUE)
-  
-  if(interactive()) {
-    summary(fit1)
-    summary(fit1, mode="long")
-    summary(fit1, mode="expert")
+  test_that("fit passes without errors", {
+    expect_is(fit1 <- POUMM(z = z[1:N], tree = tree, 
+                            spec = specifyPOUMM(z[1:N], tree, nSamplesMCMC = 10000), 
+                            verbose=FALSE), "POUMM")
     
-    plot(fit1)
-  }
-
+    # end value not changed warnings from coda
+    expect_warning(smmShort <- summary(fit1))
+    expect_is(smmShort, "summary.POUMM")
+    
+    expect_warning(smmLong <- summary(fit1, mode="long"))
+    expect_is(smmLong, "summary.POUMM")
+    
+    expect_warning(smmExpert <- summary(fit1, mode="expert"))
+    expect_is(smmExpert, "summary.POUMM")
+    
+    expect_warning(plList <- plot(fit1, interactive = FALSE, doPlot = FALSE))
+    expect_is(plList, "list")
+  })
+  
 }
