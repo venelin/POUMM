@@ -318,12 +318,12 @@ It is possible to use this parallelization in combination with parallelization o
 
 # Packages used
 ```{r create-references, echo=FALSE, include=FALSE, eval=TRUE}
-likCalculation <- c("Rcpp", "RcppArmadillo", "Rmpfr")
+likCalculation <- c("Rcpp", "Rmpfr")
 mcmcSampling <- c("adaptMCMC")
 mcmcDiagnosis <- c("coda")
 otherPackages <- c("parallel", "foreach", "data.table", "Matrix", "gsl")
 treeProcessing <- c("ape")
-reporting <- c("data.table", "ggplot2", "GGally", "lmtest")
+reporting <- c("data.table", "ggplot2", "lmtest")
 testing <- c("testthat", "mvtnorm", "TreeSim")
  
 packagesUsed <- c(likCalculation, mcmcDiagnosis, otherPackages, treeProcessing, reporting, testing)
