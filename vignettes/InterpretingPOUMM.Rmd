@@ -150,12 +150,12 @@ As an exersise, we can generate data under the PMM model and see if a POUMM fit 
 
 ```{r}
 gBM <- rVNodesGivenTreePOUMM(tree, g0, alpha = 0, theta = 0, sigma = sigma)
-zBM <- gBM + e
+z <- gBM + e
 
-fitPMM_on_zBM <- POUMM(zBM[1:N], tree, spec = specPMM, doMCMC = FALSE)
-fitPOUMM_on_zBM <- POUMM(zBM[1:N], tree, doMCMC = FALSE)
+fitPMM_on_z <- POUMM(z[1:N], tree, spec = specPMM, doMCMC = FALSE)
+fitPOUMM_on_z <- POUMM(z[1:N], tree, doMCMC = FALSE)
 
-lmtest::lrtest(fitPMM_on_zBM, fitPOUMM_on_zBM)
+lmtest::lrtest(fitPMM_on_z, fitPOUMM_on_z)
 ```
 
 
