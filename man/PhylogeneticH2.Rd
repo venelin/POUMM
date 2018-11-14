@@ -48,8 +48,6 @@ The phylogenetic heritability, \eqn{H^2}, is defined as the
   described here provide an R-implementation of these equations.
 }
 \details{
-The function alpha invokes the gsl function lambert_W0.
-
 The function sigmae uses the formula H2 = varOU(t, alpha, sigma) /
   (varOU(t, alpha, sigma) + sigmae^2)
 }

@@ -6,9 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Processing of the root value and calculation of the maximum log-likelihood 
-for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
-an internal function. — loglik_abc_g0_g0Prior • POUMM</title>
+<title>Check if the POUMM version correpsonds to a dev release — POUMMIsADevRelease • POUMM</title>
 
 <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
 
@@ -34,13 +32,11 @@ an internal function. — loglik_abc_g0_g0Prior • POUMM</title>
 
 
 
-<meta property="og:title" content="Processing of the root value and calculation of the maximum log-likelihood 
-for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
-an internal function. — loglik_abc_g0_g0Prior" />
+<meta property="og:title" content="Check if the POUMM version correpsonds to a dev release — POUMMIsADevRelease" />
 
-<meta property="og:description" content="Processing of the root value and calculation of the maximum log-likelihood 
-for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
-an internal function." />
+<meta property="og:description" content="We define a dev release as having a sub-release, eg 0.9.15.5 is
+one whereas 0.9.16 is not. The number of components in the version can be
+changed through the argument numVersionComponents." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -119,45 +115,33 @@ an internal function." />
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Processing of the root value and calculation of the maximum log-likelihood 
-for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
-an internal function.</h1>
-    <small class="dont-index">Source: <a href='https://github.com/venelin/POUMM/blob/master/R/likPOUMM.R'><code>R/likPOUMM.R</code></a></small>
-    <div class="hidden name"><code>loglik_abc_g0_g0Prior.Rd</code></div>
+    <h1>Check if the POUMM version correpsonds to a dev release</h1>
+    <small class="dont-index">Source: <a href='https://github.com/venelin/POUMM/blob/master/R/utilities.R'><code>R/utilities.R</code></a></small>
+    <div class="hidden name"><code>POUMMIsADevRelease.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Processing of the root value and calculation of the maximum log-likelihood 
-for the given coefficients abc, and parameters theta, g0 and g0Prior. This is
-an internal function.</p>
+    <p>We define a dev release as having a sub-release, eg 0.9.15.5 is
+one whereas 0.9.16 is not. The number of components in the version can be
+changed through the argument numVersionComponents.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>loglik_abc_g0_g0Prior</span>(<span class='no'>abc</span>, <span class='no'>alpha</span>, <span class='no'>theta</span>, <span class='no'>sigma</span>, <span class='no'>g0</span>, <span class='no'>g0Prior</span>)</pre>
+    <pre class="usage"><span class='fu'>POUMMIsADevRelease</span>(<span class='kw'>numVersionComponents</span> <span class='kw'>=</span> <span class='fl'>4L</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>abc</th>
-      <td><p>a vector of 3 numerical values denoting the corresponding 
-coefficients in the POUMM likelihood presented as exp(a g0^2 + b g0 + c).</p></td>
-    </tr>
-    <tr>
-      <th>alpha, theta, sigma</th>
-      <td><p>parameters of the OU-process.</p></td>
-    </tr>
-    <tr>
-      <th>g0</th>
-      <td><p>initial value at the root of the tree (can be NA). See argument
-parMapping in ?specifyPOUMM.</p></td>
-    </tr>
-    <tr>
-      <th>g0Prior</th>
-      <td><p>list object. See parameter g0Prior in ?specifyPOUMM.</p></td>
+      <th>numVersionComponents</th>
+      <td><p>an integer, default 4.</p></td>
     </tr>
     </table>
+    
+    <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
+
+    <p>a logical</p>
     
 
   </div>
@@ -165,7 +149,9 @@ parMapping in ?specifyPOUMM.</p></td>
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-                </ul>
+      
+      <li><a href="#value">Value</a></li>
+          </ul>
 
   </div>
 </div>
