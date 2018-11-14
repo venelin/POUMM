@@ -82,11 +82,12 @@ load("UserGuideCache.RData")
 
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `rTrajectoryOU()`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
 
-```{r, echo=FALSE, fig.height=4.6, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
+```{r, echo=FALSE, fig.height=5, fig.width=7, fig.cap="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\\theta$, fixing the stochastic parameter $\\sigma=0$."}
 tStep <- 0.025
 t <- seq(0, 6, by = tStep)
 
-plot(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
+plot(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', ylab = expression(bar(z)), ylim = c(0, 4))
+#plot(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma, length(t)), type = 'l', main = "Random OU trajectories", ylab = "g", ylim = c(0, 4))
 lines(t, rTrajectoryOU(g0, tStep, alpha, theta, 0, length(t)), lty = 2)
 
 lines(t, rTrajectoryOU(g0, tStep, alpha*2, theta, sigma, length(t)), col = "magenta")
@@ -97,14 +98,22 @@ lines(t, rTrajectoryOU(g0, tStep, alpha, theta, sigma*2, length(t)), col = "blue
 abline(h=theta, lty = 3, col = "darkgrey")
 
 legend("topleft", 
-       legend = c(expression(list(alpha == .5, theta == 2, sigma == 0.2)),
-                  expression(list(alpha == .5, theta == 2, sigma == 0.4)),
-                  expression(list(alpha == .5, theta == 2, sigma == 0)),
+       legend = c(expression(list(alpha == .5, sigma^2 == 0.04)),
+                  expression(list(alpha == .5, sigma^2 == 0.16)),
+                  expression(list(alpha == .5, sigma^2 == 0)),
                   
-                  expression(list(alpha == 1, theta == 2, sigma == 0.2)),
-                  expression(list(alpha == 1, theta == 2, sigma == 0)),
+                  expression(list(alpha == 1, sigma^2 == 0.04)),
+                  expression(list(alpha == 1, sigma^2 == 0)),
                   
                   expression(theta == 2)),
+       # legend = c(expression(list(alpha == .5, theta == 2, sigma == 0.2)),
+       #            expression(list(alpha == .5, theta == 2, sigma == 0.4)),
+       #            expression(list(alpha == .5, theta == 2, sigma == 0)),
+       #            
+       #            expression(list(alpha == 1, theta == 2, sigma == 0.2)),
+       #            expression(list(alpha == 1, theta == 2, sigma == 0)),
+       #            
+       #            expression(theta == 2)),
        lty = c(1, 1, 2, 1, 2, 3), 
        col = c("black", "blue", "black", "magenta", "magenta", "darkgrey"))
 ```

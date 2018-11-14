@@ -5,8 +5,8 @@
 \title{Summarize the results of a POUMM-fit}
 \usage{
 \method{summary}{POUMM}(object, ..., startMCMC = NA, endMCMC = NA,
-  thinMCMC = 1000, stats = statistics(object), mode = c("short", "long",
-  "expert"))
+  thinMCMC = 1000, stats = statistics(object), mode = c("short",
+  "long", "expert"))
 }
 \arguments{
 \item{object}{a POUMM object returned by POUMM-function (see ?POUMM).}
