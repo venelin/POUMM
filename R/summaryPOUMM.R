@@ -203,9 +203,6 @@ summary.POUMM <- function(object, ...,
 #' which is a color-blind friendly.
 #' @param prettyNames A logical indicating if greek letters and sub/superscripts 
 #' should be used for the names of columns in the posterior density pairs-plot.
-#' @param showUnivarDensityOnDiag A logical indicating if univariate density 
-#' plots should be displaied on the main diagonal in the bivariate posterior plot.
-#' Defaults to FALSE, in which case the column names are displayed on the diagonal.
 #' @param ... Not used; included for compatibility with the generic function plot.
 #' 
 #' @return If doPlot==TRUE, the function returns nothing and produces output on 
@@ -213,7 +210,6 @@ summary.POUMM <- function(object, ...,
 #' a list of plot-objects: traceplot and densplot.
 #'  
 #' @import ggplot2
-#' @importFrom GGally ggpairs print_if_interactive wrap ggally_text
 #' @importFrom stats cor complete.cases
 #' @import methods
 #'  
@@ -262,7 +258,6 @@ plot.summary.POUMM <- function(
                         "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"), 
   palette = c("#999999", "#0072B2", "#CC79A7", "#E69F00", "#D55E00", "#56B4E9", "#009E73", "#F0E442"), 
   prettyNames = TRUE,
-  showUnivarDensityOnDiag = FALSE,
   ...) {
   
   # declare global variables to avoid CRAN CHECK NOTES "no visible binding":
@@ -355,176 +350,6 @@ plot.summary.POUMM <- function(
                    scales = "free", 
                    labeller = if(prettyNames) "label_parsed" else "label_value")
       
-      my_dens <- function(data, mapping, ...) {
-        my_ggplot(data = data, mapping=mapping) +
-            geom_density(..., alpha = 0.5)
-      }
-      
-      eval_data_col <- function (data, aes_col) {
-        eval(aes_col, data)
-      }
-      
-      my_points <- function(data, mapping, ...) {
-        my_ggplot(data = data, mapping = mapping) + 
-          geom_point(..., alpha = 0.5)
-      }
-      
-      # copied and modified from GGally
-      my_cor <- function(data, mapping, alignPercent = 0, method = "pearson", 
-                use = "complete.obs", corAlignPercent = NULL, corMethod = NULL, 
-                corUse = NULL, ...) {
-        
-        # global variable name to avoid check note:
-        labelp <- NULL
-        
-        # copied from GGally
-        is_date <- function (x) {
-          inherits(x, c("POSIXt", "POSIXct", "POSIXlt", "Date"))
-        }
-        
-        # copied from GGally
-        str_c <- function (..., sep = "", collapse = NULL) {
-          paste(..., sep = sep, collapse = collapse)
-        }
-        if (!is.null(corAlignPercent)) {
-          stop("'corAlignPercent' is deprecated.  Please use argument 'alignPercent'")
-        }
-        if (!is.null(corMethod)) {
-          stop("'corMethod' is deprecated.  Please use argument 'method'")
-        }
-        if (!is.null(corUse)) {
-          stop("'corUse' is deprecated.  Please use argument 'use'")
-        }
-        useOptions <- c("all.obs", "complete.obs", "pairwise.complete.obs", 
-                        "everything", "na.or.complete")
-        use <- pmatch(use, useOptions)
-        if (is.na(use)) {
-          warning("correlation 'use' not found.  Using default value of 'all.obs'")
-          use <- useOptions[1]
-        }
-        else {
-          use <- useOptions[use]
-        }
-        cor_fn <- function(x, y) {
-          cor(x, y, method = method, use = use)
-        }
-        xCol <- deparse(mapping$x)
-        yCol <- deparse(mapping$y)
-        
-        if (is.numeric(eval_data_col(data, mapping$colour))) {
-          stop("ggally_cor: mapping color column must be categorical, not numeric")
-        }
-        colorCol <- deparse(mapping$colour)
-        singleColorCol <- ifelse(is.null(colorCol), NULL, paste(colorCol, 
-                                                                collapse = ""))
-        if (use %in% c("complete.obs", "pairwise.complete.obs", "na.or.complete")) {
-          
-          if (length(colorCol) > 0) {
-            if (singleColorCol %in% colnames(data)) {
-              rows <- complete.cases(data[c(xCol, yCol, colorCol)])
-            }
-            else {
-              rows <- complete.cases(data[c(xCol, yCol)])
-            }
-          } else {
-            rows <- complete.cases(data[c(xCol, yCol)])
-          }
-          if (any(!rows)) {
-            total <- sum(!rows)
-            if (total > 1) {
-              warning("Removed ", total, " rows containing missing values")
-            }
-            else if (total == 1) {
-              warning("Removing 1 row that contained a missing value")
-            }
-          }
-          data <- data[rows, ]
-        }
-        xVal <- data[[xCol]]
-        yVal <- data[[yCol]]
-        if (length(names(mapping)) > 0) {
-          for (i in length(names(mapping)):1) {
-            tmp_map_val <- deparse(mapping[names(mapping)[i]][[1]])
-            if (tmp_map_val[length(tmp_map_val)] %in% colnames(data)) 
-              mapping[[names(mapping)[i]]] <- NULL
-            if (length(names(mapping)) < 1) {
-              mapping <- NULL
-              break
-            }
-          }
-        }
-        if (length(colorCol) < 1) {
-          colorCol <- "ggally_NO_EXIST"
-        }
-        if ((singleColorCol != "ggally_NO_EXIST") && (singleColorCol %in% 
-                                                      colnames(data))) {
-          cord <- as.data.frame(
-            as.data.table(data)[, cor_fn(eval(parse(text=(xCol))), eval(parse(text=yCol))), 
-                                  by=eval(colorCol)])
-          
-          colnames(cord)[2] <- "ggally_cor"
-          cord$ggally_cor <- signif(as.numeric(cord$ggally_cor), 
-                                    3)
-          lev <- levels(data[[colorCol]])
-          ord <- rep(-1, nrow(cord))
-          for (i in 1:nrow(cord)) {
-            for (j in seq_along(lev)) {
-              if (identical(as.character(cord[i, colorCol]), 
-                            as.character(lev[j]))) {
-                ord[i] <- j
-              }
-            }
-          }
-          cord <- cord[order(ord[ord >= 0]), ]
-          cord$label <- str_c(cord[[colorCol]], ": ", cord$ggally_cor)
-          xmin <- min(xVal, na.rm = TRUE)
-          xmax <- max(xVal, na.rm = TRUE)
-          xrange <- c(xmin - 0.01 * (xmax - xmin), xmax + 0.01 * 
-                        (xmax - xmin))
-          ymin <- min(yVal, na.rm = TRUE)
-          ymax <- max(yVal, na.rm = TRUE)
-          yrange <- c(ymin - 0.01 * (ymax - ymin), ymax + 0.01 * 
-                        (ymax - ymin))
-          p <- ggally_text(label = str_c("Correlation: ", ""), 
-                           mapping = mapping, xP = 0.5, yP = 0.9, 
-                           xrange = xrange, yrange = yrange, color = "black", 
-                           ...) + theme(legend.position = "none")
-          xPos <- rep(alignPercent, nrow(cord)) * diff(xrange) + 
-            min(xrange, na.rm = TRUE)
-          yPos <- seq(from = 0.9, to = 0.2, length.out = nrow(cord) + 
-                        1)
-          yPos <- yPos * diff(yrange) + min(yrange, na.rm = TRUE)
-          yPos <- yPos[-1]
-          cordf <- data.frame(xPos = xPos, yPos = yPos, labelp = cord$label, 
-                              colorCol = cord[[colorCol]])
-          cordf$labelp <- factor(cordf$labelp, levels = cordf$labelp)
-          p <- p + geom_text(data = cordf, 
-                             aes(x = xPos, y = yPos, label = labelp, 
-                                 color = colorCol), hjust = "left", ...) + 
-            scale_color_manual(values = palette) + 
-            theme(panel.grid = element_blank(), 
-                  panel.grid.major = element_blank(), 
-                  panel.background = element_rect(color="grey"))
-            
-          p
-        } else {
-          xmin <- min(xVal, na.rm = TRUE)
-          xmax <- max(xVal, na.rm = TRUE)
-          xrange <- c(xmin - 0.01 * (xmax - xmin), xmax + 0.01 * 
-                        (xmax - xmin))
-          ymin <- min(yVal, na.rm = TRUE)
-          ymax <- max(yVal, na.rm = TRUE)
-          yrange <- c(ymin - 0.01 * (ymax - ymin), ymax + 0.01 * 
-                        (ymax - ymin))
-          p <- ggally_text(
-            label = paste("Correlation:\n", 
-                          signif(cor_fn(xVal, yVal), 3), 
-                          sep = "", collapse = ""), mapping, xP = 0.5, 
-                          yP = 0.5, xrange = xrange, yrange = yrange, ...) + 
-            theme(legend.position = "none")
-          p
-        }
-      }
       
       densplot <- my_ggplot(data) + 
         geom_density(aes(x=value, fill = chain, col = chain), alpha=0.5) + 
@@ -534,20 +359,6 @@ plot.summary.POUMM <- function(
         facet_wrap(~statFactor, 
                    scales = "free", labeller= if(prettyNames) "label_parsed" else "label_value")
       
-      densplot_bivar <- ggpairs(
-        as.data.frame(dtm), 
-        mapping = aes(fill = chain, color = chain), 
-        columns = .availStats, 
-        columnLabels = if(prettyNames) prettifyNames(.availStats) else .availStats,
-        axisLabels = "show", 
-        showStrips = showUnivarDensityOnDiag,
-        labeller = if(prettyNames) "label_parsed" else "label_value",
-        diag = list(continuous = if(showUnivarDensityOnDiag) my_dens else "blankDiag"),
-        lower = list(continuous = my_points, 
-                     combo = wrap("box_no_facet")),
-        upper = list(continuous = my_cor, 
-                     combo = wrap("box_no_facet")))
-        
       if(doPlot) {
         print(traceplot) 
         if(interactive()) {
@@ -555,13 +366,8 @@ plot.summary.POUMM <- function(
           scan("", what = "character", nlines = 1)
         }
         print(densplot) 
-        if(interactive()) {
-          print("Press Enter to see a bivariate posterior density plot")
-          scan("", what = "character", nlines = 1)
-        }
-        print(densplot_bivar)
       } else {
-        list(traceplot = traceplot, densplot = densplot, densplot_bivar = densplot_bivar)  
+        list(traceplot = traceplot, densplot = densplot)  
       }
     }
   } else {
