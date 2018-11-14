@@ -17,7 +17,7 @@ memoiseMax <- function(f, par, memo, verbose, ...) {
     assign('val', val, pos = memo)
     assign('valDelta', val - valMemo, pos = memo)
     
-    if(verbose) {
+    if(interactive() && verbose) {
       cat('\nCall ', countMemo, ': loglik on par=(', 
           toString(round(par, 6)), "): ", val, "\n", sep = "")
     }
@@ -121,7 +121,7 @@ maxLikPOUMMGivenTreeVTips <- function(
     control$fnscale <- -1
     
     if(length(parInitML) > 0) {
-      if(verbose) {
+      if(interactive() && verbose) {
         cat("Call to optim no.", iOptimTry, ": starting from ", 
             toString(round(parInitML, 6)), "\n", 
             "parLower = ", toString(round(parLower, 6)), "\n",
@@ -384,7 +384,7 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
     debug <- FALSE
   }
   
-  if(debug) {
+  if(interactive() && debug) {
     cat("Using prior function:\n")
     print(parPriorMCMC) 
   }
@@ -410,11 +410,11 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
           loglik, par = par, pruneInfo = pruneInfo, 
           memo = memoMaxLoglik, verbose = verbose)
         
-        if(debug) {
+        if(interactive() && debug) {
           cat("par: ", toString(round(par, 6)), ";", "ll:", ll)
         }
       }
-      if(debug) {
+      if(interactive() && debug) {
         cat("\n")
       }
       
@@ -425,13 +425,13 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
   doMCMC <- function(i, pruneInfo) {
     memoMaxLoglik <- new.env()
     
-    if(verbose) {
+    if(interactive() && verbose) {
       cat('Chain No:', i, ', nSamplesMCMC = ', nSamplesMCMC, ', initial state: \n')
     }
     
     init <- parInitMCMC(i, fitML)
     
-    if(verbose) {
+    if(interactive() && verbose) {
       print(init)  
     }
     
@@ -442,7 +442,9 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
         memoMaxLoglik = memoMaxLoglik, chainNo = i, pruneInfo = pruneInfo), 
       thinMCMC = thinMCMC)
     
-    print(paste("Finished chain no:", i))
+    if(interactive()) {
+      print(paste("Finished chain no:", i))
+    }
     
     ch$parScaleMCMC.start <- parScaleMCMC    
     

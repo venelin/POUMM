@@ -5,8 +5,8 @@
 \title{Plots of a POUMM-fit}
 \usage{
 \method{plot}{POUMM}(x, type = c("MCMC"), doPlot = TRUE,
-  interactive = TRUE, stat = c("alpha", "theta", "sigma", "sigmae", "g0",
-  "H2tMean"), chain = NULL, startMCMC = NA, endMCMC = NA,
+  interactive = TRUE, stat = c("alpha", "theta", "sigma", "sigmae",
+  "g0", "H2tMean"), chain = NULL, startMCMC = NA, endMCMC = NA,
   thinMCMC = 1000, statFunctions = statistics(x), doZoomIn = FALSE,
   zoomInFilter = paste0("(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
   "(value >= 0 & value <= 1) ) |",

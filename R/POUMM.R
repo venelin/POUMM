@@ -242,7 +242,7 @@ POUMM <- function(
         ((valMemo + 1 < val) | 
          (valPrev + .01 * abs(valPrev) < val)))) {
   
-        if(verbose) {
+        if(interactive() && verbose) {
           print(par)
           cat('Rmpfr check on: val =', val, '; valDelta =', val - valPrev)
         }
@@ -262,7 +262,7 @@ POUMM <- function(
           attr(val2, "g0LogPrior") <- NA
         } 
         
-        if(verbose & abs(val2 - val) > abs(val) * 0.0001) {
+        if(interactive() && verbose && abs(val2 - val) > abs(val) * 0.0001) {
           cat(' ====>  Changed difference - after Rmpfr-check valDelta =', val2 - valPrev, '.\n')
         } 
         val <- val2
@@ -273,7 +273,7 @@ POUMM <- function(
   
   result$loglik <- loglik
   
-  if(verbose) {
+  if(interactive() && verbose) {
     print('Performing ML-fit...')
   }
   
@@ -291,17 +291,20 @@ POUMM <- function(
   
   
   if(defaultRmpfr) {
-    if(verbose) {
+    if(interactive() && verbose) {
       cat('Checking the max-loglik value with Rmpfr, current: val = ', 
           fitML$value, ", par=(", toString(fitML$par), ")")
     }
     usempfr = 2
     valLoglikRmpfr <- loglik(fitML$par, pruneInfo)
-    if(verbose) {
+    if(interactive() && verbose) {
       cat(' ===> New: ', valLoglikRmpfr)
     }
     if(fitML$value - valLoglikRmpfr > 1E-6 * pruneInfo$N) {
-      warning('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for every improved log-likelihood point. You can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.')
+      if(interactive()) {
+        cat('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for every improved log-likelihood point. You can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.')
+      }
+      
       
       usempfr <-  0
       fitML <- do.call(
@@ -310,14 +313,14 @@ POUMM <- function(
                pruneInfo = pruneInfo), spec))
     } else {
       usempfr <- 0
-      if(verbose) {
+      if(interactive() && verbose) {
         cat( " ===> OK.")
       }
     }
   } 
   
   
-  if(verbose) {
+  if(interactive() && verbose) {
     cat("max loglik from ML: \n")
     print(fitML$value)
     cat("parameters at max loglik from ML: \n")
@@ -330,7 +333,7 @@ POUMM <- function(
   result[['MCMCBetterLik']] <- 0 
   
   if(doMCMC & spec$nSamplesMCMC > 0) {
-    if(verbose) {
+    if(interactive() && verbose) {
       print('Performing MCMC-fit...')
     }
     
@@ -339,7 +342,7 @@ POUMM <- function(
       c(list(loglik = loglik, fitML = fitML, verbose = verbose, debug = debug, 
              pruneInfo = pruneInfo), spec))
     
-    if(verbose) {
+    if(interactive() && verbose) {
       cat("max loglik from MCMCs: \n")
       print(fitMCMC$valueMaxLoglik)
       cat("parameters at max loglik from MCMCs: \n")
@@ -354,8 +357,9 @@ POUMM <- function(
       names(parInitML) <- names(spec$parLower)
       
       if(all(c(parInitML >= spec$parLower, parInitML <= spec$parUpper))) {
-        warning("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
-        
+        if(interactive()) {
+          cat("The MCMC-fit found a better likelihood than the ML-fit. Performing ML-fit starting from the MCMC optimum.")
+        }
         spec[["parInitML"]] <- parInitML
         
         if(defaultRmpfr) {
@@ -368,17 +372,18 @@ POUMM <- function(
         
         
         if(defaultRmpfr) {
-          if(verbose) {
+          if(interactive() && verbose) {
             cat('Checking the max-loglik value with Rmpfr, current: val = ', fitML2$value)
           }
           usempfr = 2
           valLoglikRmpfr <- loglik(fitML2$par, pruneInfo)
-          if(verbose) {
+          if(interactive() && verbose) {
             cat(' ===> New: ', valLoglikRmpfr)
           }
           if(fitML2$value - valLoglikRmpfr > 1E-6 * pruneInfo$N) {
-            warning('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for improved log-likelihood points. \nYou can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.\n')
-            
+            if(interactive()) {
+              cat('Significant difference with Rmpfr-checked log-likelihood. Repeating the ML-fit with enabled Rmpfr checks for improved log-likelihood points. \nYou can disable this numerical stability test by setting usempfr = -1. Thanks for your patience.\n')
+            }
             usempfr <-  0
             fitML2 <- do.call(
               maxLikPOUMMGivenTreeVTips, 
@@ -386,7 +391,7 @@ POUMM <- function(
                      pruneInfo = pruneInfo), spec))
           } else {
             usempfr <- 0
-            if(verbose) {
+            if(interactive() && verbose) {
               cat( " ===> OK.")
             }
           }
@@ -396,8 +401,9 @@ POUMM <- function(
         result[['MCMCBetterLik']] <- 1 # within search-region
       } else {
         message <- "The MCMC-fit found a better likelihood outside of the search-region of the ML-fit."
-        cat(message)
-        warning(message)
+        if(interactive()) {
+          cat(message)
+        }
         result[['MCMCBetterLik']] <- 2 # outside search-region
       }
     }
@@ -482,7 +488,9 @@ fitted.POUMM <- function(object, vCov=FALSE, ...) {
   if("POUMM" %in% class(object)) {
     g0 <- coef.POUMM(object, mapped=TRUE)['g0']
     if(is.nan(g0)) {
-      warning("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
+      if(interactive()) {
+        cat("Genotypic values cannot be inferred for g0=NaN; Read documentaton for parMapping in ?specifyPOUMM and use a parMapping function that sets a finite value or NA for g0.")
+      }
     }
     p <- coef(object, mapped = TRUE)
     gList <- gPOUMM(object$pruneInfo$z, object$pruneInfo$tree, g0,
