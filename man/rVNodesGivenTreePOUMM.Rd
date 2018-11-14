@@ -28,18 +28,3 @@ A numeric vector containing the generated values at all nodes
 Random generation of values along a phylogenetic tree following a branching
 OU process
 }
-\examples{
-  
-\dontrun{
-  N <- 20 
-  tree <- TreeSim::sim.bd.taxa(N, 1, lambda = 2, mu = 1, complete =
-  FALSE)[[1]] 
-  z <- rVNodesGivenTreePOUMM(tree, 8, 2, 2, 1)
-  
-  phytools::plotBranchbyTrait(tree, z, mode = "nodes", show.tip.label =
-  FALSE, show.node.label = FALSE) 
-  ape::nodelabels(round(z[-(1:N)], 2)) 
-  ape::tiplabels(round(z[(1:N)], 2))
-} 
-
-}
