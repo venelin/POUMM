@@ -193,7 +193,6 @@ fitH2tMean <- POUMM(z[1:N], tree, spec = specH2tMean)
 
 ```{r, fig.height=5.4, fig.show="hold", fig.width=7.2, warning=FALSE}
 plot(fitH2tMean, stat = c("H2tMean", "H2e", "H2tInf", "sigmae"), 
-     showUnivarDensityOnDiag = TRUE, 
      doZoomIn = TRUE, doPlot = TRUE)
 ```
 
