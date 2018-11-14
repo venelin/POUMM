@@ -23,8 +23,9 @@ library(ggplot2)
 library(data.table)
 library(POUMM)
 
-# set this to FALSE to disable cache and run all MCMC-fits.
-useCachedResults <- file.exists(system.file("extdata", "UserGuideCache.RData", package="POUMM")) & TRUE
+# this has to be TRUE, otherwise the vignette cannot be generated, since 
+# it does not generate tree and data. 
+useCachedResults <- TRUE
 ```
 
 ```{r, include=FALSE, eval=useCachedResults}
@@ -35,7 +36,7 @@ theta <- 2
 sigma <- 0.2     
 sigmae <- 0.2 
 
-load(system.file("extdata", "UserGuideCache.RData", package="POUMM"))
+load("UserGuideCache.RData")
 ```
 
 Here, we consider the POUMM from the point of view of its biological interpretation. Before we begin, we need to make an important cautionary note:
