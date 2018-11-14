@@ -12,6 +12,9 @@ knitr::opts_chunk$set(
 )
 ```
 
+[![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM)
+[![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master)
+
 # The Phylogenetic Ornstein-Uhlenbeck Mixed Model
 The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to estimate the phylogenetic heritability of a continuous trait, to test hypotheses of neutral evolution versus stabilizing selection, to quantify the strength of stabilizing selection, to estimate measurement error and to make predictions about the evolution of a phenotype and phenotypic variation in a population. The POUMM package provides an easy and efficient way to perform this variety of analyses on large macro-evolutionary or epidemic trees. It implements a fast-likelihood calculation algorithm enabling MCMC-sampling with millions of iterations within minutes on contemporary multiple core processors. The package provides functions for configuring the fit of the model and a number of standard generic functions such as logLik, plot, summary, allowing a visual and a statistical assessment of the goodness of fit. This is an important step before using the model fit to answer relevant biological questions.
 
