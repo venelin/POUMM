@@ -231,9 +231,7 @@ NULL
 
 #' @describeIn PhylogeneticH2 Calculate alpha given time t, H2, sigma and sigmae
 #' 
-#' @details The function alpha invokes the gsl function lambert_W0.
-#' 
-#' @importFrom gsl lambert_W0
+#' @importFrom lamW lambertW0
 #'
 #' @export
 alpha <- function(H2, sigma, sigmae, t = Inf) {
@@ -259,7 +257,7 @@ alpha <- function(H2, sigma, sigmae, t = Inf) {
     if(is.na(y) | is.infinite(y)) {
       as.double(NA)
     } else {
-      (t * y + lambert_W0((-exp(-t * y)) * t * y)) / (2 * t)
+      (t * y + lambertW0((-exp(-t * y)) * t * y)) / (2 * t)
     }
   }
 }

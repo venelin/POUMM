@@ -34,7 +34,7 @@ Imports:
     coda,
     foreach,
     ggplot2,
-    gsl,
+    lamW,
     adaptMCMC,
     utils
 Suggests:
@@ -49,6 +49,9 @@ Suggests:
     doParallel,
     covr
 RoxygenNote: 6.1.1
-VignetteBuilder: knitr
+VignetteBuilder: knitr, rmarkdown
 ByteCompile: no
 NeedsCompilation: yes
+URL: https://venelin.github.io/POUMM/index.html, https://github.com/venelin/POUMM
+BugReports: https://github.com/venelin/POUMM/issues
+
