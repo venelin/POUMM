@@ -229,22 +229,20 @@ alpha <- function(H2, sigma, sigmae, t = Inf) {
   #   NA
   # }
   if(is.infinite(t)) {
-    if(H2 == 1) {
+    ifelse(H2 == 1,
       # Assume correctly defined PMM, i.e. Brownian motion with sigma > 0 and 
       # environmental deviation with sigmae >= 0
-      0
-    } else {
+      0,
       # H2 is the phylogenetic heritability at equilibrium
       sigma^2 * (1 - H2) / (2 * H2 * sigmae^2)    
-    }
+    )
   } else {
     # finite t
     y <- sigma^2 / sigmae^2 * (1 / H2 - 1)
-    if(is.na(y) | is.infinite(y)) {
-      as.double(NA)
-    } else {
+    ifelse(is.na(y) | is.infinite(y),
+      as.double(NA),
       (t * y + lambertW0((-exp(-t * y)) * t * y)) / (2 * t)
-    }
+    )
   }
 }
 
@@ -257,22 +255,20 @@ alpha <- function(H2, sigma, sigmae, t = Inf) {
 #' @export
 sigmaOU <- function(H2, alpha, sigmae, t=Inf) {
   res <- if(is.infinite(t)) {
-    if(alpha == 0) {
+    ifelse(alpha == 0,
       # BM
-      sqrt(sigmae^2 * H2 / (t * (1 - H2)))
-    } else {
+      sqrt(sigmae^2 * H2 / (t * (1 - H2))),
       # alpha>0, OU in equilibrium
       sqrt(2 * alpha * H2 * sigmae^2 / (1 - H2))
-    }
+    )
   } else {
     # t is finite
-    if(alpha == 0) {
+    ifelse(alpha == 0,
       # BM
-      sqrt(sigmae^2 * H2 / (t * (1 - H2)))
-    } else {
+      sqrt(sigmae^2 * H2 / (t * (1 - H2))),
       # alpha>0, OU not in equilibrium
       sqrt(2 * alpha * H2 * sigmae^2 / ((1 - exp(-2 * alpha * t)) * (1 - H2)))
-    } 
+    ) 
   }
   names(res) <- NULL
   res
