@@ -210,20 +210,6 @@ rTrajectoryOU <- function(z0, t, alpha, theta, sigma, steps = 1) {
 #' sigma <- sigmaOU(H2 = H2, alpha = 0.75, sigmae = 1, t = 0.2) # 1
 #' sigmae <- sigmae(H2  =  H2, alpha = 0.75, sigma = 1, t = 0.2) # 1
 #' 
-#' # Comparing with the empirical H2e from a simulation
-#' N <- 20 
-#' tree <- TreeSim::sim.bd.taxa(N, 1, lambda = 2, mu = 1, complete =
-#' FALSE)[[1]] 
-#' tMean <- mean(nodeTimes(tree, tipsOnly = TRUE))
-#' z <- rVNodesGivenTreePOUMM(tree, 8, 2, 2, 1)
-#'
-#' \dontrun{
-#' phytools::plotBranchbyTrait(tree, z, mode = "nodes", show.tip.label =
-#'   FALSE, show.node.label = FALSE) 
-#' ape::nodelabels(round(z[-(1:N)], 2)) 
-#' ape::tiplabels(round(z[(1:N)], 2))
-#' 
-#' }      
 #'    
 #' @name PhylogeneticH2
 #' @seealso OU
