@@ -30,14 +30,12 @@ Here, we introduce the R-package **POUMM** - an implementation of the Phylogenet
 But before we start, we need to install and load a few R-packages from CRAN:
 
 ```{r install-CRAN-packages, eval=FALSE}
-install.packages("TreeSim")
 install.packages("data.table")
 install.packages("ggplot2")
 install.packages("lmtest")
 install.packages("ape")
 ```
 ```{r load-CRAN-packages, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, results="hide"}
-library(TreeSim)
 library(ggplot2)
 library(data.table)
 library(lmtest)
@@ -122,14 +120,11 @@ legend("topleft",
 The POUMM models the evolution of a continuous trait, $z$, along a phylogenetic tree, assuming that $z$ is the sum of a genetic (heritable) component, $g$, and an independent non-heritable (environmental) component, $e\sim N(0,\sigma_e^2)$. At every branching in the tree, the daughter lineages inherit the $g$-value of their parent, adding their own environmental component $e$. The POUMM assumes the genetic component, $g$, evolves along each lineage according to an OU-process with initial state the $g$ value inherited from the parent-lineage and global parameters $\alpha$, $\theta$ and $\sigma$. 
 
 ## Simulating the phylogeny
-Once the POUMM parameters are specified, we use the **TreeSim** R-package [@R-TreeSim] to generate a random birth-death tree with `r N` tips:
+Once the POUMM parameters are specified, we use the **ape** R-package to generate a random tree with `r N` tips:
 
 ```{r simulate-tree, results="hide", eval=!useCachedResults}
 # Number of tips
-tree <- ladderize(
-  TreeSim::sim.bdsky.stt(N, lambdasky = 1.6, deathsky = .6, 
-                         timesky=c(0, Inf), sampprobsky = 1)[[1]]
-)
+tree <- rtree(N)
 
 plot(tree, show.tip.label = FALSE)
 ```
@@ -321,10 +316,10 @@ It is possible to use this parallelization in combination with parallelization o
 likCalculation <- c("Rcpp", "Rmpfr")
 mcmcSampling <- c("adaptMCMC")
 mcmcDiagnosis <- c("coda")
-otherPackages <- c("parallel", "foreach", "data.table", "Matrix", "gsl")
+otherPackages <- c("parallel", "foreach", "data.table", "Matrix")
 treeProcessing <- c("ape")
 reporting <- c("data.table", "ggplot2", "lmtest")
-testing <- c("testthat", "mvtnorm", "TreeSim")
+testing <- c("testthat", "mvtnorm")
  
 packagesUsed <- c(likCalculation, mcmcDiagnosis, otherPackages, treeProcessing, reporting, testing)
 
