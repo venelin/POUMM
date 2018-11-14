@@ -5,7 +5,7 @@ date: "14 November, 2018"
 output: html_document
 ---
 
-# POUMM 2.1.1
+# POUMM 2.1.2
 
 * Temporarily removed bivariate posterior density plotting functionality; univariate posterior density plotting still 
 available. 
@@ -14,8 +14,18 @@ available.
 * Refactored unit tests. 
 * Enabled test-coverage report with inserted badge in the README.Rmd.
 * Enabled travis continuous integration with a status badge in the README.Rmd.
+* Some bugs were fixed. 
+
+
+# POUMM 2.1.1
+
+* Release available from github only
+
 # POUMM 2.1.0
+
 * SPLiTTree dependency is renamed to SPLITT
+* Release available from github only
+
 
 # POUMM 2.0.0
 * Using SPLiTTree for the pruning likelihood calculation.
