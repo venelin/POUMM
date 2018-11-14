@@ -1,0 +1,16 @@
+library(testthat)
+library(POUMM)
+
+context("specifyPOUMM")
+test_that("default calls no error", {
+  expect_silent(specifyPOUMM())
+  expect_silent(specifyPOUMM_ATH2tMeanSe())
+  expect_silent(specifyPOUMM_ATH2tMeanSeG0())
+  expect_silent(specifyPOUMM_ATS())
+  expect_silent(specifyPOUMM_ATSG0())
+  expect_silent(specifyPOUMM_ATSSeG0())
+  expect_silent(specifyPMM())
+  expect_silent(specifyPMM_H2tMeanSe())
+  expect_silent(specifyPMM_H2tMeanSeG0())
+  expect_silent(specifyPMM_SSeG0())
+})

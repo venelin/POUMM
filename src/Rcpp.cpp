@@ -1,11 +1,9 @@
-#include <RcppArmadillo.h>
-#include <R_ext/Rdynload.h>
+#include <Rcpp.h>
 
 #include "AbcPOUMM.h"
 
 // [[Rcpp::plugins("cpp11")]]
 // [[Rcpp::plugins(openmp)]]
-// [[Rcpp::depends(RcppArmadillo)]]
 
 // BEGIN: Needed for r-devel (R 3.4)
 void R_init_POUMM(DllInfo *info) {
@@ -22,16 +20,17 @@ void R_unload_POUMM(DllInfo *info) {
 
 using namespace SPLITT;
 
+
 ParallelPruningAbcPOUMM* CreateParallelPruningAbcPOUMM(
     Rcpp::List const& tree, vec const& z, vec const& se) {
-  arma::umat branches = tree["edge"];
-  uvec br_0 = arma::conv_to<uvec>::from(branches.col(0));
-  uvec br_1 = arma::conv_to<uvec>::from(branches.col(1));
+  Rcpp::IntegerMatrix branches = tree["edge"];
+  uvec parents(branches.column(0).begin(), branches.column(0).end());
+  uvec daughters(branches.column(1).begin(), branches.column(1).end());
   vec t = Rcpp::as<vec>(tree["edge.length"]);
   uint num_tips = Rcpp::as<Rcpp::CharacterVector>(tree["tip.label"]).size();
-  uvec node_names = Seq(uint(1), num_tips);
-  typename ParallelPruningAbcPOUMM::DataType data(node_names, z, se);
-  return new ParallelPruningAbcPOUMM(br_0, br_1, t, data);
+  uvec tip_names = Seq(uint(1), num_tips);
+  typename ParallelPruningAbcPOUMM::DataType data(tip_names, z, se);
+  return new ParallelPruningAbcPOUMM(parents, daughters, t, data);
 }
 
 RCPP_EXPOSED_CLASS_NODECL(ParallelPruningAbcPOUMM::TreeType)
@@ -59,7 +58,7 @@ RCPP_MODULE(POUMM_AbcPOUMM) {
   ;
   Rcpp::class_<ParallelPruningAbcPOUMM::AlgorithmType::ParentType>( "POUMM_TraversalAlgorithm" )
     .property( "VersionOPENMP", &ParallelPruningAbcPOUMM::AlgorithmType::ParentType::VersionOPENMP )
-    .property( "num_threads", &ParallelPruningAbcPOUMM::AlgorithmType::num_threads )
+    .property( "num_threads", &ParallelPruningAbcPOUMM::AlgorithmType::NumOmpThreads )
   ;
   Rcpp::class_<ParallelPruningAbcPOUMM::AlgorithmType> ( "POUMM_ParallelPruning" )
     .derives<ParallelPruningAbcPOUMM::AlgorithmType::ParentType>( "POUMM_TraversalAlgorithm" )

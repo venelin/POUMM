@@ -270,7 +270,7 @@ plot.summary.POUMM <- function(
     HPDLowerFiltered <- value <- HPDUpper <- HPDLower <- it <- PostMean <- mcs <- 
     ESS <- nChains <- chain <- G.R. <- stat2 <- statFactor <- NULL
   
-  if(class(x) == "summary.POUMM" & !is.null(x$MCMC)) {
+  if(class(x) == "summary.POUMM" && !is.null(x$MCMC)) {
     .stat <- stat
     .chain <- chain
     

@@ -14,74 +14,76 @@
 \alias{specifyPMM_H2tMeanSeG0}
 \title{Specifying a POUMM fit}
 \usage{
-specifyPOUMM(z = NULL, tree = NULL, zMin = -10, zMean = 0, zMax = 10,
-  zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2, tMax = 10,
-  parMapping = NULL, parLower = NULL, parUpper = NULL, g0Prior = NULL,
-  parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE, validateSpec = TRUE)
+specifyPOUMM(z = NULL, tree = NULL, zMin = -10, zMean = 0,
+  zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
+  tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE, validateSpec = TRUE)
 
 specifyPOUMM_ATS(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
   tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE, sigmaeFixed = 0)
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE, sigmaeFixed = 0)
 
 specifyPOUMM_ATSG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
   tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE, sigmaeFixed = 0)
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE, sigmaeFixed = 0)
 
 specifyPOUMM_ATSSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
   tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE)
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE)
 
-specifyPMM(z = NULL, tree = NULL, zMin = -10, zMean = 0, zMax = 10,
-  zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2, tMax = 10,
-  parMapping = NULL, parLower = NULL, parUpper = NULL, g0Prior = NULL,
-  parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE)
+specifyPMM(z = NULL, tree = NULL, zMin = -10, zMean = 0,
+  zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
+  tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE)
 
 specifyPMM_SSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
   tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE)
+
+specifyPOUMM_ATH2tMeanSe(z = NULL, tree = NULL, zMin = -10,
+  zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1,
+  tMean = 2, tMax = 10, parMapping = NULL, parLower = NULL,
+  parUpper = NULL, g0Prior = NULL, parInitML = NULL,
+  control = NULL, parPriorMCMC = NULL, parInitMCMC = NULL,
+  parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
   gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
 
-specifyPOUMM_ATH2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
-  zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
-  tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE)
-
-specifyPOUMM_ATH2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
-  zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
-  tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
+specifyPOUMM_ATH2tMeanSeG0(z = NULL, tree = NULL, zMin = -10,
+  zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1,
+  tMean = 2, tMax = 10, parMapping = NULL, parLower = NULL,
+  parUpper = NULL, g0Prior = NULL, parInitML = NULL,
+  control = NULL, parPriorMCMC = NULL, parInitMCMC = NULL,
+  parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
   gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
@@ -89,17 +91,18 @@ specifyPOUMM_ATH2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
 specifyPMM_H2tMeanSe(z = NULL, tree = NULL, zMin = -10, zMean = 0,
   zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
   tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
-  nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
-  gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
-  parallelMCMC = FALSE)
+  g0Prior = NULL, parInitML = NULL, control = NULL,
+  parPriorMCMC = NULL, parInitMCMC = NULL, parScaleMCMC = NULL,
+  nSamplesMCMC = 1e+05, nAdaptMCMC = nSamplesMCMC, thinMCMC = 100,
+  accRateMCMC = 0.01, gammaMCMC = 2/3, nChainsMCMC = 3,
+  samplePriorMCMC = TRUE, parallelMCMC = FALSE)
 
-specifyPMM_H2tMeanSeG0(z = NULL, tree = NULL, zMin = -10, zMean = 0,
-  zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1, tMean = 2,
-  tMax = 10, parMapping = NULL, parLower = NULL, parUpper = NULL,
-  g0Prior = NULL, parInitML = NULL, control = NULL, parPriorMCMC = NULL,
-  parInitMCMC = NULL, parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
+specifyPMM_H2tMeanSeG0(z = NULL, tree = NULL, zMin = -10,
+  zMean = 0, zMax = 10, zVar = 4, zSD = sqrt(zVar), tMin = 0.1,
+  tMean = 2, tMax = 10, parMapping = NULL, parLower = NULL,
+  parUpper = NULL, g0Prior = NULL, parInitML = NULL,
+  control = NULL, parPriorMCMC = NULL, parInitMCMC = NULL,
+  parScaleMCMC = NULL, nSamplesMCMC = 1e+05,
   nAdaptMCMC = nSamplesMCMC, thinMCMC = 100, accRateMCMC = 0.01,
   gammaMCMC = 2/3, nChainsMCMC = 3, samplePriorMCMC = TRUE,
   parallelMCMC = FALSE)
