@@ -22,7 +22,7 @@ options(digits = 4)
 library(POUMM)
 
 # set this to FALSE to disable cache and run all MCMC-fits.
-useCachedResults <- file.exists(system.file("extdata", "UserGuideCache.RData", package="POUMM")) & TRUE
+useCachedResults <- file.exists("UserGuideCache.RData") && TRUE
 ```
 
 Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku;@Mitov235739]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./InterpretingPOUMM.html).
@@ -75,7 +75,7 @@ sigmae <- 0.2
 ```
 
 ```{r, include=FALSE, eval=useCachedResults}
-load(system.file("extdata", "UserGuideCache.RData", package="POUMM"))
+load("UserGuideCache.RData")
 ```
 
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `rTrajectoryOU()`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
@@ -189,7 +189,7 @@ if(!useCachedResults) {
   
   save(g, z, tree, e, 
        fitPOUMM2, fitPOUMM, fitH2tMean,
-       file=system.file("extdata", "UserGuideCache.RData", package="POUMM"))
+       file="UserGuideCache.RData")
 } 
 # restore the pruneInfo since it is needed afterwards.
 fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- pruneTree(tree, z[1:length(tree$tip.label)])
