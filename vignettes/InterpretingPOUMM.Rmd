@@ -23,6 +23,7 @@ library(ggplot2)
 library(data.table)
 library(POUMM)
 
+cachedResultsFile <- "UserGuideCache.RData"
 # this has to be TRUE, otherwise the vignette cannot be generated, since 
 # it does not generate tree and data. 
 useCachedResults <- TRUE
@@ -36,12 +37,12 @@ theta <- 2
 sigma <- 0.2     
 sigmae <- 0.2 
 
-load("UserGuideCache.RData")
+load(cachedResultsFile)
 ```
 
 Here, we consider the POUMM from the point of view of its biological interpretation. Before we begin, we need to make an important cautionary note:
 
-One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals for the modeled population properties can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to [@Mitov:2016kd]. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates. For an example of this approach, see the package [patherit](https://venelin.github.io/patherit/articles/UserGuide.html). 
+One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals for the modeled population properties can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to [@Mitov:2018co]. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates. For an example of this approach, see the package [patherit](https://venelin.github.io/patherit/articles/UserGuide.html). 
 
 # Parametrizing the POUMM
 From a modeling perspective, the POUMM can be regarded as a combination of two of its widely used nested models:

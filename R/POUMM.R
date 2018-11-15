@@ -713,7 +713,7 @@ covHPDFunPOUMM <- function(object, prob = .95, corr = FALSE, ...) {
 #' 
 #' @seealso \code{\link{rVNodesGivenTreePOUMM}}
 #' @export
-simulate <- function(object, tree = NULL) {
+simulateTrait <- function(object, tree = NULL) {
   if(is.null(tree)) {
     tree <- object$pruneInfo$tree
   }

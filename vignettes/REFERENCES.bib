@@ -1,3 +1,28 @@
+@article{Mitov:2018co,
+author = {Mitov, Venelin and Stadler, Tanja},
+title = {A Practical Guide to Estimating the Heritability of Pathogen Traits},
+journal = {Molecular Biology and Evolution},
+volume = {35},
+number = {3},
+pages = {756-772},
+year = {2018},
+doi = {10.1093/molbev/msx328},
+URL = {http://dx.doi.org/10.1093/molbev/msx328},
+eprint = {/oup/backfile/content_public/journal/mbe/35/3/10.1093_molbev_msx328/3/msx328.pdf}
+}
+
+@article {Mitov:2017eg,
+	author = {Mitov, Venelin and Stadler, Tanja},
+	title = {Parallel Likelihood Calculation for Phylogenetic Comparative Models: the SPLITT C++ Library},
+	year = {2018},
+	doi = {10.1101/235739},
+	publisher = {Cold Spring Harbor Laboratory},
+	abstract = {1. Phylogenetic comparative models (PCMs) have been used to study macroevolutionary patterns, to characterize adaptive phenotypic landscapes, to quantify rates of evolution, to measure the heritability of traits, and to test various evolutionary hypotheses. A major obstacle to applying these models has been the complexity of evaluating their likelihood function. Recent works have shown that for many PCMs, the likelihood can be obtained in time proportional to the size of the tree based on post-order tree traversal, also known as pruning. Despite this progress, inferring complex multi-trait PCMs on large trees remains a time-intensive task. Here, we study parallelizing the pruning algorithm as a generic technique for speeding-up PCM-inference. 2. We implement several parallel traversal algorithms in the form of a generic C++ library for Serial and Parallel LIneage Traversal of Trees (SPLITT). Based on SPLITT, we provide examples of parallel likelihood evaluation for several popular PCMs, ranging from a single-trait Brownian motion model to complex multi-trait Ornstein-Uhlenbeck and mixed Gaussian phylogenetic models. 3. Using the phylogenetic Ornstein-Uhlenbeck mixed model (POUMM) as a showcase, we run benchmarks on up to 24 CPU cores, reporting up to an order of magnitude parallel speed-up on simulated balanced and unbalanced trees of up to 100,000 tips with up to 16 traits. Noticing that the parallel speed-up depends on multiple factors, the SPLITT library is capable to automatically select the fastest traversal strategy for a given hardware, tree-topology, and data. Combining SPLITT likelihood calculation with adaptive Metropolis sampling on real data, we show that the time for Bayesian POUMM inference on a tree of 10,000 tips can be reduced from several days to minutes. 4. We conclude that parallel pruning effectively accelerates the likelihood calculation and, thus, the statistical inference of Gaussian phylogenetic models. For time-intensive Bayesian inferences, we recommend combining this technique with adaptive Metropolis sampling. Beyond Gaussian models, the parallel tree traversal can be applied to numerous other models, including discrete trait and birth-death population dynamics models. Currently, SPLITT supports multi-core shared memory architectures, but can be extended to distributed memory architectures as well as graphical processing units.},
+	URL = {https://www.biorxiv.org/content/early/2018/10/29/235739},
+	eprint = {https://www.biorxiv.org/content/early/2018/10/29/235739.full.pdf},
+	journal = {bioRxiv}
+}
+
 @Manual{R-ape,
   title = {ape: Analyses of Phylogenetics and Evolution},
   author = {Emmanuel Paradis and Simon Blomberg and Ben Bolker and Julien Claude and Hoa Sien Cuong and Richard Desper and Gilles Didier and Benoit Durand and Julien Dutheil and Olivier Gascuel and Christoph Heibl and Anthony Ives and Bradley Jones and Daniel Lawson and Vincent Lefort and Pierre Legendre and Jim Lemon and Rosemary McCloskey and Johan Nylander and Rainer Opgen-Rhein and Andrei-Alin Popescu and Manuela Royer-Carenzi and Klaus Schliep and Korbinian Strimmer and Damien {de Vienne}},
@@ -134,68 +159,6 @@ Library},
 }
 
 
-@article{Butler:2004ce,
-author = {Butler, M A and King, A A},
-title = {{Phylogenetic comparative analysis: A modeling approach for adaptive evolution}},
-journal = {American Naturalist},
-year = {2004},
-volume = {164},
-number = {6},
-pages = {683--695},
-month = dec
-}
-
-@article{Lynch:1991db,
-author = {Lynch, Michael},
-title = {{Methods for the Analysis of Comparative Data in Evolutionary Biology}},
-journal = {Evolution; international journal of organic evolution},
-year = {1991},
-volume = {45},
-number = {5},
-pages = {1065--1080},
-month = aug
-}
-
-@article{Harmon:2010gh,
-author = {Harmon, Luke J and Losos, Jonathan B and Jonathan Davies, T and Gillespie, Rosemary G and Gittleman, John L and Bryan Jennings, W and Kozak, Kenneth H and McPeek, Mark A and Moreno-Roark, Franck and Near, Thomas J and Purvis, Andy and Ricklefs, Robert E and Schluter, Dolph and Schulte Ii, James A and Seehausen, Ole and Sidlauskas, Brian L and Torres-Carvajal, Omar and Weir, Jason T and Mooers, Arne {\O}},
-title = {{Early bursts of body size and shape evolution are rare in comparative data.}},
-journal = {Evolution; international journal of organic evolution},
-year = {2010},
-volume = {64},
-number = {8},
-pages = {2385--2396},
-month = aug
-}
-
-@article{Hansen:2012et,
-author = {Hansen, Thomas F and Bartoszek, Krzysztof},
-title = {{Interpreting the evolutionary regression: the interplay between observational and biological errors in phylogenetic comparative studies.}},
-journal = {Systematic Biology},
-year = {2012},
-volume = {61},
-number = {3},
-pages = {413--425},
-month = may
-}
-
-@book{Lynch:1998vx,
-author = {Lynch, Michael and Walsh, Bruce},
-title = {{Genetics and Analysis of Quantitative Traits}},
-publisher = {Sinauer Associates Incorporated},
-year = {1998},
-month = jan
-}
-
-@article{Mitov:2016kd,
-author = {Mitov, Venelin and Stadler, Tanja},
-title = {{The heritability of pathogen traits - definitions and estimators}},
-journal = {unpublished data},
-year = {2016},
-volume = {https://www.biorxiv.org/content/early/2016/06/12/058503, last accessed June 12, 2016},
-month = jun
-}
-
-
 @article{Brooks:1998ci,
 author = {Brooks, S P and Gelman, A},
 title = {{General methods for monitoring convergence of iterative simulations}},
@@ -303,12 +266,13 @@ month = jan
 
 @article{Mitov:2016kd,
 author = {Mitov, Venelin and Stadler, Tanja},
-title = {{The Heritability of Pathogen Traits - Definitions and Estimators}},
+title = {{The heritability of pathogen traits - definitions and estimators}},
 journal = {bioRxiv},
 year = {2016},
 pages = {058503},
 month = jun
 }
+
 
 @article{Mitov:2017ku,
 author = {Mitov, Venelin and Stadler, Tanja},
@@ -317,15 +281,4 @@ journal = {bioRxiv},
 year = {2017},
 pages = {115089},
 month = mai
-}
-
-@article {Mitov235739,
-	author = {Mitov, Venelin and Stadler, Tanja},
-	title = {Fast Bayesian Inference of Phylogenetic Models Using Parallel Likelihood Calculation and Adaptive Metropolis Sampling},
-	year = {2017},
-	doi = {10.1101/235739},
-	publisher = {Cold Spring Harbor Laboratory},
-	URL = {https://www.biorxiv.org/content/early/2017/12/18/235739},
-	eprint = {https://www.biorxiv.org/content/early/2017/12/18/235739.full.pdf},
-	journal = {bioRxiv}
 }
