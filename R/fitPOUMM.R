@@ -169,7 +169,9 @@ convertToMCMC <- function(obj, thinMCMC=1) {
     mcmc = winmcmc, log.p = log.p, 
     accRateMCMC = obj$acceptance.rate, 
     adaption = obj$adaption, n.sample = obj$n.sample, cov.jump = obj$cov.jump,
-    sampling.parameters = obj$sampling.parameters, 
+    # This is causing the saved fit objects to be abnormally big.
+    # Try not using it. 
+    #sampling.parameters = obj$sampling.parameters, 
     scale.start = obj$scale.start)
 }
 
