@@ -6,7 +6,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Find a maximum likelihood fit of the POUMM model — maxLikPOUMMGivenTreeVTips • POUMM</title>
+<title>Simulate a trait on a tree under a ML fit of the POUMM model — simulateTrait • POUMM</title>
 
 <link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
 
@@ -32,9 +32,10 @@
 
 
 
-<meta property="og:title" content="Find a maximum likelihood fit of the POUMM model — maxLikPOUMMGivenTreeVTips" />
+<meta property="og:title" content="Simulate a trait on a tree under a ML fit of the POUMM model — simulateTrait" />
 
-<meta property="og:description" content="Find a maximum likelihood fit of the POUMM model" />
+<meta property="og:description" content="Use the maximum likelihood parameters of the model to simulate
+trait values on a phylogenetic tree." />
 <meta name="twitter:card" content="summary" />
 
 
@@ -113,69 +114,49 @@
 <div class="row">
   <div class="col-md-9 contents">
     <div class="page-header">
-    <h1>Find a maximum likelihood fit of the POUMM model</h1>
-    <small class="dont-index">Source: <a href='https://github.com/venelin/POUMM/blob/master/R/fitPOUMM.R'><code>R/fitPOUMM.R</code></a></small>
-    <div class="hidden name"><code>maxLikPOUMMGivenTreeVTips.Rd</code></div>
+    <h1>Simulate a trait on a tree under a ML fit of the POUMM model</h1>
+    <small class="dont-index">Source: <a href='https://github.com/venelin/POUMM/blob/master/R/POUMM.R'><code>R/POUMM.R</code></a></small>
+    <div class="hidden name"><code>simulateTrait.Rd</code></div>
     </div>
 
     <div class="ref-description">
     
-    <p>Find a maximum likelihood fit of the POUMM model</p>
+    <p>Use the maximum likelihood parameters of the model to simulate
+trait values on a phylogenetic tree.</p>
     
     </div>
 
-    <pre class="usage"><span class='fu'>maxLikPOUMMGivenTreeVTips</span>(<span class='no'>loglik</span>, <span class='no'>pruneInfo</span>, <span class='no'>parLower</span>, <span class='no'>parUpper</span>,
-  <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='fu'>list</span>(<span class='kw'>factr</span> <span class='kw'>=</span> <span class='fl'>1e+08</span>, <span class='kw'>fnscale</span> <span class='kw'>=</span> -<span class='fl'>1</span>),
-  <span class='kw'>verbose</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
+    <pre class="usage"><span class='fu'>simulateTrait</span>(<span class='no'>object</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
     <tr>
-      <th>loglik</th>
-      <td><p>function(par, memo, parFixedNoAlpha)</p></td>
+      <th>object</th>
+      <td><p>an S3 object of class POUMM</p></td>
     </tr>
     <tr>
-      <th>pruneInfo</th>
-      <td><p>a list-object returned by the pruneTree(tree, z) function.</p></td>
-    </tr>
-    <tr>
-      <th>parLower, parUpper</th>
-      <td><p>Two named numeric vectors indicating the boundaries of 
-the search region. Default values are parLower = c(alpha = 0, theta = 0, 
-sigma = 0, sigmae = 0) and parUpper = c(alpha = 100, theta = 10, sigma = 20, 
-sigmae = 10).</p></td>
-    </tr>
-    <tr>
-      <th>parInitML</th>
-      <td><p>A named vector (like parLower and parUpper) or a list of such
-vectors - starting points for optim.</p></td>
-    </tr>
-    <tr>
-      <th>control</th>
-      <td><p>List of parameters passed on to optim, default 
-list(factr = 1e8, fnscale = -1), see ?optim.</p></td>
-    </tr>
-    <tr>
-      <th>verbose</th>
-      <td><p>A logical indicating whether to print informative messages on 
-the standard output.</p></td>
-    </tr>
-    <tr>
-      <th>debug</th>
-      <td><p>A logical indicating whether to print debug messages 
-(currently not implemented).</p></td>
-    </tr>
-    <tr>
-      <th>...</th>
-      <td><p>currently not used.</p></td>
+      <th>tree</th>
+      <td><p>a phylo object. If NULL (default) the trait is simulated on the
+tree, on which the POUMM object has been fit.</p></td>
     </tr>
     </table>
     
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
-    <p>a list containing an element par and an element value as well as the 
-  parameters passed</p>
+    <p>a numerical vector containing the simulated trait value for each tip 
+in the tree.</p>
+    
+    <h2 class="hasAnchor" id="details"><a class="anchor" href="#details"></a>Details</h2>
+
+    <p>This function is a shortcut to calling
+<code><a href='rVNodesGivenTreePOUMM.html'>rVNodesGivenTreePOUMM</a></code>, which will map the inferred parameters 
+of the model back to the original POUMM parameters alpha, theta, sigma, sigmae,
+and g0.</p>
+    
+    <h2 class="hasAnchor" id="see-also"><a class="anchor" href="#see-also"></a>See also</h2>
+
+    <div class='dont-index'><p><code><a href='rVNodesGivenTreePOUMM.html'>rVNodesGivenTreePOUMM</a></code></p></div>
     
 
   </div>
@@ -185,6 +166,10 @@ the standard output.</p></td>
       <li><a href="#arguments">Arguments</a></li>
       
       <li><a href="#value">Value</a></li>
+
+      <li><a href="#details">Details</a></li>
+
+      <li><a href="#see-also">See also</a></li>
           </ul>
 
   </div>

@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.2</span>
       </span>
     </div>
 
@@ -88,7 +88,7 @@
 
     
     
-<p>Here, we introduce the R-package <strong>POUMM</strong> - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits <span class="citation">(Mitov and Stadler 2017b; Mitov and Stadler 2017a)</span>. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette <a href="./InterpretingPOUMM.html">Interpreting the POUMM</a>.</p>
+<p>Here, we introduce the R-package <strong>POUMM</strong> - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits <span class="citation">(Mitov and Stadler 2018a; Mitov and Stadler 2018b)</span>. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette <a href="./InterpretingPOUMM.html">Interpreting the POUMM</a>.</p>
 <p>But before we start, we need to install and load a few R-packages from CRAN:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"data.table"</span>)
 <span class="kw">install.packages</span>(<span class="st">"ggplot2"</span>)
@@ -106,8 +106,8 @@
 <p>The above command will install the HEAD version from the master git-branch. This is the package branch, which evolves the fastest and gets the quickest bug-fixes.</p>
 <p>A more stable version of the package can be installed from CRAN:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">install.packages</span>(<span class="st">"POUMM"</span>)</code></pre></div>
-<p>The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as “Suggests” in POUMM’s DESCRIPTION, since it’s installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp <a href="https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-FAQ.pdf">FAQ</a>.</p>
-<p>Bear in mind that, for CRAN compliance, some of the functionality of the package might not be enabled on some systems, in particular, parallel likelihood calculation on Mac OS X El Capitan using clang compiler (see the section <a href="#Parallel">Parallel execution</a> below).</p>
+<p>The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as “Suggests” in POUMM’s DESCRIPTION, since it’s installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp-FAQ vignette available from <a href="https://CRAN.R-project.org/package=Rcpp">this page</a>.</p>
+<p>Bear in mind that, for CRAN compliance, some of the functionality of the package might not be enabled on some systems, in particular, parallel likelihood calculation on Mac OS X El Capitan using clang compiler prior to version 6 (see the section <a href="#Parallel">Parallel execution</a> below).</p>
 </div>
 <div id="simulating-trait-evolution-under-the-poumm" class="section level1">
 <h1 class="hasAnchor">
@@ -198,24 +198,24 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 </div>
 <p>A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, <span class="math inline">\(H_{\bar{t}}^2\)</span>, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitPOUMM)</code></pre></div>
-<pre><code>##             stat   N       MLE  PostMean             HPD    ESS  G.R.
-##  1:        alpha 500   0.47442   0.47823   0.3127,0.6483 103.94 1.119
-##  2:        theta 500   2.04246   2.04767     1.921,2.171 134.72 1.041
-##  3:        sigma 500   0.20051   0.20421   0.1527,0.2678 106.16 1.068
-##  4:       sigmae 500   0.20521   0.20315   0.1691,0.2399 180.00 1.007
-##  5:          H2e 500   0.64114   0.64549   0.5178,0.7633 180.00 1.003
-##  6:       H2tInf 500   0.50154   0.51244   0.3266,0.7108 110.66 1.008
-##  7:       H2tMax 500   0.50069   0.51113   0.3259,0.7097 110.70 1.008
-##  8:      H2tMean 500   0.49921   0.50935   0.3248,0.7079 110.60 1.009
-##  9:           g0 500        NA        NA           NA,NA   0.00    NA
-## 10: sigmaG2tMean 500   0.04198   0.04410 0.02524,0.06528 117.54 1.020
-## 11:  sigmaG2tMax 500   0.04223   0.04443 0.02530,0.06562 118.44 1.019
-## 12:  sigmaG2tInf 500   0.04237   0.04467 0.02532,0.06582 119.05 1.019
-## 13:      logpost 500        NA -55.74341   -59.56,-53.64  68.76 1.089
-## 14:       loglik 500 -53.29615        NA           NA,NA   0.00    NA
-## 15:          AIC 500 116.59230        NA           NA,NA   0.00    NA
-## 16:         AICc 500 116.71376        NA           NA,NA   0.00    NA
-## 17:           g0 500   0.03896        NA           NA,NA   0.00    NA</code></pre>
+<pre><code>##             stat   N       MLE PostMean               HPD    ESS   G.R.
+##  1:        alpha 500   0.41430  0.38095     0.1938,0.5448  73.57 1.0161
+##  2:        theta 500   2.06446  2.08904       1.969,2.241 121.99 1.0479
+##  3:        sigma 500   0.12321  0.11772   0.07029,0.16217 169.64 1.0103
+##  4:       sigmae 500   0.19983  0.20085     0.1836,0.2220 218.72 0.9981
+##  5:          H2e 500   0.43886  0.43160     0.3074,0.5262 219.13 0.9979
+##  6:       H2tInf 500   0.31451  0.31497     0.1555,0.4641 173.25 1.0022
+##  7:       H2tMax 500   0.31450  0.31472     0.1554,0.4629 174.34 1.0025
+##  8:      H2tMean 500   0.31343  0.31172     0.1531,0.4589 179.89 1.0039
+##  9:           g0 500        NA       NA             NA,NA   0.00     NA
+## 10: sigmaG2tMean 500   0.01823  0.01845 0.008793,0.029918 167.24 1.0026
+## 11:  sigmaG2tMax 500   0.01832  0.01871 0.009725,0.031620 159.57 1.0016
+## 12:  sigmaG2tInf 500   0.01832  0.01873   0.00973,0.03162 158.30 1.0013
+## 13:      logpost 500        NA 14.88262      8.583,16.925  37.53 1.1598
+## 14:       loglik 500  16.32733       NA             NA,NA   0.00     NA
+## 15:          AIC 500 -22.65466       NA             NA,NA   0.00     NA
+## 16:         AICc 500 -22.53320       NA             NA,NA   0.00     NA
+## 17:           g0 500   0.34021       NA             NA,NA   0.00     NA</code></pre>
 <p>The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for <span class="math inline">\(4 \times 10^5\)</span> iterations:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fitPOUMM2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw">list</span>(<span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>))  </code></pre></div>
 <p>Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one.</p>
@@ -223,24 +223,24 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 plotList<span class="op">$</span>densplot</code></pre></div>
 <p><img src="UserGuide_files/figure-html/unnamed-chunk-9-1.png" width="691.2"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitPOUMM2)</code></pre></div>
-<pre><code>##             stat   N       MLE  PostMean             HPD   ESS   G.R.
-##  1:        alpha 500   0.47442   0.46639   0.3226,0.6197 720.0 0.9998
-##  2:        theta 500   2.04246   2.05993     1.944,2.210 720.0 0.9993
-##  3:        sigma 500   0.20051   0.19902   0.1375,0.2615 720.0 0.9997
-##  4:       sigmae 500   0.20521   0.20537   0.1701,0.2389 849.4 0.9997
-##  5:          H2e 500   0.64114   0.63805   0.5214,0.7593 841.5 0.9998
-##  6:       H2tInf 500   0.50154   0.50082   0.3126,0.6998 656.0 0.9998
-##  7:       H2tMax 500   0.50069   0.49943   0.3000,0.6878 656.6 0.9998
-##  8:      H2tMean 500   0.49921   0.49753   0.2965,0.6850 657.2 0.9998
-##  9:           g0 500        NA        NA           NA,NA   0.0     NA
-## 10: sigmaG2tMean 500   0.04198   0.04287 0.02287,0.06531 642.3 0.9997
-## 11:  sigmaG2tMax 500   0.04223   0.04320 0.02283,0.06533 642.3 0.9997
-## 12:  sigmaG2tInf 500   0.04237   0.04345 0.02299,0.06541 642.3 0.9997
-## 13:      logpost 500        NA -55.54167   -58.38,-53.60 720.0 0.9990
-## 14:       loglik 500 -53.29615        NA           NA,NA   0.0     NA
-## 15:          AIC 500 116.59230        NA           NA,NA   0.0     NA
-## 16:         AICc 500 116.71376        NA           NA,NA   0.0     NA
-## 17:           g0 500   0.03896        NA           NA,NA   0.0     NA</code></pre>
+<pre><code>##             stat   N       MLE PostMean               HPD   ESS   G.R.
+##  1:        alpha 500   0.41430  0.39722     0.2204,0.5687 720.0 0.9990
+##  2:        theta 500   2.06446  2.08125       1.990,2.184 720.0 1.0050
+##  3:        sigma 500   0.12321  0.11908   0.07627,0.16773 688.1 0.9996
+##  4:       sigmae 500   0.19983  0.20149     0.1806,0.2243 651.9 1.0044
+##  5:          H2e 500   0.43886  0.42762     0.3003,0.5480 648.7 1.0049
+##  6:       H2tInf 500   0.31451  0.30996     0.1576,0.4649 631.5 1.0021
+##  7:       H2tMax 500   0.31450  0.30980     0.1575,0.4648 631.3 1.0021
+##  8:      H2tMean 500   0.31343  0.30740     0.1538,0.4613 630.7 1.0019
+##  9:           g0 500        NA       NA             NA,NA   0.0     NA
+## 10: sigmaG2tMean 500   0.01823  0.01824 0.008765,0.028872 643.1 1.0005
+## 11:  sigmaG2tMax 500   0.01832  0.01845 0.009039,0.029170 644.1 1.0007
+## 12:  sigmaG2tInf 500   0.01832  0.01847 0.009042,0.029171 644.4 1.0008
+## 13:      logpost 500        NA 15.12576       12.39,17.05 720.0 1.0004
+## 14:       loglik 500  16.32733       NA             NA,NA   0.0     NA
+## 15:          AIC 500 -22.65466       NA             NA,NA   0.0     NA
+## 16:         AICc 500 -22.53320       NA             NA,NA   0.0     NA
+## 17:           g0 500   0.34021       NA             NA,NA   0.0     NA</code></pre>
 <div id="consistency-of-the-fit-with-the-true-simulation-parameters" class="section level2">
 <h2 class="hasAnchor">
 <a href="#consistency-of-the-fit-with-the-true-simulation-parameters" class="anchor"></a>Consistency of the fit with the “true” simulation parameters</h2>
@@ -262,16 +262,16 @@ tMax &lt;-<span class="st"> </span><span class="kw">max</span>(<span class="kw">
   <span class="dt">sigmaG2tInf =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> <span class="ot">Inf</span>, alpha, sigma)
   )</code></pre></div>
 <pre><code>##      H2tMean       H2tInf          H2e sigmaG2tMean sigmaG2tMean 
-##      0.49820      0.50000      0.65914      0.03971      0.03990 
+##      0.49958      0.50000      0.43792      0.03993      0.04000 
 ##  sigmaG2tInf 
 ##      0.04000</code></pre>
 <p>Finally, we compare the ratio of empirical genotypic to total phenotypic variance with the HPD-interval for the phylogenetic heritability.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">c</span>(<span class="dt">H2empirical =</span> <span class="kw">var</span>(g[<span class="dv">1</span><span class="op">:</span>N])<span class="op">/</span><span class="kw">var</span>(z[<span class="dv">1</span><span class="op">:</span>N]))</code></pre></div>
 <pre><code>## H2empirical 
-##      0.6791</code></pre>
+##      0.6541</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitPOUMM2)[<span class="st">"H2e"</span><span class="op">==</span>stat, <span class="kw">unlist</span>(HPD)]</code></pre></div>
 <pre><code>##  lower  upper 
-## 0.5214 0.7593</code></pre>
+## 0.3003 0.5480</code></pre>
 </div>
 </div>
 <div id="Parallel" class="section level1">
@@ -279,15 +279,8 @@ tMax &lt;-<span class="st"> </span><span class="kw">max</span>(<span class="kw">
 <a href="#Parallel" class="anchor"></a>Parallel execution</h1>
 <p>On computers with multiple core processors, it is possible to speed-up the POUMM-fit by parallelization. The POUMM package supports parallelization on two levels:</p>
 <ul>
-<li>parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLiTTree library for parallel lineage traversal <span class="citation">(Mitov and Stadler 2017a)</span>. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical cores. Parallelization on multiple cores becomes beneficial on trees exceeding several hundreds tips. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++ and Intel-icpc, but not the current version of the <code>clang</code> compiler. We have tested the package on Linux and MacOS X El Capitan using the Intel compiler v16.0.0. To that end, before installing the package from source, we modify the global <code>Makevars</code> file found in the directory <code>.R</code> under the user’s home directory:</li>
+<li>parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLITT library for parallel lineage traversal <span class="citation">(Mitov and Stadler 2018b)</span>. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical cores. Parallelization on multiple cores becomes beneficial on trees exceeding several hundreds tips. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++, Intel-icpc and clang version 6.0 or above (see also the <a href="https://venelin.github.io/SPLITT/articles/SPLITT.html#prerequisites">SPLITT Get started guide</a> for details).</li>
 </ul>
-<pre><code>CPP=cpp
-CXX=icpc
-CC=icc
-SHLIB_CXXLD=icpc -qopenmp</code></pre>
-<p>Note that if you are installing the POUMM package from CRAN, on Mac OS X, the above modification of the global <code>Makevars</code> file might still be overwritten by the R-package builder. This is because, for CRAN compliance, the package DESCRIPTION file needs a directive:</p>
-<pre><code>SystemRequirements: C++11</code></pre>
-<p>On my Mac OS X El Capitan, the above directive forces the use of the <code>clang</code> compiler, which does not support Open MP. Therefore, to enbable using the icpc and the Open MP, I recommend installing the package from github.</p>
 <p>To control the maximum number of threads (defaults to all physical or virtual cores on the system) by specifying the environment variable OMP_NUM_THREADS, before starting R e.g.:</p>
 <pre><code>export OMP_NUM_THREADS=4</code></pre>
 <ul>
@@ -295,13 +288,13 @@ SHLIB_CXXLD=icpc -qopenmp</code></pre>
 </ul>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set up a parallel cluster on the local computer for parallel MCMC:</span>
 cluster &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/parallel/topics/makeCluster">makeCluster</a></span>(parallel<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>(<span class="dt">logical =</span> <span class="ot">FALSE</span>))
-doParallel<span class="op">::</span><span class="kw">registerDoParallel</span>(cluster)
+doParallel<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/doParallel/topics/registerDoParallel">registerDoParallel</a></span>(cluster)
 
 fitPOUMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw">list</span>(<span class="dt">parallelMCMC =</span> <span class="ot">TRUE</span>))
 
 <span class="co"># Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.</span>
 parallel<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/parallel/topics/makeCluster">stopCluster</a></span>(cluster)</code></pre></div>
-<p>It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLiTTree library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.</p>
+<p>It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLITT library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.</p>
 </div>
 <div id="packages-used" class="section level1">
 <h1 class="hasAnchor">
@@ -339,11 +332,11 @@ parallel<span class="op">::</span><span class="kw"><a href="http://www.rdocument
 <div id="ref-R-Rmpfr">
 <p>Maechler, Martin. 2016. <em>Rmpfr: R Mpfr - Multiple Precision Floating-Point Reliable</em>. <a href="https://CRAN.R-project.org/package=Rmpfr" class="uri">https://CRAN.R-project.org/package=Rmpfr</a>.</p>
 </div>
-<div id="ref-Mitov235739">
-<p>Mitov, Venelin, and Tanja Stadler. 2017a. “Fast Bayesian Inference of Phylogenetic Models Using Parallel Likelihood Calculation and Adaptive Metropolis Sampling.” <em>bioRxiv</em>. Cold Spring Harbor Laboratory. doi:<a href="https://doi.org/10.1101/235739">10.1101/235739</a>.</p>
+<div id="ref-Mitov:2018co">
+<p>Mitov, Venelin, and Tanja Stadler. 2018a. “A Practical Guide to Estimating the Heritability of Pathogen Traits.” <em>Molecular Biology and Evolution</em> 35 (3): 756–72. doi:<a href="https://doi.org/10.1093/molbev/msx328">10.1093/molbev/msx328</a>.</p>
 </div>
-<div id="ref-Mitov:2017ku">
-<p>———. 2017b. “Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation.” <em>bioRxiv</em>, mai, 115089.</p>
+<div id="ref-Mitov:2017eg">
+<p>———. 2018b. “Parallel Likelihood Calculation for Phylogenetic Comparative Models: The Splitt C++ Library.” <em>bioRxiv</em>. Cold Spring Harbor Laboratory. doi:<a href="https://doi.org/10.1101/235739">10.1101/235739</a>.</p>
 </div>
 <div id="ref-R-ape">
 <p>Paradis, Emmanuel, Simon Blomberg, Ben Bolker, Julien Claude, Hoa Sien Cuong, Richard Desper, Gilles Didier, et al. 2016. <em>Ape: Analyses of Phylogenetics and Evolution</em>. <a href="https://CRAN.R-project.org/package=ape" class="uri">https://CRAN.R-project.org/package=ape</a>.</p>

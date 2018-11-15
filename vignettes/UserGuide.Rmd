@@ -21,11 +21,11 @@ options(digits = 4)
 
 library(POUMM)
 
-# set this to FALSE to disable cache and run all MCMC-fits.
-useCachedResults <- file.exists("UserGuideCache.RData") && TRUE
+cachedResultsFile <- "UserGuideCache.RData"
+useCachedResults <- file.exists(cachedResultsFile) && TRUE
 ```
 
-Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2017ku;@Mitov235739]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./InterpretingPOUMM.html).
+Here, we introduce the R-package **POUMM** - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits [@Mitov:2018co;@Mitov:2017eg]. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette [Interpreting the POUMM](./InterpretingPOUMM.html).
 
 But before we start, we need to install and load a few R-packages from CRAN:
 
@@ -54,12 +54,11 @@ A more stable version of the package can be installed from CRAN:
 install.packages("POUMM")
 ```
 
-The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as "Suggests" in POUMM's DESCRIPTION, since it's installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp [FAQ](https://cran.r-project.org/web/packages/Rcpp/vignettes/Rcpp-FAQ.pdf).
+The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as "Suggests" in POUMM's DESCRIPTION, since it's installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp-FAQ vignette available from [this page](https://CRAN.R-project.org/package=Rcpp).
 
 Bear in mind that, for CRAN compliance, some of the functionality of the package
 might not be enabled on some systems, in particular, parallel likelihood calculation on 
-Mac OS X El Capitan using clang compiler (see the section [Parallel execution](#Parallel) 
-below).
+Mac OS X El Capitan using clang compiler prior to version 6 (see the section [Parallel execution](#Parallel) below).
 
 # Simulating trait evolution under the POUMM 
 
@@ -74,8 +73,9 @@ sigma <- 0.2
 sigmae <- 0.2 
 ```
 
+
 ```{r, include=FALSE, eval=useCachedResults}
-load("UserGuideCache.RData")
+load(cachedResultsFile)
 ```
 
 We briefly explain the above parameters. The first four of them define an OU-process with initial state $g_0$, a selection strength parameter, $\alpha$, a long-term mean, $\theta$, and a stochastic time-unit standard deviation, $\sigma$. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function `rTrajectoryOU()`. On the figure below, notice that doubling $\alpha$ speeds up the convergence of the trajectory towards $\theta$ (magenta line) while doubling $\sigma$ results in bigger stochastic oscilations (blue line):
@@ -179,18 +179,14 @@ if(!useCachedResults) {
   
   # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
   parallel::stopCluster(cluster)
-  
-  # delete some of the slots to make cach-file smaller :-(.
-  # fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
-  #fitPOUMM$loglik <- fitPOUMM2$loglik <- fitH2tMean$loglik <- NULL
-  #fitPOUMM$fitMCMC$post <- fitPOUMM2$fitMCMC$post <- fitH2tMean$fitMCMC$post <- NULL
-  #fitPOUMM$spec$parPriorMCMC <- fitPOUMM2$spec$parPriorMCMC <- fitH2tMean$spec$parPriorMCMC <- NULL
-  #fitPOUMM$spec$parInitMCMC <- fitPOUMM2$spec$parInitMCMC <- fitH2tMean$spec$parInitMCMC <- NULL
-  
+
   save(g, z, tree, e, 
        fitPOUMM2, fitPOUMM, fitH2tMean,
-       file="UserGuideCache.RData")
+       file = cachedResultsFile)
 } 
+```
+
+```{r RestorePruneInfo, echo=FALSE, warning=FALSE, results="hide", message=FALSE, eval=TRUE}
 # restore the pruneInfo since it is needed afterwards.
 fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- pruneTree(tree, z[1:length(tree$tip.label)])
 ```
@@ -276,20 +272,7 @@ summary(fitPOUMM2)["H2e"==stat, unlist(HPD)]
 # Parallel execution {#Parallel}
 On computers with multiple core processors, it is possible to speed-up the POUMM-fit by parallelization. The POUMM package supports parallelization on two levels:
 
-* parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLiTTree library for parallel lineage traversal [@Mitov235739]. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical cores. Parallelization on multiple cores becomes beneficial on trees exceeding several hundreds tips. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++ and Intel-icpc, but not the current version of the `clang` compiler. We have tested the package on Linux and MacOS X El Capitan using the Intel compiler v16.0.0. To that end, before installing the package from source, we modify the global ```Makevars``` file found in the directory ```.R``` under the user's home directory:
-
-```
-CPP=cpp
-CXX=icpc
-CC=icc
-SHLIB_CXXLD=icpc -qopenmp
-```
-
-Note that if you are installing the POUMM package from CRAN, on Mac OS X, the above modification of the global ```Makevars``` file might still be overwritten by the R-package builder. This is because, for CRAN compliance, the package DESCRIPTION file needs a directive:
-```
-SystemRequirements: C++11
-```
-On my Mac OS X El Capitan, the above directive forces the use of the `clang` compiler, which does not support Open MP. Therefore, to enbable using the icpc and the Open MP, I recommend installing the package from github.
+* parallelizing the POUMM likelihood calculation. The POUMM package parallelizes the likelihood calculation through the SPLITT library for parallel lineage traversal [@Mitov:2017eg]. This is a fine grain parallelization, which can benefit from modern single instruction multiple data (SIMD) processors as well as multiple physical cores. Parallelization on multiple cores becomes beneficial on trees exceeding several hundreds tips. For this parallelization to work, the POUMM package must be compiled from source-code using an OpenMP 4.0-enabled C++ compiler. Open MP 4.0 is supported by several modern C++ compilers including Gnu-g++, Intel-icpc and clang version 6.0 or above (see also the [SPLITT Get started guide](https://venelin.github.io/SPLITT/articles/SPLITT.html#prerequisites) for details). 
 
 To control the maximum number of threads (defaults to all physical or virtual cores on the system) by specifying the environment variable OMP_NUM_THREADS, before starting R e.g.:
 ```
@@ -309,7 +292,7 @@ fitPOUMM <- POUMM(z[1:N], tree, spec=list(parallelMCMC = TRUE))
 parallel::stopCluster(cluster)
 ```
 
-It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLiTTree library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.
+It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLITT library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.
 
 # Packages used
 ```{r create-references, echo=FALSE, include=FALSE, eval=TRUE}

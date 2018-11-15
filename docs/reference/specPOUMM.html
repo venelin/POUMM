@@ -64,7 +64,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.1</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.2</span>
       </span>
     </div>
 
@@ -130,7 +130,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>validateSpec</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>)
 
 <span class='fu'>specifyPOUMM_ATS</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -139,7 +139,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>sigmaeFixed</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
 <span class='fu'>specifyPOUMM_ATSG0</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -148,7 +148,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='kw'>sigmaeFixed</span> <span class='kw'>=</span> <span class='fl'>0</span>)
 
 <span class='fu'>specifyPOUMM_ATSSeG0</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -157,7 +157,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPMM</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -166,7 +166,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPMM_SSeG0</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -175,7 +175,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPOUMM_ATH2tMeanSe</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>,
@@ -185,7 +185,7 @@
   <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>,
   <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>,
-  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPOUMM_ATH2tMeanSeG0</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>,
@@ -195,7 +195,7 @@
   <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>,
   <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>,
-  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPMM_H2tMeanSe</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>, <span class='kw'>zMean</span> <span class='kw'>=</span> <span class='fl'>0</span>,
@@ -204,7 +204,7 @@
   <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitML</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>, <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>,
-  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
+  <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>, <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>,
   <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)
 
 <span class='fu'>specifyPMM_H2tMeanSeG0</span>(<span class='kw'>z</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>tree</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>zMin</span> <span class='kw'>=</span> -<span class='fl'>10</span>,
@@ -214,7 +214,7 @@
   <span class='kw'>control</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parPriorMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>parInitMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
   <span class='kw'>parScaleMCMC</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>nSamplesMCMC</span> <span class='kw'>=</span> <span class='fl'>1e+05</span>,
   <span class='kw'>nAdaptMCMC</span> <span class='kw'>=</span> <span class='no'>nSamplesMCMC</span>, <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>100</span>, <span class='kw'>accRateMCMC</span> <span class='kw'>=</span> <span class='fl'>0.01</span>,
-  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>2</span>/<span class='fl'>3</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>gammaMCMC</span> <span class='kw'>=</span> <span class='fl'>0.50001</span>, <span class='kw'>nChainsMCMC</span> <span class='kw'>=</span> <span class='fl'>3</span>, <span class='kw'>samplePriorMCMC</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
   <span class='kw'>parallelMCMC</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
     
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
@@ -387,7 +387,7 @@ Default 0.01.</p></td>
     </tr>
     <tr>
       <th>gammaMCMC</th>
-      <td><p>controls the speed of adaption. Should be in the interval (0.5,1]. A lower gamma leads to faster adaption. Default value is 2/3.</p></td>
+      <td><p>controls the speed of adaption. Should be in the interval (0.5,1]. A lower gamma leads to faster adaption. Default value is 0.50001.</p></td>
     </tr>
     <tr>
       <th>nChainsMCMC</th>
