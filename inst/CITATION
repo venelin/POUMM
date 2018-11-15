@@ -1,19 +1,37 @@
-citHeader("To cite POUMM in publications use:")
+citHeader("To cite POUMM in publications use one of the following articles:")
 
 citEntry(entry = "Article",
-  title        = "Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation",
+  title        = "A Practical Guide to Estimating the Heritability of Pathogen Traits",
+  author       = personList(as.person("Venelin Mitov"),
+                   as.person("Tanja Stadler")),
+  journal      = "Molecular Biology and Evolution",
+  year         = "2018",
+  volume       = "35",
+  number       = "3",
+  pages        = "756-772",
+  url          = "https://academic.oup.com/mbe/article/35/3/756/4796877",
+
+  textVersion  =
+  paste("Venelin Mitov, Tanja Stadler (2018).",
+        "A Practical Guide to Estimating the Heritability of Pathogen Traits",
+        "Molecular Biology and Evolution",
+        "URL https://academic.oup.com/mbe/article/35/3/756/4796877")
+)
+
+citEntry(entry = "Article",
+  title        = "Parallel Likelihood Calculation for Phylogenetic Comparative Models: the SPLITT C++ Library",
   author       = personList(as.person("Venelin Mitov"),
                    as.person("Tanja Stadler")),
   journal      = "BiorXiv",
-  year         = "2017",
+  year         = "2018",
   volume       = "",
   number       = "",
   pages        = "",
-  url          = "http://biorxiv.org/content/early/2017/05/30/115089",
+  url          = "https://www.biorxiv.org/content/early/2018/10/29/235739",
 
   textVersion  =
-  paste("Venelin Mitov, Tanja Stadler (2017).",
-        "Fast and Robust Inference of Phylogenetic Ornstein-Uhlenbeck Models Using Parallel Likelihood Calculation",
+  paste("Venelin Mitov, Tanja Stadler (2018).",
+        "Parallel Likelihood Calculation for Phylogenetic Comparative Models: the SPLITT C++ Library",
         "BiorXiv",
-        "URL http://biorxiv.org/content/early/2017/05/30/115089")
+        "URL https://www.biorxiv.org/content/early/2018/10/29/235739")
 )
