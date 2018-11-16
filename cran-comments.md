@@ -1,3 +1,8 @@
+## Fixed errors
+
+* Fixed problem with too big tarball size (reduced to 1948832 bytes on my system).
+* Fixed problematic urls in vignettes. 
+
 ## Previous errors  
 
 All previous errors that caused the Archiving of the package in February 2018 have been fixed. These were:
