@@ -180,6 +180,9 @@ if(!useCachedResults) {
   # Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.
   parallel::stopCluster(cluster)
 
+  # remove the pruneInfo because it is not serializable. To be restored after loading the cachedResultsFile.
+  fitPOUMM$pruneInfo <- fitPOUMM2$pruneInfo <- fitH2tMean$pruneInfo <- NULL
+  
   save(g, z, tree, e, 
        fitPOUMM2, fitPOUMM, fitH2tMean,
        file = cachedResultsFile)
