@@ -16,7 +16,13 @@
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-129563006-1"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-129563006-1');
+</script>
 </head>
 <body>
     <div class="container template-article">
@@ -161,8 +167,8 @@ z &lt;-<span class="st"> </span>g <span class="op">+</span><span class="st"> </s
 data &lt;-<span class="st"> </span><span class="kw"><a href="http://www.rdocumentation.org/packages/data.table/topics/data.table">data.table</a></span>(<span class="dt">z =</span> z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">t =</span> <span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))
 data &lt;-<span class="st"> </span>data[, group <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw">cut</span>(t, <span class="dt">breaks =</span> <span class="dv">5</span>, <span class="dt">include.lowest =</span> <span class="ot">TRUE</span>)]
 
-<span class="kw"><a href="ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> data, <span class="kw"><a href="ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> t, <span class="dt">y =</span> z, <span class="dt">group =</span> group)) <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw"><a href="ggplot2.tidyverse.org/reference/geom_violin.html">geom_violin</a></span>(<span class="kw"><a href="ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group)) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="kw"><a href="ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group), <span class="dt">size=</span>.<span class="dv">5</span>)</code></pre></div>
+<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> data, <span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> t, <span class="dt">y =</span> z, <span class="dt">group =</span> group)) <span class="op">+</span><span class="st"> </span>
+<span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_violin.html">geom_violin</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group)) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group), <span class="dt">size=</span>.<span class="dv">5</span>)</code></pre></div>
 <div class="figure">
 <img src="UserGuide_files/figure-html/violin-plots-1.png" alt="Distributions of the trait-values grouped according to their root-tip distances." width="672"><p class="caption">
 Distributions of the trait-values grouped according to their root-tip distances.

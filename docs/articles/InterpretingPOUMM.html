@@ -16,7 +16,13 @@
 <!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-129563006-1"></script><script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-129563006-1');
+</script>
 </head>
 <body>
     <div class="container template-article">
@@ -236,7 +242,7 @@ specH2tMean<span class="op">$</span>parMapping</code></pre></div>
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7faa22a0d9d8&gt;</code></pre>
+## &lt;environment: 0x7face50436c8&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 <pre><code>## function (par) 
@@ -246,7 +252,7 @@ specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7faa22a0d9d8&gt;</code></pre>
+## &lt;environment: 0x7face50436c8&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
