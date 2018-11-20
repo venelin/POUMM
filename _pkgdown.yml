@@ -1,5 +1,9 @@
 url: http://venelin.github.io/POUMM
 
+template:
+  params:
+    ganalytics: UA-129563006-1
+    
 navbar:
   title: POUMM
   type: default
