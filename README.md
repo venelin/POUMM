@@ -1,6 +1,6 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-[![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM) [![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](http://cran.r-project.org/web/packages/POUMM) [![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](http://cran.rstudio.com/package=POUMM)
+[![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM) [![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](http://cran.rstudio.com/package=POUMM) [![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](http://cran.rstudio.com/package=POUMM)
 
 The Phylogenetic Ornstein-Uhlenbeck Mixed Model
 ===============================================

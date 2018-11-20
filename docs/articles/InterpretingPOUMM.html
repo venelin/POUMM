@@ -31,7 +31,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.2</span>
+        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.3.1</span>
       </span>
     </div>
 
@@ -81,7 +81,7 @@
                         <h4 class="author">Venelin Mitov</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/venelin/POUMM/blob/master/vignettes/vignettes/InterpretingPOUMM.Rmd"><code>vignettes/vignettes/InterpretingPOUMM.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/venelin/POUMM/blob/master/vignettes/InterpretingPOUMM.Rmd"><code>vignettes/InterpretingPOUMM.Rmd</code></a></small>
       <div class="hidden name"><code>InterpretingPOUMM.Rmd</code></div>
 
     </div>
@@ -236,7 +236,7 @@ specH2tMean<span class="op">$</span>parMapping</code></pre></div>
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7f9021d54390&gt;</code></pre>
+## &lt;environment: 0x7faa22a0d9d8&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 <pre><code>## function (par) 
@@ -246,7 +246,7 @@ specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7f9021d54390&gt;</code></pre>
+## &lt;environment: 0x7faa22a0d9d8&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
@@ -260,11 +260,11 @@ specH2tMean<span class="op">$</span>parLower</code></pre></div>
      <span class="dt">doZoomIn =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-1.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-2.png" width="691.2"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</code></pre></div>
-<pre><code>##       stat   N    MLE PostMean           HPD ESS   G.R.
-## 1: H2tMean 500 0.3057   0.3178 0.1718,0.4596 720 0.9986
-## 2:  sigmae 500 0.2013   0.2031 0.1827,0.2238 720 1.0002
-## 3:     H2e 500 0.4307   0.4188 0.2959,0.5308 720 1.0005
-## 4:  H2tInf 500 0.3073   0.3240   0.182,0.477 720 0.9986</code></pre>
+<pre><code>##       stat   N    MLE PostMean           HPD   ESS  G.R.
+## 1: H2tMean 500 0.3057   0.3165 0.1542,0.4559 720.0 1.004
+## 2:  sigmae 500 0.2013   0.2028 0.1819,0.2235 772.2 1.001
+## 3:     H2e 500 0.4307   0.4202 0.3045,0.5410 774.3 1.001
+## 4:  H2tInf 500 0.3073   0.3229 0.1614,0.4692 720.0 1.005</code></pre>
 <p>Now we see that the prior density for <code>H2tMean</code> is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for <code>H2tMean</code> and <code>H2tInf</code> are nearly the same. Notice, though, that the estimate for the empirical heritability <code>H2e</code> is shifted towards 1 compared to <code>H2tMean</code> and <code>H2tInf</code>. This shows an important difference between <code>H2e</code> and the time-dependent formulae for phylogenetic heritability: <code>H2e</code> takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Compare global empirical heritability</span>
 H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">sigmae =</span> <span class="kw">coef</span>(fitH2tMean)[<span class="st">'sigmae'</span>])
