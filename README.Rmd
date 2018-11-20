@@ -14,8 +14,8 @@ knitr::opts_chunk$set(
 
 [![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM)
 [![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](http://cran.rstudio.com/package=POUMM)
-[![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](http://cran.rstudio.com/package=POUMM)
+[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](https://cran.r-project.org/package=POUMM)
+[![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](https://cran.r-project.org/package=POUMM)
 
 
 # The Phylogenetic Ornstein-Uhlenbeck Mixed Model
