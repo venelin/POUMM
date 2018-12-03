@@ -453,6 +453,7 @@ covVTipsGivenTreePOUMM <- function(
 #' @param alpha,theta,sigma Numeric values, parameters of the OU model.
 #' @param sigmae Numeric non-negative value (default 0). Specifies the standard
 #'   deviation of random environmental contribution (white noise) included in z.
+#' @return a list with elements V.g, V.g_1, mu.g, V.e, V.e_1, mu.e, V.g.poumm, mu.g.poumm.
 gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
   N <- length(tree$tip.label)
   
