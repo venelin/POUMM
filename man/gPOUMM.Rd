@@ -19,6 +19,9 @@ values at the tip-nodes.}
 \item{sigmae}{Numeric non-negative value (default 0). Specifies the standard
 deviation of random environmental contribution (white noise) included in z.}
 }
+\value{
+a list with elements V.g, V.g_1, mu.g, V.e, V.e_1, mu.e, V.g.poumm, mu.g.poumm.
+}
 \description{
 Distribution of the genotypic values under a POUMM fit
 }

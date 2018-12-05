@@ -1,9 +1,14 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "14 November, 2018"
+date: "05 December, 2018"
 output: html_document
 ---
+
+# POUMM 2.1.3
+* Improved man page for gPOUMM function.
+* Testing minor changes in the source package - store RData files in lfs. 
+* Testing github release and zanodo doi-issuing. 
 
 # POUMM 2.1.2
 
