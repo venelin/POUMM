@@ -1,6 +1,6 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
-[![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM) [![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](https://cran.r-project.org/package=POUMM) [![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](https://cran.r-project.org/package=POUMM)
+[![Travis build status](https://travis-ci.org/venelin/POUMM.svg?branch=master)](https://travis-ci.org/venelin/POUMM) [![Coverage status](https://codecov.io/gh/venelin/POUMM/branch/master/graph/badge.svg)](https://codecov.io/github/venelin/POUMM?branch=master) [![CRAN\_Status\_Badge](http://www.r-pkg.org/badges/version/POUMM?color=blue)](https://cran.r-project.org/package=POUMM) [![Downloads](http://cranlogs.r-pkg.org/badges/POUMM?color=blue)](https://cran.r-project.org/package=POUMM) [![DOI](https://zenodo.org/badge/115860927.svg)](https://zenodo.org/badge/latestdoi/115860927)
 
 The Phylogenetic Ornstein-Uhlenbeck Mixed Model
 ===============================================
