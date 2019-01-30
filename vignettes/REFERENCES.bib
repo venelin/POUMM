@@ -14,13 +14,12 @@ eprint = {/oup/backfile/content_public/journal/mbe/35/3/10.1093_molbev_msx328/3/
 @article {Mitov:2017eg,
 	author = {Mitov, Venelin and Stadler, Tanja},
 	title = {Parallel Likelihood Calculation for Phylogenetic Comparative Models: the SPLITT C++ Library},
-	year = {2018},
-	doi = {10.1101/235739},
-	publisher = {Cold Spring Harbor Laboratory},
+	year = {2019},
+	doi = {10.1111/2041-210X.13136},
+	publisher = {John Wiley & Sons, Inc.},
 	abstract = {1. Phylogenetic comparative models (PCMs) have been used to study macroevolutionary patterns, to characterize adaptive phenotypic landscapes, to quantify rates of evolution, to measure the heritability of traits, and to test various evolutionary hypotheses. A major obstacle to applying these models has been the complexity of evaluating their likelihood function. Recent works have shown that for many PCMs, the likelihood can be obtained in time proportional to the size of the tree based on post-order tree traversal, also known as pruning. Despite this progress, inferring complex multi-trait PCMs on large trees remains a time-intensive task. Here, we study parallelizing the pruning algorithm as a generic technique for speeding-up PCM-inference. 2. We implement several parallel traversal algorithms in the form of a generic C++ library for Serial and Parallel LIneage Traversal of Trees (SPLITT). Based on SPLITT, we provide examples of parallel likelihood evaluation for several popular PCMs, ranging from a single-trait Brownian motion model to complex multi-trait Ornstein-Uhlenbeck and mixed Gaussian phylogenetic models. 3. Using the phylogenetic Ornstein-Uhlenbeck mixed model (POUMM) as a showcase, we run benchmarks on up to 24 CPU cores, reporting up to an order of magnitude parallel speed-up on simulated balanced and unbalanced trees of up to 100,000 tips with up to 16 traits. Noticing that the parallel speed-up depends on multiple factors, the SPLITT library is capable to automatically select the fastest traversal strategy for a given hardware, tree-topology, and data. Combining SPLITT likelihood calculation with adaptive Metropolis sampling on real data, we show that the time for Bayesian POUMM inference on a tree of 10,000 tips can be reduced from several days to minutes. 4. We conclude that parallel pruning effectively accelerates the likelihood calculation and, thus, the statistical inference of Gaussian phylogenetic models. For time-intensive Bayesian inferences, we recommend combining this technique with adaptive Metropolis sampling. Beyond Gaussian models, the parallel tree traversal can be applied to numerous other models, including discrete trait and birth-death population dynamics models. Currently, SPLITT supports multi-core shared memory architectures, but can be extended to distributed memory architectures as well as graphical processing units.},
-	URL = {https://www.biorxiv.org/content/early/2018/10/29/235739},
-	eprint = {https://www.biorxiv.org/content/early/2018/10/29/235739.full.pdf},
-	journal = {bioRxiv}
+	URL = {https://doi.org/10.1111/2041-210X.13136},
+	journal = {Methods in Ecology and Evolution}
 }
 
 @Manual{R-ape,
