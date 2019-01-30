@@ -62,7 +62,11 @@
 #' @param parLower,parUpper two named numeric vectors of the same length
 #'   indicating the boundaries of the search region for the ML-fit. Calling
 #'   parMapping on parLower and parUpper should result in appropriate values of
-#'   the POUMM parameters alpha, theta, sigma sigmae and g0. Examples: \cr
+#'   the POUMM parameters alpha, theta, sigma sigmae and g0. By default, the
+#'   upper limit for alpha is set to 69.31 / tMean, which corresponds to a value
+#'   of alpha so big that the time for half-way convergence towards theta from
+#'   any initial trait value is 100 times shorter than the mean root-tip distance
+#'   in the tree. Examples: \cr
 #' \preformatted{
 #' # Default for POUMM:
 #' parLower = c(alpha = 0, theta = zMin - 2 * (zMax - zMin), sigma = 0, sigmae = 0)
