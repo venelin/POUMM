@@ -1,10 +1,12 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 2.1.4.01
-Date: 2018-12-05
-Authors@R: person("Venelin", "Mitov", email = "vmitov@gmail.com",
-                 role = c("aut", "cre", "cph"))
+Version: 2.1.4.02
+Date: 2018-02-14
+Authors@R: c(person("Venelin", "Mitov", email = "vmitov@gmail.com",
+                    role = c("aut", "cre", "cph")),
+             person("Matt", "Dowle",
+                    role = c("ctb")))
 Maintainer: Venelin Mitov <vmitov@gmail.com>
 Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to 
     estimate the phylogenetic heritability of continuous traits, to test 
