@@ -104,7 +104,7 @@ maxLikPOUMMGivenTreeVTips <- function(
     }
   }
   
-  for(iOptimTry in 1:length(listParInitML)) {
+  for(iOptimTry in seq_along(listParInitML)) {
     parInitML <- listParInitML[[iOptimTry]]
     if(!(all(parInitML >= parLower) & all(parInitML <= parUpper))) {
       stop(paste0("All parameters in parInitML should be between \n parLower=", 
@@ -195,7 +195,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
   
   if(statName == 'logpost') {
     mcs <- as.mcmc.list(
-      lapply(1:length(log.ps), function(i) {
+      lapply(seq_along(log.ps), function(i) {
           if(is.matrix(log.ps[[i]])) {
             log.ps[[i]][, 1, drop = FALSE]
           } else {
@@ -208,7 +208,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     names(mcs) <- names(chains)
   } else if(statName == 'loglik') {
     mcs <- as.mcmc.list(
-      lapply(1:length(log.ps), function(i) {
+      lapply(seq_along(log.ps), function(i) {
         if(is.matrix(log.ps[[i]])) {
           log.ps[[i]][, 2, drop = FALSE]
         } else {
@@ -220,7 +220,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     names(mcs) <- names(chains)
   } else if(statName == 'AIC') {
     mcs <- as.mcmc.list(
-      lapply(1:length(log.ps), function(i) {
+      lapply(seq_along(log.ps), function(i) {
         if(is.matrix(log.ps[[i]])) {
           logl <- log.ps[[i]][, 2, drop = FALSE]
           2*k - 2*logl  
@@ -233,7 +233,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     names(mcs) <- names(chains)
   } else if(statName == 'AICc') {
     mcs <- as.mcmc.list(
-      lapply(1:length(log.ps), function(i) {
+      lapply(seq_along(log.ps), function(i) {
         if(is.matrix(log.ps[[i]])) {
           logl <- log.ps[[i]][, 2, drop = FALSE]
           2*k - 2*logl + 2*k*(k+1)/(N-k-1)  
@@ -247,7 +247,7 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     names(mcs) <- names(chains)
   # } else if(statName == 'g0') {
   #   mcs <- as.mcmc.list(
-  #     lapply(1:length(log.ps), function(i) {
+  #     lapply(seq_along(log.ps), function(i) {
   #       if(is.matrix(log.ps[[i]])) {
   #         log.ps[[i]][, 3, drop = FALSE]  
   #       } else {
@@ -308,13 +308,13 @@ analyseMCMCs <- function(chains, stat=NULL, statName="logpost",
     }
   })
 
-  Mean <- sapply(1:length(mcs), function(i) {
+  Mean <- sapply(seq_along(mcs), function(i) {
     colMeans(mcs[[i]])
   })
   
   if(as.dt) {
     data.table(
-      chain=1:length(mcs), stat=statName, start=start, end=end, thinMCMC=thinMCMC, 
+      chain=seq_along(mcs), stat=statName, start=start, end=end, thinMCMC=thinMCMC, 
       ESS=ESS, Mean=Mean, HPD=HPD, HPD50=HPD50, mcs=mcs)
   } else {
     l <- list(stat=statName, start=start, end=end, thinMCMC=thinMCMC, 
@@ -489,7 +489,7 @@ mcmcPOUMMGivenPriorTreeVTips <- function(
       }
   }
   
-  for(i in 1:length(chains)) {
+  for(i in seq_along(chains)) {
     if(class(chains[[i]]) == "try-error") {
       warning(paste0("Error in MCMC chain no ", i, ":", toString(chains[[i]])))
     }

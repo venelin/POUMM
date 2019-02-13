@@ -36,7 +36,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.2</span>
       </span>
     </div>
 
@@ -100,8 +100,8 @@
 <a href="#parametrizing-the-poumm" class="anchor"></a>Parametrizing the POUMM</h1>
 <p>From a modeling perspective, the POUMM can be regarded as a combination of two of its widely used nested models:</p>
 <ul>
-<li>The non-mixed phylogenetic Ornstein-Uhlenbeck (POU) model, (also referred to as the ‘Hansen model’ <span class="citation">(<span class="citeproc-not-found" data-reference-id="Butler:2004ce"><strong>???</strong></span>)</span>), which has been used to infer local phenotypic optima in phylogenetic clades or across categories of phylogenetic related species <span class="citation">(<span class="citeproc-not-found" data-reference-id="Butler:2004ce"><strong>???</strong></span>)</span>, and to prove the presence of stabilizing selection towards a single stationary peak (SSP) <span class="citation">(<span class="citeproc-not-found" data-reference-id="Harmon:2010gh"><strong>???</strong></span>)</span>.</li>
-<li>The phylogenetic mixed model (PMM) <span class="citation">(<span class="citeproc-not-found" data-reference-id="Lynch:1991db"><strong>???</strong></span>; Housworth, Martins, and Lynch 2004)</span>, which has been used to measure phylogenetic heritability under the assumption that the genotype evolves according to Brownian motion <span class="citation">(Hodcroft et al. 2014)</span>;</li>
+<li>The non-mixed phylogenetic Ornstein-Uhlenbeck (POU) model, (also referred to as the ‘Hansen model’ <span class="citation">(Butler and King 2004)</span>), which has been used to infer local phenotypic optima in phylogenetic clades or across categories of phylogenetic related species <span class="citation">(Butler and King 2004)</span>, and to prove the presence of stabilizing selection towards a single stationary peak (SSP) <span class="citation">(Harmon et al. 2010)</span>.</li>
+<li>The phylogenetic mixed model (PMM) <span class="citation">(Lynch 1991; Housworth, Martins, and Lynch 2004)</span>, which has been used to measure phylogenetic heritability under the assumption that the genotype evolves according to Brownian motion <span class="citation">(Hodcroft et al. 2014)</span>;</li>
 </ul>
 <p>The POUMM combines the applications of the above two models. The properties we will consider represent bijective functions of some of the POUMM parameters. Thus, it is possible to reparametrize the POUMM, so that the model inference is done directly on properties of interest, e.g. the phylogenetic heritability. This is particularly useful for Bayesian inference, since for Bayesian inference priors should be specified for the properties of interest rather than the default POUMM parameters. We call a <em>parametrization</em> any numerical bijective function mapping its argument into the default POUMM parameter-space (<span class="math inline">\(&lt;g_0,\alpha,\theta,\sigma,\sigma_e&gt;\)</span>).</p>
 <div id="trait-distribution-at-equilibrium" class="section level2">
@@ -125,7 +125,7 @@
 <div id="phylogenetic-heritability" class="section level2">
 <h2 class="hasAnchor">
 <a href="#phylogenetic-heritability" class="anchor"></a>Phylogenetic heritability</h2>
-<p>The term <em>phylogenetic heritability</em>, introduced with the phylogenetic mixed model (PMM) <span class="citation">(Housworth, Martins, and Lynch 2004)</span>, measures the proportion of phenotypic variance in a population attributable to heritable factors, such as genes, as opposed to non-heritable factors, such as environment and measurement error. Although this concept has been applied mostly in the context of the original PMM, i.e. under the assumption of Brownian motion, the same concept applies to any evolutionary model allowing for the estimation of measurement error (ME) <span class="citation">(<span class="citeproc-not-found" data-reference-id="Hansen:2012et"><strong>???</strong></span>)</span>. The <em>phylogenetic heritability</em> is defined as the expected proportion of phenotypic variance attributable to <span class="math inline">\(g\)</span> at the tips of the tree, <span class="math inline">\(\sigma^2(g)/\left[\sigma^2(g)+\sigma_e^2\right]\)</span> <span class="citation">(Housworth, Martins, and Lynch 2004)</span>. This definition is a phylogenetic variant of the definition of broad-sense heritability, <span class="math inline">\(H^2\)</span>, from quantitative genetics <span class="citation">(<span class="citeproc-not-found" data-reference-id="Lynch:1998vx"><strong>???</strong></span>)</span>. However, in the case of a trait evolving along a phylogeny, the expected genotypic variance, <span class="math inline">\(\sigma^2(g)\)</span>, and, therefore, the phylogenetic heritability, are functions of time. Depending on the applicaiton, the following three types of phylogenetic heritability might all be of interest:</p>
+<p>The term <em>phylogenetic heritability</em>, introduced with the phylogenetic mixed model (PMM) <span class="citation">(Housworth, Martins, and Lynch 2004)</span>, measures the proportion of phenotypic variance in a population attributable to heritable factors, such as genes, as opposed to non-heritable factors, such as environment and measurement error. Although this concept has been applied mostly in the context of the original PMM, i.e. under the assumption of Brownian motion, the same concept applies to any evolutionary model allowing for the estimation of measurement error (ME) <span class="citation">(Hansen and Bartoszek 2012)</span>. The <em>phylogenetic heritability</em> is defined as the expected proportion of phenotypic variance attributable to <span class="math inline">\(g\)</span> at the tips of the tree, <span class="math inline">\(\sigma^2(g)/\left[\sigma^2(g)+\sigma_e^2\right]\)</span> <span class="citation">(Housworth, Martins, and Lynch 2004)</span>. This definition is a phylogenetic variant of the definition of broad-sense heritability, <span class="math inline">\(H^2\)</span>, from quantitative genetics <span class="citation">(Lynch and Walsh 1998)</span>. However, in the case of a trait evolving along a phylogeny, the expected genotypic variance, <span class="math inline">\(\sigma^2(g)\)</span>, and, therefore, the phylogenetic heritability, are functions of time. Depending on the applicaiton, the following three types of phylogenetic heritability might all be of interest:</p>
 <ul>
 <li>Expectation at the mean root-tip distance (<span class="math inline">\(\bar{t}\)</span>): <span class="math inline">\(H_{\bar{t}}^2:=\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}\right]/\left[\sigma^2\, \frac{\left(1-e^{-2\alpha \bar{t}}\right)}{2\alpha}+\sigma_e^2\right]\)</span>. This definition gives rize to three parametrizations where <span class="math inline">\(H_{\bar{t}}^2\)</span> is a free model parameter, while one of the parameters <span class="math inline">\(\alpha\)</span>, <span class="math inline">\(\sigma\)</span> or <span class="math inline">\(\sigma_e\)</span> is a function of <span class="math inline">\(H_{\bar{t}}^2\)</span> and the two other parameters. These parametrizations can be expressed as:
 <span class="math display">\[\begin{align}
@@ -241,7 +241,7 @@ specH2tMean<span class="op">$</span>parMapping</code></pre></div>
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7f93de37eac0&gt;</code></pre>
+## &lt;environment: 0x7fc9bedc7348&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 <pre><code>## function (par) 
@@ -251,7 +251,7 @@ specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7f93de37eac0&gt;</code></pre>
+## &lt;environment: 0x7fc9bedc7348&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
@@ -290,14 +290,29 @@ TODO
 <h1 class="hasAnchor">
 <a href="#references" class="anchor"></a>References</h1>
 <div id="refs" class="references">
+<div id="ref-Butler:2004ce">
+<p>Butler, M A, and A A King. 2004. “Phylogenetic comparative analysis: A modeling approach for adaptive evolution.” <em>American Naturalist</em> 164 (6): 683–95.</p>
+</div>
 <div id="ref-Hansen:1997ek">
 <p>Hansen, Thomas F. 1997. “Stabilizing Selection and the Comparative Analysis of Adaptation.” <em>Evolution; International Journal of Organic Evolution</em> 51 (5): 1341–51.</p>
+</div>
+<div id="ref-Hansen:2012et">
+<p>Hansen, Thomas F, and Krzysztof Bartoszek. 2012. “Interpreting the evolutionary regression: the interplay between observational and biological errors in phylogenetic comparative studies.” <em>Systematic Biology</em> 61 (3): 413–25.</p>
+</div>
+<div id="ref-Harmon:2010gh">
+<p>Harmon, Luke J, Jonathan B Losos, T Jonathan Davies, Rosemary G Gillespie, John L Gittleman, W Bryan Jennings, Kenneth H Kozak, et al. 2010. “Early bursts of body size and shape evolution are rare in comparative data.” <em>Evolution</em> 64 (8): 2385–96.</p>
 </div>
 <div id="ref-Hodcroft:2014es">
 <p>Hodcroft, Emma, Jarrod D Hadfield, Esther Fearnhill, Andrew Phillips, David Dunn, Siobhan O’Shea, Deenan Pillay, Andrew J Leigh Brown, on behalf of the UK HIV Drug Resistance Database, and the UK CHIC Study. 2014. “The Contribution of Viral Genotype to Plasma Viral Set-Point in HIV Infection.” <em>PLoS Pathogens</em> 10 (5): e1004112.</p>
 </div>
 <div id="ref-Housworth:2004gj">
 <p>Housworth, Elizabeth A, Emília P Martins, and Michael Lynch. 2004. “The phylogenetic mixed model.” <em>The American Naturalist</em> 163 (1): 84–96.</p>
+</div>
+<div id="ref-Lynch:1991db">
+<p>Lynch, Michael. 1991. “Methods for the Analysis of Comparative Data in Evolutionary Biology.” <em>Evolution</em> 45 (5): 1065–80.</p>
+</div>
+<div id="ref-Lynch:1998vx">
+<p>Lynch, Michael, and Bruce Walsh. 1998. <em>Genetics and Analysis of Quantitative Traits</em>. Sinauer Associates Incorporated.</p>
 </div>
 <div id="ref-Mitov:2018co">
 <p>Mitov, Venelin, and Tanja Stadler. 2018. “A Practical Guide to Estimating the Heritability of Pathogen Traits.” <em>Molecular Biology and Evolution</em> 35 (3): 756–72. doi:<a href="https://doi.org/10.1093/molbev/msx328">10.1093/molbev/msx328</a>.</p>

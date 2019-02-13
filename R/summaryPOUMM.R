@@ -42,7 +42,7 @@ summary.POUMM <- function(object, ...,
   parUpper <- matrix(object$spec$parUpper, nrow = 1)
   parML <- matrix(object$fitML$par, nrow = 1)
   
-  anlist <- lapply(1:length(stats), function(i) {
+  anlist <- lapply(seq_along(stats), function(i) {
     data.table(stat = names(stats)[i], MLE = stats[[i]](parML))
   })
   
@@ -50,8 +50,7 @@ summary.POUMM <- function(object, ...,
     data.table(stat = "logpost", MLE = NA),
     data.table(stat = "loglik", MLE = object$fitML$value),
     data.table(stat = "AIC", MLE = AIC(object)),
-    data.table(stat = "AICc", MLE = AIC(object) + 2*object$dof*(object$dof+1)/(object$N-object$dof-1)),
-    data.table(stat = "g0", MLE = attr(object$fitML$value, "g0"))
+    data.table(stat = "AICc", MLE = AIC(object) + 2*object$dof*(object$dof+1)/(object$N-object$dof-1))
   ))
   
   an.ML <- rbindlist(anlist)
@@ -66,7 +65,7 @@ summary.POUMM <- function(object, ...,
       endMCMC <- object$spec$nSamplesMCMC
     } 
     
-    anlist <- lapply(1:length(stats), function(i) {
+    anlist <- lapply(seq_along(stats), function(i) {
       analyseMCMCs(object$fitMCMC$chains, 
                    stat = stats[[i]], statName = names(stats)[i],
                    start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
@@ -79,27 +78,18 @@ summary.POUMM <- function(object, ...,
                    start = startMCMC, end=endMCMC, thinMCMC = thinMCMC, 
                    as.dt = TRUE),
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat = NULL, statName='loglik', logprior=object$spec$parPriorMCMC,
+                   stat = NULL, statName='loglik', 
                    start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
                    as.dt = TRUE),
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat = NULL, statName='AIC', logprior=object$spec$parPriorMCMC,
+                   stat = NULL, statName='AIC', 
                    start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
                    as.dt = TRUE, k = object$dof, N = object$N),
       analyseMCMCs(object$fitMCMC$chains, 
-                   stat = NULL, statName='AICc', logprior=object$spec$parPriorMCMC,
+                   stat = NULL, statName='AICc', 
                    start = startMCMC, end = endMCMC, thinMCMC = thinMCMC, 
                    as.dt = TRUE, k = object$dof, N = object$N)
     ))
-    
-    if( !("g0" %in% names(stats)) ) {
-      anlist <- c(anlist, list(
-        analyseMCMCs(object$fitMCMC$chains, 
-                     stat=NULL, statName='g0', logprior=object$spec$parPriorMCMC,
-                     start=startMCMC, end=endMCMC, thinMCMC=thinMCMC, 
-                     as.dt=TRUE))
-      )
-    }
     
     an.MCMC <- rbindlist(anlist)
     an.MCMC[, samplePriorMCMC:=rep( c(object$spec$samplePriorMCMC, 
@@ -167,6 +157,26 @@ summary.POUMM <- function(object, ...,
   class(res) <- c('summary.POUMM', class(res))
   res
 }
+
+generateStatisticFunG0 <- function(object) {
+  function(par) {
+    if( 'g0' %in% names(object$spec$parMapping(par)) ) {
+      object$spec$parMapping(par)[, 'g0']
+    } else {
+      g0s <- try(
+        apply(par, 1, function(par) {
+          ll <- object$loglik(par, pruneInfo = object$pruneInfo)
+          attr(ll, "g0")
+        }), silent = TRUE)
+      if(class(g0s) == "try-error") {
+        rep(NA_real_, nrow(par))
+      } else {
+        g0s
+      }
+    }
+  }
+}
+
 
 #' Plot a summary of a POUMM fit
 #' @param x An object of class POUMM.
@@ -273,9 +283,9 @@ plot.summary.POUMM <- function(
     
     data <- data[
       { 
-        if(!is.null(.stat)) {stat %in% .stat} else TRUE 
+        if(!is.null(.stat)) {stat %in% .stat} else rep(TRUE, .N)
       } & { 
-        if(!is.null(.chain)) {chain %in% .chain} else TRUE
+        if(!is.null(.chain)) {chain %in% .chain} else rep(TRUE, .N)
       }]
     
     setkey(data, stat)
@@ -283,45 +293,21 @@ plot.summary.POUMM <- function(
     data <- data[list(.stat)]
     
     data <- data[{ 
-      if(!is.null(.stat)) {stat %in% .stat} else TRUE 
+      if(!is.null(.stat)) {stat %in% .stat} else rep(TRUE, .N)
     } & {
-      if(!is.null(.chain)) {chain %in% .chain} else TRUE 
-    }, { MAX = length(unlist(mcmc))  # 'value=' below is longest item
-      ans <- list(
-      N = rep(N, length=MAX),
-      MLE = rep(MLE, length=MAX),
-      samplePriorMCMC = rep(samplePriorMCMC,length=MAX), 
-      HPDLower = rep(sapply(HPD, function(.) .[1]), length=MAX),
-      HPDUpper = rep(sapply(HPD, function(.) .[2]), length=MAX),
-      HPD50Lower = rep(sapply(HPD50, function(.) .[1]), length=MAX),
-      HPD50Upper = rep(sapply(HPD50, function(.) .[2]), length=MAX), 
-      ESS = rep(ESS, length=MAX),
-      value = unlist(mcmc),   # this is the longest (MAX) 
-      it = rep(seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]]), length=MAX))
-      #  if (.GRP==13) print(ans)
-      #  it's group 13 that has 2 rows :
-      #  data[,.N, list(stat = factor(stat), chain = factor(chain))]
-      #         stat  chain     N
-      #       <fctr> <fctr> <int>
-      #   1:   alpha      1     1
-      #   2:   alpha      2     1
-      #   3:   alpha      3     1
-      #   4:   theta      1     1
-      #   5:   theta      2     1
-      #   6:   theta      3     1
-      #   7:   sigma      1     1
-      #   8:   sigma      2     1
-      #   9:   sigma      3     1
-      #  10:  sigmae      1     1
-      #  11:  sigmae      2     1
-      #  12:  sigmae      3     1
-      #  13:      g0      1     2   # .N==2 for the first time but 'value' is length 18
-      #  14:      g0      2     2
-      #  15:      g0      3     2
-      #  16: H2tMean      1     1
-      #  17: H2tMean      2     1
-      #  18: H2tMean      3     1
-      ans }, 
+      if(!is.null(.chain)) {chain %in% .chain} else rep(TRUE, .N)
+    }, list(
+      N, 
+      MLE,
+      samplePriorMCMC,
+      HPDLower = sapply(HPD, function(.) .[1]),
+      HPDUpper = sapply(HPD, function(.) .[2]),
+      HPD50Lower = sapply(HPD50, function(.) .[1]),
+      HPD50Upper = sapply(HPD50, function(.) .[2]), 
+      ESS,
+      value = unlist(mcmc),
+      it = seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]])),
+
     by = list(stat = factor(stat), chain = factor(chain))]
     
     if(doZoomIn) {
@@ -333,7 +319,6 @@ plot.summary.POUMM <- function(
       
       data[, stat2:=NULL]
     }
-    
     
     data[, HPDUpperFiltered:=min(max(value), unique(HPDUpper)), 
          list(stat = factor(stat), chain = factor(chain))]
@@ -363,7 +348,7 @@ plot.summary.POUMM <- function(
     }
     
     
-    names(palette) <- as.character(1:length(palette))
+    names(palette) <- as.character(seq_along(palette))
     
     my_ggplot <- function(...) ggplot(...) + 
       scale_color_manual(values = palette) +
@@ -428,7 +413,7 @@ statistics <- function(object) {
 #'  
 #' @export
 statistics.POUMM <- function(object) {
-  listPar <- sapply(1:length(object$spec$parLower), function(i) {
+  listPar <- sapply(seq_along(object$spec$parLower), function(i) {
     name <- names(object$spec$parLower)[i]
     stat <- eval(
       parse(text=paste0("list(", name, " = function(par) par[, ", i , "])"))
@@ -457,7 +442,7 @@ statistics.POUMM <- function(object) {
     theta = function(par) object$spec$parMapping(par)[, 'theta'],
     sigma = function(par) object$spec$parMapping(par)[, 'sigma'],
     sigmae = function(par) object$spec$parMapping(par)[, 'sigmae'],
-    g0 = function(par) object$spec$parMapping(par)[, 'g0'],
+    g0 = generateStatisticFunG0(object),
     
     sigmaG2tMean = function(par) varOU(alpha = object$spec$parMapping(par)[, 'alpha'],
                                        sigma = object$spec$parMapping(par)[, 'sigma'],

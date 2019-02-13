@@ -36,7 +36,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.2</span>
       </span>
     </div>
 
@@ -212,15 +212,14 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 ##  6:       H2tInf 500   0.31451  0.31802   0.1853,0.4642 103.95 1.048
 ##  7:       H2tMax 500   0.31450  0.31795   0.1853,0.4642 103.97 1.048
 ##  8:      H2tMean 500   0.31343  0.31611   0.1846,0.4639 104.07 1.049
-##  9:           g0 500        NA       NA           NA,NA   0.00    NA
+##  9:           g0 500   0.34021  0.31496 -1.1239, 0.9072 105.20 1.087
 ## 10: sigmaG2tMean 500   0.01823  0.01867 0.01100,0.03038 107.95 1.056
 ## 11:  sigmaG2tMax 500   0.01832  0.01883 0.01107,0.03060 108.13 1.054
 ## 12:  sigmaG2tInf 500   0.01832  0.01884 0.01107,0.03062 108.13 1.054
 ## 13:      logpost 500        NA 15.35738     12.87,16.96  44.96 1.179
 ## 14:       loglik 500  16.32733       NA           NA,NA   0.00    NA
 ## 15:          AIC 500 -22.65466       NA           NA,NA   0.00    NA
-## 16:         AICc 500 -22.53320       NA           NA,NA   0.00    NA
-## 17:           g0 500   0.34021       NA           NA,NA   0.00    NA</code></pre>
+## 16:         AICc 500 -22.53320       NA           NA,NA   0.00    NA</code></pre>
 <p>The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for <span class="math inline">\(4 \times 10^5\)</span> iterations:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fitPOUMM2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>))  </code></pre></div>
 <p>Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one.</p>
@@ -228,24 +227,23 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 plotList<span class="op">$</span>densplot</code></pre></div>
 <p><img src="UserGuide_files/figure-html/unnamed-chunk-9-1.png" width="691.2"></p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM2)</code></pre></div>
-<pre><code>##             stat   N       MLE PostMean               HPD ESS   G.R.
-##  1:        alpha 500   0.41430  0.39388     0.2069,0.5752 720 1.0004
-##  2:        theta 500   2.06446  2.08188       1.993,2.197 720 1.0009
-##  3:        sigma 500   0.12321  0.11917   0.07596,0.16771 720 0.9996
-##  4:       sigmae 500   0.19983  0.20130     0.1789,0.2241 720 0.9988
-##  5:          H2e 500   0.43886  0.42853     0.3047,0.5602 720 0.9987
-##  6:       H2tInf 500   0.31451  0.31247     0.1710,0.4816 720 0.9994
-##  7:       H2tMax 500   0.31450  0.31231     0.1704,0.4808 720 0.9994
-##  8:      H2tMean 500   0.31343  0.30984     0.1676,0.4793 720 0.9994
-##  9:           g0 500        NA       NA             NA,NA   0     NA
-## 10: sigmaG2tMean 500   0.01823  0.01839 0.008902,0.029703 720 1.0007
-## 11:  sigmaG2tMax 500   0.01832  0.01861 0.008838,0.029476 720 1.0008
-## 12:  sigmaG2tInf 500   0.01832  0.01863 0.008849,0.029482 720 1.0008
-## 13:      logpost 500        NA 15.04781       11.78,17.01 720 1.0101
-## 14:       loglik 500  16.32733       NA             NA,NA   0     NA
-## 15:          AIC 500 -22.65466       NA             NA,NA   0     NA
-## 16:         AICc 500 -22.53320       NA             NA,NA   0     NA
-## 17:           g0 500   0.34021       NA             NA,NA   0     NA</code></pre>
+<pre><code>##             stat   N       MLE PostMean               HPD   ESS   G.R.
+##  1:        alpha 500   0.41430  0.39388     0.2069,0.5752 720.0 1.0004
+##  2:        theta 500   2.06446  2.08188       1.993,2.197 720.0 1.0009
+##  3:        sigma 500   0.12321  0.11917   0.07596,0.16771 720.0 0.9996
+##  4:       sigmae 500   0.19983  0.20130     0.1789,0.2241 720.0 0.9988
+##  5:          H2e 500   0.43886  0.42853     0.3047,0.5602 720.0 0.9987
+##  6:       H2tInf 500   0.31451  0.31247     0.1710,0.4816 720.0 0.9994
+##  7:       H2tMax 500   0.31450  0.31231     0.1704,0.4808 720.0 0.9994
+##  8:      H2tMean 500   0.31343  0.30984     0.1676,0.4793 720.0 0.9994
+##  9:           g0 500   0.34021  0.37982   -0.5617, 1.2600 665.7 1.0059
+## 10: sigmaG2tMean 500   0.01823  0.01839 0.008902,0.029703 720.0 1.0007
+## 11:  sigmaG2tMax 500   0.01832  0.01861 0.008838,0.029476 720.0 1.0008
+## 12:  sigmaG2tInf 500   0.01832  0.01863 0.008849,0.029482 720.0 1.0008
+## 13:      logpost 500        NA 15.04781       11.78,17.01 720.0 1.0101
+## 14:       loglik 500  16.32733       NA             NA,NA   0.0     NA
+## 15:          AIC 500 -22.65466       NA             NA,NA   0.0     NA
+## 16:         AICc 500 -22.53320       NA             NA,NA   0.0     NA</code></pre>
 <div id="consistency-of-the-fit-with-the-true-simulation-parameters" class="section level2">
 <h2 class="hasAnchor">
 <a href="#consistency-of-the-fit-with-the-true-simulation-parameters" class="anchor"></a>Consistency of the fit with the “true” simulation parameters</h2>
