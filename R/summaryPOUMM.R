@@ -102,8 +102,8 @@ summary.POUMM <- function(object, ...,
     }
     
     an.MCMC <- rbindlist(anlist)
-    an.MCMC[, samplePriorMCMC:=c(object$spec$samplePriorMCMC, 
-                                 rep(FALSE, object$spec$nChainsMCMC - 1))]
+    an.MCMC[, samplePriorMCMC:=rep( c(object$spec$samplePriorMCMC, 
+                                    rep(FALSE, object$spec$nChainsMCMC - 1)), length.out=.N) ]
     
     if(mode[1] != 'expert') {
       an.MCMC <- an.MCMC[, 
@@ -286,16 +286,42 @@ plot.summary.POUMM <- function(
       if(!is.null(.stat)) {stat %in% .stat} else TRUE 
     } & {
       if(!is.null(.chain)) {chain %in% .chain} else TRUE 
-    }, list(
-      N, MLE, 
-      samplePriorMCMC, 
-      HPDLower = sapply(HPD, function(.) .[1]),
-      HPDUpper = sapply(HPD, function(.) .[2]),
-      HPD50Lower = sapply(HPD50, function(.) .[1]),
-      HPD50Upper = sapply(HPD50, function(.) .[2]), 
-      ESS,
-      value = unlist(mcmc), 
-      it = seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]])), 
+    }, { MAX = length(unlist(mcmc))  # 'value=' below is longest item
+      ans <- list(
+      rep(N, length=MAX),
+      rep(MLE, length=MAX),
+      rep(samplePriorMCMC,length=MAX), 
+      HPDLower = rep(sapply(HPD, function(.) .[1]), length=MAX),
+      HPDUpper = rep(sapply(HPD, function(.) .[2]), length=MAX),
+      HPD50Lower = rep(sapply(HPD50, function(.) .[1]), length=MAX),
+      HPD50Upper = rep(sapply(HPD50, function(.) .[2]), length=MAX), 
+      rep(ESS, length=MAX),
+      value = unlist(mcmc),   # this is the longest (MAX) 
+      it = rep(seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]]), length=MAX))
+      #  if (.GRP==13) print(ans)
+      #  it's group 13 that has 2 rows :
+      #  data[,.N, list(stat = factor(stat), chain = factor(chain))]
+      #         stat  chain     N
+      #       <fctr> <fctr> <int>
+      #   1:   alpha      1     1
+      #   2:   alpha      2     1
+      #   3:   alpha      3     1
+      #   4:   theta      1     1
+      #   5:   theta      2     1
+      #   6:   theta      3     1
+      #   7:   sigma      1     1
+      #   8:   sigma      2     1
+      #   9:   sigma      3     1
+      #  10:  sigmae      1     1
+      #  11:  sigmae      2     1
+      #  12:  sigmae      3     1
+      #  13:      g0      1     2   # .N==2 for the first time but 'value' is length 18
+      #  14:      g0      2     2
+      #  15:      g0      3     2
+      #  16: H2tMean      1     1
+      #  17: H2tMean      2     1
+      #  18: H2tMean      3     1
+      ans }, 
     by = list(stat = factor(stat), chain = factor(chain))]
     
     if(doZoomIn) {
