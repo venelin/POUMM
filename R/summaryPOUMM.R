@@ -288,14 +288,14 @@ plot.summary.POUMM <- function(
       if(!is.null(.chain)) {chain %in% .chain} else TRUE 
     }, { MAX = length(unlist(mcmc))  # 'value=' below is longest item
       ans <- list(
-      rep(N, length=MAX),
-      rep(MLE, length=MAX),
-      rep(samplePriorMCMC,length=MAX), 
+      N = rep(N, length=MAX),
+      MLE = rep(MLE, length=MAX),
+      samplePriorMCMC = rep(samplePriorMCMC,length=MAX), 
       HPDLower = rep(sapply(HPD, function(.) .[1]), length=MAX),
       HPDUpper = rep(sapply(HPD, function(.) .[2]), length=MAX),
       HPD50Lower = rep(sapply(HPD50, function(.) .[1]), length=MAX),
       HPD50Upper = rep(sapply(HPD50, function(.) .[2]), length=MAX), 
-      rep(ESS, length=MAX),
+      ESS = rep(ESS, length=MAX),
       value = unlist(mcmc),   # this is the longest (MAX) 
       it = rep(seq(x$startMCMC, by = x$thinMCMC, along.with = mcmc[[1]]), length=MAX))
       #  if (.GRP==13) print(ans)
