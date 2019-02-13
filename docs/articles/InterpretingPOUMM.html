@@ -6,14 +6,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interpreting the POUMM • POUMM</title>
-<link rel="shortcut icon" type="image/x-icon" href="../favicon.ico">
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Font Awesome icons --><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.6.3/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-T8Gy5hrqNKT+hzMclPo118YTQO6cYprQmhrYwIiQ/3axmI1hQomh7Ud2hPOy8SP1" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.1/clipboard.min.js" integrity="sha256-hIvIxeqhGZF+VVeM55k0mJvWpQ6gTkWk3Emc+NmowYA=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Interpreting the POUMM">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script><!--[if lt IE 9]>
+<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
 <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
 <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
 <![endif]--><!-- Global site tag (gtag.js) - Google Analytics --><script async src="https://www.googletagmanager.com/gtag/js?id=UA-129563006-1"></script><script>
@@ -37,7 +36,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.1</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.4.1</span>
       </span>
     </div>
 
@@ -183,7 +182,7 @@ TODO
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">specPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree)
 fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC=</span><span class="ot">FALSE</span>)</code></pre></div>
 <p>Now a likelihood-ratio test between the maximum likelihood fits clearly shows that the POUMM significantly outperforms the PMM to the data:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM, fitPOUMM2)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">lmtest<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM, fitPOUMM2)</code></pre></div>
 <pre><code>## Likelihood ratio test
 ## 
 ## Model 1: fitPMM
@@ -201,7 +200,7 @@ zBM &lt;-<span class="st"> </span>gBM <span class="op">+</span><span class="st">
 fitPMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)
 fitPOUMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)
 
-lmtest<span class="op">::</span><span class="kw"><a href="http://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM_on_zBM, fitPOUMM_on_zBM)</code></pre></div>
+lmtest<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM_on_zBM, fitPOUMM_on_zBM)</code></pre></div>
 <pre><code>## Likelihood ratio test
 ## 
 ## Model 1: fitPMM_on_zBM
@@ -242,7 +241,7 @@ specH2tMean<span class="op">$</span>parMapping</code></pre></div>
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7fa002fedd58&gt;</code></pre>
+## &lt;environment: 0x7f93de37eac0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 <pre><code>## function (par) 
@@ -252,7 +251,7 @@ specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7fa002fedd58&gt;</code></pre>
+## &lt;environment: 0x7f93de37eac0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
@@ -262,10 +261,10 @@ specH2tMean<span class="op">$</span>parLower</code></pre></div>
 ## 10.8379  5.9389  0.9900  0.5335  3.2139</code></pre>
 <p>Then we fit the model:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fitH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specH2tMean)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">plot</span>(fitH2tMean, <span class="dt">stat =</span> <span class="kw">c</span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>), 
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitH2tMean, <span class="dt">stat =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>), 
      <span class="dt">doZoomIn =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">TRUE</span>)</code></pre></div>
 <p><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-1.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-2.png" width="691.2"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">summary</span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw">c</span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</code></pre></div>
 <pre><code>##       stat   N    MLE PostMean           HPD   ESS  G.R.
 ## 1: H2tMean 500 0.3057   0.3165 0.1542,0.4559 720.0 1.004
 ## 2:  sigmae 500 0.2013   0.2028 0.1819,0.2235 772.2 1.001
@@ -273,10 +272,10 @@ specH2tMean<span class="op">$</span>parLower</code></pre></div>
 ## 4:  H2tInf 500 0.3073   0.3229 0.1614,0.4692 720.0 1.005</code></pre>
 <p>Now we see that the prior density for <code>H2tMean</code> is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for <code>H2tMean</code> and <code>H2tInf</code> are nearly the same. Notice, though, that the estimate for the empirical heritability <code>H2e</code> is shifted towards 1 compared to <code>H2tMean</code> and <code>H2tInf</code>. This shows an important difference between <code>H2e</code> and the time-dependent formulae for phylogenetic heritability: <code>H2e</code> takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Compare global empirical heritability</span>
-H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">sigmae =</span> <span class="kw">coef</span>(fitH2tMean)[<span class="st">'sigmae'</span>])
+H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">sigmae =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>])
 <span class="co"># versus recent empirical heritability</span>
-H2eRecent &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">sigmae =</span> <span class="kw">coef</span>(fitH2tMean)[<span class="st">'sigmae'</span>], <span class="dt">tFrom =</span> <span class="dv">5</span>)
-<span class="kw">print</span>(<span class="kw">c</span>(H2eGlobal, H2eRecent))</code></pre></div>
+H2eRecent &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">sigmae =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>], <span class="dt">tFrom =</span> <span class="dv">5</span>)
+<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/print">print</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(H2eGlobal, H2eRecent))</code></pre></div>
 <pre><code>## [1] 0.4307 0.3409</code></pre>
 <p>To learn more about different ways to specify the POUMM fit, read the documentation page <code><a href="../reference/specPOUMM.html">?specifyPOUMM</a></code>. <!--
 TODO
@@ -339,9 +338,8 @@ TODO
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="http://pkgdown.r-lib.org/">pkgdown</a>.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
 </div>
-
       </footer>
 </div>
 
