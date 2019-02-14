@@ -1,7 +1,7 @@
 Package: POUMM
 Type: Package
 Title: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
-Version: 2.1.4.02
+Version: 2.1.5
 Date: 2018-02-14
 Authors@R: c(person("Venelin", "Mitov", email = "vmitov@gmail.com",
                     role = c("aut", "cre", "cph")),

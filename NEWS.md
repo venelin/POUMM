@@ -1,9 +1,14 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "05 December, 2018"
+date: "14 February, 2019"
 output: html_document
 ---
+
+# POUMM 2.1.5
+* Improved documentation for some functions (specifyPOUMM). 
+* Fixed a bug: duplicated rows for "g0" in the summary of a POUMM object.
+* Compatibility with v1.12.2 of package data.table - using rep instead of recycling in columns with more than 1 but fewer than the max-number of rows (see https://github.com/venelin/POUMM/pull/2).
 
 # POUMM 2.1.3
 * Improved man page for gPOUMM function.
