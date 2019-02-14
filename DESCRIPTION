@@ -22,7 +22,7 @@ Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to
     the package, see the package vignettes.
 License: GPL (>= 3.0)
 Encoding: UTF-8
-LazyData: true
+LazyData: false
 Depends:
     R (>= 3.1.0),
     stats,
