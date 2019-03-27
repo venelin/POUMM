@@ -6,7 +6,6 @@
 ^tests\.BayesianValidation$
 ^README\.Rmd$
 ^README-.*\.png$
-^NEWS\.md$
 ^cran-comments\.md$
 ^tests/benchmark
 ^tests/othertests
