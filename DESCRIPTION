@@ -22,9 +22,9 @@ Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to
     package has been used for estimating the heritability of quantitative traits
     in macroevolutionary and epidemiological studies, see e.g. 
     Bertels et al. (2017) <doi:10.1093/molbev/msx246> and 
-    Mitov and Stadler (2018a) <doi:10.1093/molbev/msx328>. The algorithm for 
+    Mitov and Stadler (2018) <doi:10.1093/molbev/msx328>. The algorithm for 
     parallel POUMM likelihood calculation has been published in 
-    Mitov and Stadler (2018b) <doi:10.1111/2041-210X.13136>.
+    Mitov and Stadler (2019) <doi:10.1111/2041-210X.13136>.
 License: GPL (>= 3.0)
 Encoding: UTF-8
 LazyData: false
