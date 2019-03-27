@@ -4,16 +4,12 @@
 \alias{POUMMIsADevRelease}
 \title{Check if the POUMM version correpsonds to a dev release}
 \usage{
-POUMMIsADevRelease(numVersionComponents = 4L)
-}
-\arguments{
-\item{numVersionComponents}{an integer, default 4.}
+POUMMIsADevRelease()
 }
 \value{
 a logical
 }
 \description{
 We define a dev release as having a sub-release, eg 0.9.15.5 is
-one whereas 0.9.16 is not. The number of components in the version can be
-changed through the argument numVersionComponents.
+one whereas 0.9.16 is not.
 }

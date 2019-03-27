@@ -5,7 +5,7 @@ library(mvtnorm)
 
 context("POUMM Likelihood")
 
-set.seed(1)
+set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
 
 N <- 100
 tree <- ape::rtree(N)  

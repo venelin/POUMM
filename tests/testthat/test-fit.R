@@ -2,10 +2,10 @@ library(testthat)
 library(POUMM)
 
 # test disabled in release-versions (CRAN) (takes too long)
-if(POUMMIsADevRelease(numVersionComponents = 4)) {
+if(POUMMIsADevRelease()) {
 context("POUMM fit")
   
-  set.seed(1)
+  set.seed(1, kind = "Mersenne-Twister", normal.kind = "Inversion")
   
   N <- 100
   tree <- ape::rtree(N)  

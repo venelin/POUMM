@@ -21,16 +21,15 @@ NULL
 
 
 #' Check if the POUMM version correpsonds to a dev release
-#' @param numVersionComponents an integer, default 4.
 #' @importFrom utils packageDescription
 #' @description We define a dev release as having a sub-release, eg 0.9.15.5 is
-#' one whereas 0.9.16 is not. The number of components in the version can be
-#' changed through the argument numVersionComponents.
+#' one whereas 0.9.16 is not.
 #' @return a logical
 #' @export
-POUMMIsADevRelease <- function(numVersionComponents = 4L) {
-  !is.na( packageDescription("POUMM") ) &&
-    length(strsplit(packageDescription("POUMM")$Version, "\\.")[[1]]) >= numVersionComponents
+POUMMIsADevRelease <- function() {
+  # !is.na( packageDescription("POUMM") ) &&
+  #   length(strsplit(packageDescription("POUMM")$Version, "\\.")[[1]]) >= 3
+  TRUE
 }
 printPOUMMLikelihoodMainLoop <- function(tree) {
   pruneInfo <- pruneTree(tree)
