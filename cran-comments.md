@@ -1,3 +1,5 @@
+Fixed the old date and missing reference in Description field. 
+
 This is a minor bug-fix, which should ensure compatibility with data.table v1.12.2 (to be released soon). 
 
 R CMD CHECK passes with 0 Errors, 0 Warnings and 1 Note:
