@@ -1,7 +1,7 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "14 February, 2019"
+date: "26 March, 2019"
 output: html_document
 ---
 
