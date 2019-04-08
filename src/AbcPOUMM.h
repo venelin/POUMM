@@ -2,7 +2,7 @@
  *  AbcPOUMM.h
  *  POUMM
  *
- * Copyright 2017,2018 Venelin Mitov
+ * Copyright 2015-2019 Venelin Mitov
  *
  * This file is part of the R-package POUMM: The Phylogenetic Ornstein-Uhlenbeck Mixed Model
  *

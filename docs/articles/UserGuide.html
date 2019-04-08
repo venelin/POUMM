@@ -93,6 +93,24 @@
 
     
     
+<!--
+# Copyright 2015-2019 Venelin Mitov
+#
+# This file is part of POUMM.
+#
+# POUMM is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# POUMM is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with POUMM  If not, see <http://www.gnu.org/licenses/>.
+-->
 <p>Here, we introduce the R-package <strong>POUMM</strong> - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits <span class="citation">(Mitov and Stadler 2018; Mitov and Stadler 2019)</span>. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette <a href="./InterpretingPOUMM.html">Interpreting the POUMM</a>.</p>
 <p>But before we start, we need to install and load a few R-packages from CRAN:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"data.table"</span>)
@@ -304,11 +322,11 @@ parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumen
 <a href="#packages-used" class="anchor"></a>Packages used</h1>
 <p>Apart from base R functionality, the POUMM package uses a number of 3rd party R-packages:</p>
 <ul>
-<li>For likelihood calculation: Rcpp v1.0.0 <span class="citation">(Eddelbuettel et al. 2017)</span>, Rmpfr v0.7.2 <span class="citation">(Maechler 2016)</span>;</li>
+<li>For likelihood calculation: Rcpp v1.0.1 <span class="citation">(Eddelbuettel et al. 2017)</span>, Rmpfr v0.7.2 <span class="citation">(Maechler 2016)</span>;</li>
 <li>For mcmcSampling: adaptMCMC v1.3 <span class="citation">(Scheidegger 2012)</span>;</li>
 <li>For MCMC convergence diagnostics, calculation of MCMC effective sizes and HPD-intervals: coda v0.19.2 <span class="citation">(Plummer et al. 2016)</span>;</li>
-<li>For other purposes (parameter transformations and summary statistics): parallel v3.5.1 <span class="citation">(Team, n.d.)</span>, foreach v1.4.4 <span class="citation">(Revolution Analytics and Weston, n.d.)</span>, data.table v1.12.0 <span class="citation">(Dowle and Srinivasan 2016)</span>, Matrix v1.2.14 <span class="citation">(Bates and Maechler 2017)</span>);</li>
-<li>For tree processing: ape v5.2 <span class="citation">(Paradis et al. 2016)</span>;</li>
+<li>For other purposes (parameter transformations and summary statistics): parallel v3.5.3 <span class="citation">(Team, n.d.)</span>, foreach v1.4.4 <span class="citation">(Revolution Analytics and Weston, n.d.)</span>, data.table v1.12.0 <span class="citation">(Dowle and Srinivasan 2016)</span>, Matrix v1.2.15 <span class="citation">(Bates and Maechler 2017)</span>);</li>
+<li>For tree processing: ape v5.3 <span class="citation">(Paradis et al. 2016)</span>;</li>
 <li>For reporting: data.table v1.12.0 <span class="citation">(Dowle and Srinivasan 2016)</span>, ggplot2 v3.1.0 <span class="citation">(Wickham and Chang 2016)</span>, lmtest v0.9.36 <span class="citation">(Hothorn et al. 2015)</span>;</li>
 <li>For testing: testthat v2.0.1 <span class="citation">(Wickham 2016)</span>, mvtnorm v1.0.10 <span class="citation">(Genz et al. 2016)</span>.</li>
 </ul>

@@ -26,4 +26,5 @@ articles:
 - title: All vignettes
   desc: ~
   contents:
+  - '`UserGuide`'
   - '`InterpretingPOUMM`'

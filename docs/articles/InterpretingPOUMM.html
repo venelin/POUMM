@@ -93,6 +93,24 @@
 
     
     
+<!--
+# Copyright 2015-2019 Venelin Mitov
+#
+# This file is part of POUMM.
+#
+# POUMM is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# POUMM is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with POUMM  If not, see <http://www.gnu.org/licenses/>.
+-->
 <p>Here, we consider the POUMM from the point of view of its biological interpretation. Before we begin, we need to make an important cautionary note:</p>
 <p>One should always be aware that non-mechanistic stochastic models like Brownian motion (BM) and Ornstein-Uhlenbeck (OU) are unlikeliy to be accurate representations of the trait evolution at the individual level, be it an individual taxon, a patient infected with a pathogen, or any other evolving entity represented by a lineage in a phylogeny. Rather, these models are useful when analyzing population properties, such as the mean trait value, variance, covariance and correlation. In terms of the models, these properties represent deterministic functions of the model parameters and the temporal information in the tree (e.g. mean root-tip distance and phylogenetic distance between couples of tips). This makes it possible to use a statistical fit of the model parameters to the tree and the data (e.g. maximum likelihood and posterior samples), to estimate point-values and credibility intervals of such population properties. All these estimates depart from the assumption that the model is at least approximately accurate at the population level. If the data violates this assumption, the resulting estimates and credibility intervals for the modeled population properties can be strongly biased. For an example of such bias caused by a wrong Brownian motion assumption, we refer the reader to <span class="citation">(Mitov and Stadler 2018)</span>. Therefore, we recommend comparing model-based parametric estimates with non-parametric estimates. For an example of this approach, see the package <a href="https://venelin.github.io/patherit/articles/UserGuide.html">patherit</a>.</p>
 <div id="parametrizing-the-poumm" class="section level1">
@@ -241,7 +259,7 @@ specH2tMean<span class="op">$</span>parMapping</code></pre></div>
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7fe2fa5578c8&gt;</code></pre>
+## &lt;environment: 0x7fdc2543eac0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Prior for the MCMC sampling</span>
 specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 <pre><code>## function (par) 
@@ -251,7 +269,7 @@ specH2tMean<span class="op">$</span>parPriorMCMC</code></pre></div>
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7fe2fa5578c8&gt;</code></pre>
+## &lt;environment: 0x7fdc2543eac0&gt;</code></pre>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Bounds for the maximum likelihood search</span>
 specH2tMean<span class="op">$</span>parLower</code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
