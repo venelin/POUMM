@@ -1,9 +1,13 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "26 March, 2019"
+date: "05 December, 2019"
 output: html_document
 ---
+
+# POUMM 2.1.6
+* Fixed an S3-class related problem on r-devel.
+* Disabled OPENMP compilation flags due to potential test failures on some platforms, e.g. Solaris.
 
 # POUMM 2.1.5
 * Improved documentation for some functions (specifyPOUMM). 

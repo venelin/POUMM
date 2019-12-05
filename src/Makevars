@@ -58,8 +58,8 @@
 # shared libraries. Yet, for these options to have an effect, the compiler itself
 # should support OpenMP, i.e. it should include the appropriate OpenMP headers,
 # and the openmp shared library binaries in its distribution (see above comments).
-PKG_CXXFLAGS=$(SHLIB_OPENMP_CXXFLAGS) 
+#PKG_CXXFLAGS=$(SHLIB_OPENMP_CXXFLAGS) 
 #PKG_CFLAGS=$(SHLIB_OPENMP_CFLAGS)
-PKG_LIBS=$(SHLIB_OPENMP_CXXFLAGS)
+#PKG_LIBS=$(SHLIB_OPENMP_CXXFLAGS)
 
 CXX_STD = CXX11

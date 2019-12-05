@@ -12,3 +12,4 @@
 ^benchmark$
 ^docs$
 ^_pkgdown\.yml$
+^data-raw

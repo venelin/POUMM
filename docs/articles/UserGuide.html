@@ -36,7 +36,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.5</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
       </span>
     </div>
 
@@ -111,24 +111,24 @@
 # You should have received a copy of the GNU General Public License
 # along with POUMM  If not, see <http://www.gnu.org/licenses/>.
 -->
-<p>Here, we introduce the R-package <strong>POUMM</strong> - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits <span class="citation">(Mitov and Stadler 2018; Mitov and Stadler 2019)</span>. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette <a href="./InterpretingPOUMM.html">Interpreting the POUMM</a>.</p>
+<p>Here, we introduce the R-package <strong>POUMM</strong> - an implementation of the Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) for univariate continuous traits <span class="citation">(Mitov and Stadler 2018, 2019)</span>. In the sections below, we demonstrate how the package works. To that end, we run a simulation of a trait according to the POUMM model. Then, we execute a maximum likelihood (ML) and a Bayesian (MCMC) POUMM fit to the simulated data. We show how to use plots and some diagnostics to assess the quality of the fit, i.e. the mixing and the convergence of the MCMC, as well as the consistency of the POUMM fit with the true POUMM parameters from the simulation. Once you are familiar with these topics, we recommend reading the vignette <a href="./InterpretingPOUMM.html">Interpreting the POUMM</a>.</p>
 <p>But before we start, we need to install and load a few R-packages from CRAN:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"data.table"</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ggplot2"</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lmtest"</span>)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ape"</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(data.table)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lmtest)
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ape)</code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"data.table"</span>)</a>
+<a class="sourceLine" id="cb1-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ggplot2"</span>)</a>
+<a class="sourceLine" id="cb1-3" data-line-number="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"lmtest"</span>)</a>
+<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"ape"</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ggplot2)</a>
+<a class="sourceLine" id="cb2-2" data-line-number="2"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(data.table)</a>
+<a class="sourceLine" id="cb2-3" data-line-number="3"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(lmtest)</a>
+<a class="sourceLine" id="cb2-4" data-line-number="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/library">library</a></span>(ape)</a></code></pre></div>
 <div id="Installing" class="section level1">
 <h1 class="hasAnchor">
 <a href="#Installing" class="anchor"></a>Installing the POUMM R-package</h1>
 <p>You can install the most recent version of the package from github:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/reexports">install_github</a></span>(<span class="dt">repo=</span><span class="st">"venelin/POUMM"</span>)</code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">devtools<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/devtools/topics/remote-reexports">install_github</a></span>(<span class="dt">repo=</span><span class="st">"venelin/POUMM"</span>)</a></code></pre></div>
 <p>The above command will install the HEAD version from the master git-branch. This is the package branch, which evolves the fastest and gets the quickest bug-fixes.</p>
 <p>A more stable version of the package can be installed from CRAN:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"POUMM"</span>)</code></pre></div>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/utils/topics/install.packages">install.packages</a></span>(<span class="st">"POUMM"</span>)</a></code></pre></div>
 <p>The above commands will install all 3rd party dependencies with one exception: the package for high precision floating point arithmetics (Rmpfr). While the POUMM can be run without Rmpfr installed, installing this package is recommended to prevent numerical instability in some extreme cases, i.e. very small positive values for the POUMM parameters alpha, sigma, and sigmae. Currently, Rmpfr is listed as “Suggests” in POUMM’s DESCRIPTION, since it’s installation has been problematic on some systems (i.e. Linux). If you have not done this before, you may need to enable Rcpp in your R environment. You can read how to do this in the Rcpp-FAQ vignette available from <a href="https://CRAN.R-project.org/package=Rcpp">this page</a>.</p>
 <p>Bear in mind that, for CRAN compliance, some of the functionality of the package might not be enabled on some systems, in particular, parallel likelihood calculation on Mac OS X El Capitan using clang compiler prior to version 6 (see the section <a href="#Parallel">Parallel execution</a> below).</p>
 </div>
@@ -139,12 +139,12 @@
 <h2 class="hasAnchor">
 <a href="#parameters-of-the-simulation" class="anchor"></a>Parameters of the simulation</h2>
 <p>First, we specify the parameters of the POUMM simulation:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">N &lt;-<span class="st"> </span><span class="dv">500</span>
-g0 &lt;-<span class="st"> </span><span class="dv">0</span>           
-alpha &lt;-<span class="st"> </span>.<span class="dv">5</span>        
-theta &lt;-<span class="st"> </span><span class="dv">2</span>        
-sigma &lt;-<span class="st"> </span><span class="fl">0.2</span>     
-sigmae &lt;-<span class="st"> </span><span class="fl">0.2</span> </code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">N &lt;-<span class="st"> </span><span class="dv">500</span></a>
+<a class="sourceLine" id="cb5-2" data-line-number="2">g0 &lt;-<span class="st"> </span><span class="dv">0</span>           </a>
+<a class="sourceLine" id="cb5-3" data-line-number="3">alpha &lt;-<span class="st"> </span><span class="fl">.5</span>        </a>
+<a class="sourceLine" id="cb5-4" data-line-number="4">theta &lt;-<span class="st"> </span><span class="dv">2</span>        </a>
+<a class="sourceLine" id="cb5-5" data-line-number="5">sigma &lt;-<span class="st"> </span><span class="fl">0.2</span>     </a>
+<a class="sourceLine" id="cb5-6" data-line-number="6">sigmae &lt;-<span class="st"> </span><span class="fl">0.2</span> </a></code></pre></div>
 <p>We briefly explain the above parameters. The first four of them define an OU-process with initial state <span class="math inline">\(g_0\)</span>, a selection strength parameter, <span class="math inline">\(\alpha\)</span>, a long-term mean, <span class="math inline">\(\theta\)</span>, and a stochastic time-unit standard deviation, <span class="math inline">\(\sigma\)</span>. To get an intuition about the OU-parameters, one can consider random OU-trajectories using the function <code><a href="../reference/rTrajectoryOU.html">rTrajectoryOU()</a></code>. On the figure below, notice that doubling <span class="math inline">\(\alpha\)</span> speeds up the convergence of the trajectory towards <span class="math inline">\(\theta\)</span> (magenta line) while doubling <span class="math inline">\(\sigma\)</span> results in bigger stochastic oscilations (blue line):</p>
 <div class="figure">
 <img src="UserGuide_files/figure-html/unnamed-chunk-5-1.png" alt="Dashed black and magenta lines denote the deterministic trend towards the long-term mean $\theta$, fixing the stochastic parameter $\sigma=0$." width="672"><p class="caption">
@@ -157,35 +157,35 @@ Dashed black and magenta lines denote the deterministic trend towards the long-t
 <h2 class="hasAnchor">
 <a href="#simulating-the-phylogeny" class="anchor"></a>Simulating the phylogeny</h2>
 <p>Once the POUMM parameters are specified, we use the <strong>ape</strong> R-package to generate a random tree with 500 tips:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># Number of tips</span>
-tree &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ape/topics/rtree">rtree</a></span>(N)
-
-<span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(tree, <span class="dt">show.tip.label =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb6-1" data-line-number="1"><span class="co"># Number of tips</span></a>
+<a class="sourceLine" id="cb6-2" data-line-number="2">tree &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ape/topics/rtree">rtree</a></span>(N)</a>
+<a class="sourceLine" id="cb6-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb6-4" data-line-number="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(tree, <span class="dt">show.tip.label =</span> <span class="ot">FALSE</span>)</a></code></pre></div>
 </div>
 <div id="simulating-trait-evolution-on-the-phylogeny" class="section level2">
 <h2 class="hasAnchor">
 <a href="#simulating-trait-evolution-on-the-phylogeny" class="anchor"></a>Simulating trait evolution on the phylogeny</h2>
 <p>Starting from the root value <span class="math inline">\(g_0\)</span>, we simulate the genotypic values, <span class="math inline">\(g\)</span>, and the environmental contributions, <span class="math inline">\(e\)</span>, at all internal nodes down to the tips of the phylogeny:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># genotypic (heritable) values</span>
-g &lt;-<span class="st"> </span><span class="kw"><a href="../reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(tree, g0, alpha, theta, sigma)
-
-<span class="co"># environmental contributions</span>
-e &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(g), <span class="dv">0</span>, sigmae)
-
-<span class="co"># phenotypic values</span>
-z &lt;-<span class="st"> </span>g <span class="op">+</span><span class="st"> </span>e</code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1"><span class="co"># genotypic (heritable) values</span></a>
+<a class="sourceLine" id="cb7-2" data-line-number="2">g &lt;-<span class="st"> </span><span class="kw"><a href="../reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(tree, g0, alpha, theta, sigma)</a>
+<a class="sourceLine" id="cb7-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb7-4" data-line-number="4"><span class="co"># environmental contributions</span></a>
+<a class="sourceLine" id="cb7-5" data-line-number="5">e &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/Normal">rnorm</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/length">length</a></span>(g), <span class="dv">0</span>, sigmae)</a>
+<a class="sourceLine" id="cb7-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb7-7" data-line-number="7"><span class="co"># phenotypic values</span></a>
+<a class="sourceLine" id="cb7-8" data-line-number="8">z &lt;-<span class="st"> </span>g <span class="op">+</span><span class="st"> </span>e</a></code></pre></div>
 </div>
 <div id="visualizing-the-data" class="section level2">
 <h2 class="hasAnchor">
 <a href="#visualizing-the-data" class="anchor"></a>Visualizing the data</h2>
 <p>In most real situations, only the phenotypic value, at the tips, i.e.  will be observable. One useful way to visualize the observed trait-values is to cluster the tips in the tree according to their root-tip distance, and to use box-whisker or violin plots to visualize the trait distribution in each group. This allows to visually assess the trend towards uni-modality and normality of the values - an important prerequisite for the POUMM.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># This is easily done using the nodeTimes utility function in combination with</span>
-<span class="co"># the cut-function from the base package.</span>
-data &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/data.table/topics/data.table">data.table</a></span>(<span class="dt">z =</span> z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">t =</span> <span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))
-data &lt;-<span class="st"> </span>data[, group <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cut">cut</a></span>(t, <span class="dt">breaks =</span> <span class="dv">5</span>, <span class="dt">include.lowest =</span> <span class="ot">TRUE</span>)]
-
-<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/ggplot">ggplot</a></span>(<span class="dt">data =</span> data, <span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">x =</span> t, <span class="dt">y =</span> z, <span class="dt">group =</span> group)) <span class="op">+</span><span class="st"> </span>
-<span class="st">  </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_violin">geom_violin</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">col =</span> group)) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/geom_point">geom_point</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/ggplot2/topics/aes">aes</a></span>(<span class="dt">col =</span> group), <span class="dt">size=</span>.<span class="dv">5</span>)</code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb8-1" data-line-number="1"><span class="co"># This is easily done using the nodeTimes utility function in combination with</span></a>
+<a class="sourceLine" id="cb8-2" data-line-number="2"><span class="co"># the cut-function from the base package.</span></a>
+<a class="sourceLine" id="cb8-3" data-line-number="3">data &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/data.table/topics/data.table">data.table</a></span>(<span class="dt">z =</span> z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">t =</span> <span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))</a>
+<a class="sourceLine" id="cb8-4" data-line-number="4">data &lt;-<span class="st"> </span>data[, group <span class="op">:</span><span class="er">=</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/cut">cut</a></span>(t, <span class="dt">breaks =</span> <span class="dv">5</span>, <span class="dt">include.lowest =</span> <span class="ot">TRUE</span>)]</a>
+<a class="sourceLine" id="cb8-5" data-line-number="5"></a>
+<a class="sourceLine" id="cb8-6" data-line-number="6"><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html">ggplot</a></span>(<span class="dt">data =</span> data, <span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">x =</span> t, <span class="dt">y =</span> z, <span class="dt">group =</span> group)) <span class="op">+</span><span class="st"> </span></a>
+<a class="sourceLine" id="cb8-7" data-line-number="7"><span class="st">  </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_violin.html">geom_violin</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group)) <span class="op">+</span><span class="st"> </span><span class="kw"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html">geom_point</a></span>(<span class="kw"><a href="https://ggplot2.tidyverse.org/reference/aes.html">aes</a></span>(<span class="dt">col =</span> group), <span class="dt">size=</span>.<span class="dv">5</span>)</a></code></pre></div>
 <div class="figure">
 <img src="UserGuide_files/figure-html/violin-plots-1.png" alt="Distributions of the trait-values grouped according to their root-tip distances." width="672"><p class="caption">
 Distributions of the trait-values grouped according to their root-tip distances.
@@ -197,7 +197,7 @@ Distributions of the trait-values grouped according to their root-tip distances.
 <h1 class="hasAnchor">
 <a href="#fitting-the-poumm" class="anchor"></a>Fitting the POUMM</h1>
 <p>Once all simulated data is available, it is time proceed with a first POUMM fit. This is done easily by calling the function <code><a href="../reference/POUMM.html">POUMM()</a></code>:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fitPOUMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree)</code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1">fitPOUMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree)</a></code></pre></div>
 <p>The above code runs for about 5 minutes on a MacBook Pro Retina (late 2013) with a 2.3 GHz Intel Core i7 processor. Using default settings, it performs a maximum likelihood (ML) and a Bayesian (MCMC) fit to the data. First the ML-fit is done. Then, three MCMC chains are run as follows: the first MCMC chain samples from the default prior distribution, i.e. assuming a constant POUMM likelihood; the second and the third chains perform adaptive Metropolis sampling from the posterior parameter distribution conditioned on the default prior and the data. By default each chain is run for <span class="math inline">\(10^5\)</span> iterations. This and other default POUMM settings are described in the help-page for the function <code><a href="../reference/specPOUMM.html">specifyPOUMM()</a></code>.</p>
 <p>The strategy of executing three MCMC chains instead of one allows to assess:</p>
 <ul>
@@ -205,22 +205,22 @@ Distributions of the trait-values grouped according to their root-tip distances.
 <li>the presence of signal for the POUMM parameters in the data: a close match between prior and posterior distributions suggests lack of signal in the data.</li>
 </ul>
 <p>We plot traces and posterior sample densities from the MCMC fit:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># get a list of plots </span>
-plotList &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitPOUMM, <span class="dt">showUnivarDensityOnDiag =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">FALSE</span>)
-plotList<span class="op">$</span>traceplot</code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb10-1" data-line-number="1"><span class="co"># get a list of plots </span></a>
+<a class="sourceLine" id="cb10-2" data-line-number="2">plotList &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitPOUMM, <span class="dt">showUnivarDensityOnDiag =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb10-3" data-line-number="3">plotList<span class="op">$</span>traceplot</a></code></pre></div>
 <div class="figure">
 <img src="UserGuide_files/figure-html/unnamed-chunk-6-1.png" alt="MCMC traces from a POUMM MCMC-fit." width="691.2"><p class="caption">
 MCMC traces from a POUMM MCMC-fit.
 </p>
 </div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plotList<span class="op">$</span>densplot</code></pre></div>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1">plotList<span class="op">$</span>densplot</a></code></pre></div>
 <div class="figure">
 <img src="UserGuide_files/figure-html/unnamed-chunk-7-1.png" alt="MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit." width="691.2"><p class="caption">
 MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 </p>
 </div>
 <p>A mismatch of the posterior sample density plots from chains 2 and 3, in particular for the phylogenetic heritability, <span class="math inline">\(H_{\bar{t}}^2\)</span>, indicates that the chains have not converged. This can be confirmed quantitatively by the Gelman-Rubin statistic (column called G.R.) in the summary of the fit:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM)</code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM)</a></code></pre></div>
 <pre><code>##             stat   N       MLE PostMean               HPD    ESS  G.R.
 ##  1:        alpha 500   0.41430  0.40221     0.1898,0.6705  77.34 1.126
 ##  2:        theta 500   2.06446  2.08657       1.958,2.248 128.33 1.030
@@ -230,7 +230,7 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 ##  6:       H2tInf 500   0.31451  0.31965     0.1278,0.4446 131.32 1.102
 ##  7:       H2tMax 500   0.31450  0.31935     0.1278,0.4445 131.24 1.100
 ##  8:      H2tMean 500   0.31343  0.31641     0.1267,0.4429 130.67 1.096
-##  9:           g0 500   0.34021  0.29783     -1.125, 1.275  67.18 1.229
+##  9:           g0 500        NA       NA             NA,NA   0.00    NA
 ## 10: sigmaG2tMean 500   0.01823  0.01961 0.007174,0.029110 148.95 1.205
 ## 11:  sigmaG2tMax 500   0.01832  0.02005 0.007235,0.029455 151.11 1.225
 ## 12:  sigmaG2tInf 500   0.01832  0.02013 0.007236,0.029464 154.32 1.232
@@ -239,12 +239,12 @@ MCMC univariate density plots. Black dots on the x-axis indicate the ML-fit.
 ## 15:          AIC 500 -22.65466       NA             NA,NA   0.00    NA
 ## 16:         AICc 500 -22.53320       NA             NA,NA   0.00    NA</code></pre>
 <p>The G.R. diagnostic is used to check whether two random samples originate from the same distribution. Values that are substantially different from 1.00 (in this case greater than 1.01) indicate significant difference between the two samples and possible need to increase the number of MCMC iterations. Therefore, we rerun the fit specifying that each chain should be run for <span class="math inline">\(4 \times 10^5\)</span> iterations:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">fitPOUMM2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>))  </code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">fitPOUMM2 &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>))  </a></code></pre></div>
 <p>Now, both the density plots and the G.R. values indicate nearly perfect convergence of the second and third chains. The agreement between the ML-estimates (black dots on the density plots) and the posterior density modes (approximate location of the peak in the density curves) shows that the prior does not inflict a bias on the MCMC sample. The mismatch between chain 1 and chains 2 and 3 suggests that the information about the POUMM parameters contained in the data disagrees with or significantly improves our prior knowledge about these parameters. This is the desired outcome of a Bayesian fit, in particular, in the case of a weak (non-informed) prior, such as the default one.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">plotList &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitPOUMM2, <span class="dt">doPlot =</span> <span class="ot">FALSE</span>)
-plotList<span class="op">$</span>densplot</code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">plotList &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitPOUMM2, <span class="dt">doPlot =</span> <span class="ot">FALSE</span>)</a>
+<a class="sourceLine" id="cb15-2" data-line-number="2">plotList<span class="op">$</span>densplot</a></code></pre></div>
 <p><img src="UserGuide_files/figure-html/unnamed-chunk-9-1.png" width="691.2"></p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM2)</code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM2)</a></code></pre></div>
 <pre><code>##             stat   N       MLE PostMean               HPD    ESS   G.R.
 ##  1:        alpha 500   0.41430  0.38942     0.2104,0.5747  720.0 1.0015
 ##  2:        theta 500   2.06446  2.08602       1.987,2.195  720.0 1.0009
@@ -254,7 +254,7 @@ plotList<span class="op">$</span>densplot</code></pre></div>
 ##  6:       H2tInf 500   0.31451  0.30849     0.1470,0.4694 1274.0 1.0015
 ##  7:       H2tMax 500   0.31450  0.30831     0.1468,0.4694 1273.0 1.0015
 ##  8:      H2tMean 500   0.31343  0.30572     0.1437,0.4679 1263.7 1.0013
-##  9:           g0 500   0.34021  0.39466   -0.5643, 1.2740  720.0 1.0022
+##  9:           g0 500        NA       NA             NA,NA    0.0     NA
 ## 10: sigmaG2tMean 500   0.01823  0.01815 0.009029,0.030213 1266.7 1.0053
 ## 11:  sigmaG2tMax 500   0.01832  0.01838 0.008773,0.030115 1264.1 1.0058
 ## 12:  sigmaG2tInf 500   0.01832  0.01840 0.008774,0.030178 1264.3 1.0057
@@ -266,31 +266,31 @@ plotList<span class="op">$</span>densplot</code></pre></div>
 <h2 class="hasAnchor">
 <a href="#consistency-of-the-fit-with-the-true-simulation-parameters" class="anchor"></a>Consistency of the fit with the “true” simulation parameters</h2>
 <p>The 95% high posterior density (HPD) intervals contain the true values for all five POUMM parameters (<span class="math inline">\(\alpha\)</span>, <span class="math inline">\(\theta\)</span>, <span class="math inline">\(\sigma\)</span>, <span class="math inline">\(\sigma_e\)</span> and <span class="math inline">\(g_0\)</span>). This is also true for the derived statistics. To check this, we calculate the true derived statistics from the true parameter values and check that these are well within the corresponding HPD intervals:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tMean &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/mean">mean</a></span>(<span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))
-tMax &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Extremes">max</a></span>(<span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))
-
-<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="co"># phylogenetic heritability at mean root-tip distance: </span>
-  <span class="dt">H2tMean =</span> <span class="kw"><a href="../reference/H2.html">H2</a></span>(alpha, sigma, sigmae, <span class="dt">t =</span> tMean),
-  <span class="co"># phylogenetic heritability at long term equilibirium:</span>
-  <span class="dt">H2tInf =</span> <span class="kw"><a href="../reference/H2.html">H2</a></span>(alpha, sigma, sigmae, <span class="dt">t =</span> <span class="ot">Inf</span>),
-  <span class="co"># empirical (time-independent) phylogenetic heritability, </span>
-  <span class="dt">H2e =</span> <span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], sigmae),
-  <span class="co"># genotypic variance at mean root-tip distance: </span>
-  <span class="dt">sigmaG2tMean =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> tMean, alpha, sigma),
-  <span class="co"># genotypic variance at max root-tip distance: </span>
-  <span class="dt">sigmaG2tMean =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> tMax, alpha, sigma),
-  <span class="co"># genotypic variance at long-term equilibrium:</span>
-  <span class="dt">sigmaG2tInf =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> <span class="ot">Inf</span>, alpha, sigma)
-  )</code></pre></div>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb18-1" data-line-number="1">tMean &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/mean">mean</a></span>(<span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))</a>
+<a class="sourceLine" id="cb18-2" data-line-number="2">tMax &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/Extremes">max</a></span>(<span class="kw"><a href="../reference/nodeTimes.html">nodeTimes</a></span>(tree, <span class="dt">tipsOnly =</span> <span class="ot">TRUE</span>))</a>
+<a class="sourceLine" id="cb18-3" data-line-number="3"></a>
+<a class="sourceLine" id="cb18-4" data-line-number="4"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="co"># phylogenetic heritability at mean root-tip distance: </span></a>
+<a class="sourceLine" id="cb18-5" data-line-number="5">  <span class="dt">H2tMean =</span> <span class="kw"><a href="../reference/H2.html">H2</a></span>(alpha, sigma, sigmae, <span class="dt">t =</span> tMean),</a>
+<a class="sourceLine" id="cb18-6" data-line-number="6">  <span class="co"># phylogenetic heritability at long term equilibirium:</span></a>
+<a class="sourceLine" id="cb18-7" data-line-number="7">  <span class="dt">H2tInf =</span> <span class="kw"><a href="../reference/H2.html">H2</a></span>(alpha, sigma, sigmae, <span class="dt">t =</span> <span class="ot">Inf</span>),</a>
+<a class="sourceLine" id="cb18-8" data-line-number="8">  <span class="co"># empirical (time-independent) phylogenetic heritability, </span></a>
+<a class="sourceLine" id="cb18-9" data-line-number="9">  <span class="dt">H2e =</span> <span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], sigmae),</a>
+<a class="sourceLine" id="cb18-10" data-line-number="10">  <span class="co"># genotypic variance at mean root-tip distance: </span></a>
+<a class="sourceLine" id="cb18-11" data-line-number="11">  <span class="dt">sigmaG2tMean =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> tMean, alpha, sigma),</a>
+<a class="sourceLine" id="cb18-12" data-line-number="12">  <span class="co"># genotypic variance at max root-tip distance: </span></a>
+<a class="sourceLine" id="cb18-13" data-line-number="13">  <span class="dt">sigmaG2tMean =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> tMax, alpha, sigma),</a>
+<a class="sourceLine" id="cb18-14" data-line-number="14">  <span class="co"># genotypic variance at long-term equilibrium:</span></a>
+<a class="sourceLine" id="cb18-15" data-line-number="15">  <span class="dt">sigmaG2tInf =</span> <span class="kw"><a href="../reference/OU.html">varOU</a></span>(<span class="dt">t =</span> <span class="ot">Inf</span>, alpha, sigma)</a>
+<a class="sourceLine" id="cb18-16" data-line-number="16">  )</a></code></pre></div>
 <pre><code>##      H2tMean       H2tInf          H2e sigmaG2tMean sigmaG2tMean 
 ##      0.49958      0.50000      0.43792      0.03993      0.04000 
 ##  sigmaG2tInf 
 ##      0.04000</code></pre>
 <p>Finally, we compare the ratio of empirical genotypic to total phenotypic variance with the HPD-interval for the phylogenetic heritability.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dt">H2empirical =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">var</a></span>(g[<span class="dv">1</span><span class="op">:</span>N])<span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">var</a></span>(z[<span class="dv">1</span><span class="op">:</span>N]))</code></pre></div>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb20-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="dt">H2empirical =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">var</a></span>(g[<span class="dv">1</span><span class="op">:</span>N])<span class="op">/</span><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/cor">var</a></span>(z[<span class="dv">1</span><span class="op">:</span>N]))</a></code></pre></div>
 <pre><code>## H2empirical 
 ##      0.6541</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM2)[<span class="st">"H2e"</span><span class="op">==</span>stat, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(HPD)]</code></pre></div>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb22-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitPOUMM2)[<span class="st">"H2e"</span><span class="op">==</span>stat, <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/unlist">unlist</a></span>(HPD)]</a></code></pre></div>
 <pre><code>##  lower  upper 
 ## 0.2658 0.5435</code></pre>
 </div>
@@ -307,14 +307,14 @@ tMax &lt;-<span class="st"> </span><span class="kw"><a href="https://www.rdocume
 <ul>
 <li>parallelizing the MCMC-chains - this can be done by creating a <em>cluster</em> using the R-package <code>parallel</code>. With the default settings of the MCMC-fit (executing two MCMC chains sampling from the posterior distribution and one MCMC chain sampling from the prior), this parallelization can result in about two times speed-up of the POUMM fit on a computer with at least two available physical cores.</li>
 </ul>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># set up a parallel cluster on the local computer for parallel MCMC:</span>
-cluster &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">makeCluster</a></span>(parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>(<span class="dt">logical =</span> <span class="ot">FALSE</span>))
-doParallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/doParallel/topics/registerDoParallel">registerDoParallel</a></span>(cluster)
-
-fitPOUMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">parallelMCMC =</span> <span class="ot">TRUE</span>))
-
-<span class="co"># Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.</span>
-parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">stopCluster</a></span>(cluster)</code></pre></div>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="co"># set up a parallel cluster on the local computer for parallel MCMC:</span></a>
+<a class="sourceLine" id="cb25-2" data-line-number="2">cluster &lt;-<span class="st"> </span>parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">makeCluster</a></span>(parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/detectCores">detectCores</a></span>(<span class="dt">logical =</span> <span class="ot">FALSE</span>))</a>
+<a class="sourceLine" id="cb25-3" data-line-number="3">doParallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/doParallel/topics/registerDoParallel">registerDoParallel</a></span>(cluster)</a>
+<a class="sourceLine" id="cb25-4" data-line-number="4"></a>
+<a class="sourceLine" id="cb25-5" data-line-number="5">fitPOUMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec=</span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/list">list</a></span>(<span class="dt">parallelMCMC =</span> <span class="ot">TRUE</span>))</a>
+<a class="sourceLine" id="cb25-6" data-line-number="6"></a>
+<a class="sourceLine" id="cb25-7" data-line-number="7"><span class="co"># Don't forget to destroy the parallel cluster to avoid leaving zombie worker-processes.</span></a>
+<a class="sourceLine" id="cb25-8" data-line-number="8">parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/parallel/topics/makeCluster">stopCluster</a></span>(cluster)</a></code></pre></div>
 <p>It is possible to use this parallelization in combination with parallelization of the likelihood calculation. This, however, has not been tested and, presumably, would be slower than a parallelization on the likelihood level only. It may be appropriate to parallelize the MCMC chains on small trees, since for small trees, the parallel likelihood calculation is not likely to be much faster than a serial mode calculation. In this case the SPLITT library would switch automatically to serial mode, so there will be no parallel CPU at the likelihood level.</p>
 </div>
 <div id="packages-used" class="section level1">
@@ -322,13 +322,13 @@ parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumen
 <a href="#packages-used" class="anchor"></a>Packages used</h1>
 <p>Apart from base R functionality, the POUMM package uses a number of 3rd party R-packages:</p>
 <ul>
-<li>For likelihood calculation: Rcpp v1.0.1 <span class="citation">(Eddelbuettel et al. 2017)</span>, Rmpfr v0.7.2 <span class="citation">(Maechler 2016)</span>;</li>
+<li>For likelihood calculation: Rcpp v1.0.2 <span class="citation">(Eddelbuettel et al. 2017)</span>, Rmpfr v0.7.2 <span class="citation">(Maechler 2016)</span>;</li>
 <li>For mcmcSampling: adaptMCMC v1.3 <span class="citation">(Scheidegger 2012)</span>;</li>
-<li>For MCMC convergence diagnostics, calculation of MCMC effective sizes and HPD-intervals: coda v0.19.2 <span class="citation">(Plummer et al. 2016)</span>;</li>
-<li>For other purposes (parameter transformations and summary statistics): parallel v3.5.3 <span class="citation">(Team, n.d.)</span>, foreach v1.4.4 <span class="citation">(Revolution Analytics and Weston, n.d.)</span>, data.table v1.12.0 <span class="citation">(Dowle and Srinivasan 2016)</span>, Matrix v1.2.15 <span class="citation">(Bates and Maechler 2017)</span>);</li>
+<li>For MCMC convergence diagnostics, calculation of MCMC effective sizes and HPD-intervals: coda v0.19.3 <span class="citation">(Plummer et al. 2016)</span>;</li>
+<li>For other purposes (parameter transformations and summary statistics): parallel v3.6.1 <span class="citation">(Team, n.d.)</span>, foreach v1.4.4 <span class="citation">(Revolution Analytics and Weston, n.d.)</span>, data.table v1.12.2 <span class="citation">(Dowle and Srinivasan 2016)</span>, Matrix v1.2.17 <span class="citation">(Bates and Maechler 2017)</span>);</li>
 <li>For tree processing: ape v5.3 <span class="citation">(Paradis et al. 2016)</span>;</li>
-<li>For reporting: data.table v1.12.0 <span class="citation">(Dowle and Srinivasan 2016)</span>, ggplot2 v3.1.0 <span class="citation">(Wickham and Chang 2016)</span>, lmtest v0.9.36 <span class="citation">(Hothorn et al. 2015)</span>;</li>
-<li>For testing: testthat v2.0.1 <span class="citation">(Wickham 2016)</span>, mvtnorm v1.0.10 <span class="citation">(Genz et al. 2016)</span>.</li>
+<li>For reporting: data.table v1.12.2 <span class="citation">(Dowle and Srinivasan 2016)</span>, ggplot2 v3.2.1 <span class="citation">(Wickham and Chang 2016)</span>, lmtest v0.9.37 <span class="citation">(Hothorn et al. 2015)</span>;</li>
+<li>For testing: testthat v2.1.1 <span class="citation">(Wickham 2016)</span>, mvtnorm v1.0.11 <span class="citation">(Genz et al. 2016)</span>.</li>
 </ul>
 </div>
 <div id="references" class="section level1 unnumbered">
@@ -336,49 +336,49 @@ parallel<span class="op">::</span><span class="kw"><a href="https://www.rdocumen
 <a href="#references" class="anchor"></a>References</h1>
 <div id="refs" class="references">
 <div id="ref-R-Matrix">
-<p>Bates, Douglas, and Martin Maechler. 2017. <em>Matrix: Sparse and Dense Matrix Classes and Methods</em>. <a href="https://CRAN.R-project.org/package=Matrix" class="uri">https://CRAN.R-project.org/package=Matrix</a>.</p>
+<p>Bates, Douglas, and Martin Maechler. 2017. <em>Matrix: Sparse and Dense Matrix Classes and Methods</em>. <a href="https://CRAN.R-project.org/package=Matrix">https://CRAN.R-project.org/package=Matrix</a>.</p>
 </div>
 <div id="ref-R-data-table">
-<p>Dowle, Matt, and Arun Srinivasan. 2016. <em>Data.table: Extension of ‘Data.frame‘</em>. <a href="https://CRAN.R-project.org/package=data.table" class="uri">https://CRAN.R-project.org/package=data.table</a>.</p>
+<p>Dowle, Matt, and Arun Srinivasan. 2016. <em>Data.table: Extension of ‘Data.frame‘</em>. <a href="https://CRAN.R-project.org/package=data.table">https://CRAN.R-project.org/package=data.table</a>.</p>
 </div>
 <div id="ref-R-Rcpp">
-<p>Eddelbuettel, Dirk, Romain Francois, JJ Allaire, Kevin Ushey, Qiang Kou, Nathan Russell, Douglas Bates, and John Chambers. 2017. <em>Rcpp: Seamless R and C++ Integration</em>. <a href="https://CRAN.R-project.org/package=Rcpp" class="uri">https://CRAN.R-project.org/package=Rcpp</a>.</p>
+<p>Eddelbuettel, Dirk, Romain Francois, JJ Allaire, Kevin Ushey, Qiang Kou, Nathan Russell, Douglas Bates, and John Chambers. 2017. <em>Rcpp: Seamless R and C++ Integration</em>. <a href="https://CRAN.R-project.org/package=Rcpp">https://CRAN.R-project.org/package=Rcpp</a>.</p>
 </div>
 <div id="ref-R-mvtnorm">
-<p>Genz, Alan, Frank Bretz, Tetsuhisa Miwa, Xuefei Mi, and Torsten Hothorn. 2016. <em>Mvtnorm: Multivariate Normal and T Distributions</em>. <a href="https://CRAN.R-project.org/package=mvtnorm" class="uri">https://CRAN.R-project.org/package=mvtnorm</a>.</p>
+<p>Genz, Alan, Frank Bretz, Tetsuhisa Miwa, Xuefei Mi, and Torsten Hothorn. 2016. <em>Mvtnorm: Multivariate Normal and T Distributions</em>. <a href="https://CRAN.R-project.org/package=mvtnorm">https://CRAN.R-project.org/package=mvtnorm</a>.</p>
 </div>
 <div id="ref-R-lmtest">
-<p>Hothorn, Torsten, Achim Zeileis, Richard W. Farebrother, and Clint Cummins. 2015. <em>Lmtest: Testing Linear Regression Models</em>. <a href="https://CRAN.R-project.org/package=lmtest" class="uri">https://CRAN.R-project.org/package=lmtest</a>.</p>
+<p>Hothorn, Torsten, Achim Zeileis, Richard W. Farebrother, and Clint Cummins. 2015. <em>Lmtest: Testing Linear Regression Models</em>. <a href="https://CRAN.R-project.org/package=lmtest">https://CRAN.R-project.org/package=lmtest</a>.</p>
 </div>
 <div id="ref-R-Rmpfr">
-<p>Maechler, Martin. 2016. <em>Rmpfr: R Mpfr - Multiple Precision Floating-Point Reliable</em>. <a href="https://CRAN.R-project.org/package=Rmpfr" class="uri">https://CRAN.R-project.org/package=Rmpfr</a>.</p>
+<p>Maechler, Martin. 2016. <em>Rmpfr: R Mpfr - Multiple Precision Floating-Point Reliable</em>. <a href="https://CRAN.R-project.org/package=Rmpfr">https://CRAN.R-project.org/package=Rmpfr</a>.</p>
 </div>
 <div id="ref-Mitov:2018co">
-<p>Mitov, Venelin, and Tanja Stadler. 2018. “A Practical Guide to Estimating the Heritability of Pathogen Traits.” <em>Molecular Biology and Evolution</em> 35 (3): 756–72. doi:<a href="https://doi.org/10.1093/molbev/msx328">10.1093/molbev/msx328</a>.</p>
+<p>Mitov, Venelin, and Tanja Stadler. 2018. “A Practical Guide to Estimating the Heritability of Pathogen Traits.” <em>Molecular Biology and Evolution</em> 35 (3): 756–72. <a href="https://doi.org/10.1093/molbev/msx328">https://doi.org/10.1093/molbev/msx328</a>.</p>
 </div>
 <div id="ref-Mitov:2017eg">
-<p>———. 2019. “Parallel Likelihood Calculation for Phylogenetic Comparative Models: The Splitt C++ Library.” <em>Methods in Ecology and Evolution</em>. John Wiley &amp; Sons, Inc. doi:<a href="https://doi.org/10.1111/2041-210X.13136">10.1111/2041-210X.13136</a>.</p>
+<p>———. 2019. “Parallel Likelihood Calculation for Phylogenetic Comparative Models: The Splitt C++ Library.” <em>Methods in Ecology and Evolution</em>. John Wiley &amp; Sons, Inc. <a href="https://doi.org/10.1111/2041-210X.13136">https://doi.org/10.1111/2041-210X.13136</a>.</p>
 </div>
 <div id="ref-R-ape">
-<p>Paradis, Emmanuel, Simon Blomberg, Ben Bolker, Julien Claude, Hoa Sien Cuong, Richard Desper, Gilles Didier, et al. 2016. <em>Ape: Analyses of Phylogenetics and Evolution</em>. <a href="https://CRAN.R-project.org/package=ape" class="uri">https://CRAN.R-project.org/package=ape</a>.</p>
+<p>Paradis, Emmanuel, Simon Blomberg, Ben Bolker, Julien Claude, Hoa Sien Cuong, Richard Desper, Gilles Didier, et al. 2016. <em>Ape: Analyses of Phylogenetics and Evolution</em>. <a href="https://CRAN.R-project.org/package=ape">https://CRAN.R-project.org/package=ape</a>.</p>
 </div>
 <div id="ref-R-coda">
-<p>Plummer, Martyn, Nicky Best, Kate Cowles, Karen Vines, Deepayan Sarkar, Douglas Bates, Russell Almond, and Arni Magnusson. 2016. <em>Coda: Output Analysis and Diagnostics for Mcmc</em>. <a href="https://CRAN.R-project.org/package=coda" class="uri">https://CRAN.R-project.org/package=coda</a>.</p>
+<p>Plummer, Martyn, Nicky Best, Kate Cowles, Karen Vines, Deepayan Sarkar, Douglas Bates, Russell Almond, and Arni Magnusson. 2016. <em>Coda: Output Analysis and Diagnostics for Mcmc</em>. <a href="https://CRAN.R-project.org/package=coda">https://CRAN.R-project.org/package=coda</a>.</p>
 </div>
 <div id="ref-R-foreach">
 <p>Revolution Analytics, and Steve Weston. n.d. <em>Foreach: Provides Foreach Looping Construct for R</em>.</p>
 </div>
 <div id="ref-R-adaptMCMC">
-<p>Scheidegger, Andreas. 2012. <em>AdaptMCMC: Implementation of a Generic Adaptive Monte Carlo Markov Chain Sampler</em>. <a href="https://CRAN.R-project.org/package=adaptMCMC" class="uri">https://CRAN.R-project.org/package=adaptMCMC</a>.</p>
+<p>Scheidegger, Andreas. 2012. <em>AdaptMCMC: Implementation of a Generic Adaptive Monte Carlo Markov Chain Sampler</em>. <a href="https://CRAN.R-project.org/package=adaptMCMC">https://CRAN.R-project.org/package=adaptMCMC</a>.</p>
 </div>
 <div id="ref-R-parallel">
 <p>Team, R Core. n.d. <em>Support for Parallel Computation in R</em>.</p>
 </div>
 <div id="ref-R-testthat">
-<p>Wickham, Hadley. 2016. <em>Testthat: Unit Testing for R</em>. <a href="https://CRAN.R-project.org/package=testthat" class="uri">https://CRAN.R-project.org/package=testthat</a>.</p>
+<p>Wickham, Hadley. 2016. <em>Testthat: Unit Testing for R</em>. <a href="https://CRAN.R-project.org/package=testthat">https://CRAN.R-project.org/package=testthat</a>.</p>
 </div>
 <div id="ref-R-ggplot2">
-<p>Wickham, Hadley, and Winston Chang. 2016. <em>Ggplot2: Create Elegant Data Visualisations Using the Grammar of Graphics</em>. <a href="https://CRAN.R-project.org/package=ggplot2" class="uri">https://CRAN.R-project.org/package=ggplot2</a>.</p>
+<p>Wickham, Hadley, and Winston Chang. 2016. <em>Ggplot2: Create Elegant Data Visualisations Using the Grammar of Graphics</em>. <a href="https://CRAN.R-project.org/package=ggplot2">https://CRAN.R-project.org/package=ggplot2</a>.</p>
 </div>
 </div>
 </div>
