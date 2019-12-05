@@ -28,7 +28,7 @@ Description: The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to
     Mitov and Stadler (2019) <doi:10.1111/2041-210X.13136>.
 License: GPL (>= 3.0)
 Encoding: UTF-8
-LazyData: false
+LazyData: true
 Depends:
     R (>= 3.1.0),
     stats,
