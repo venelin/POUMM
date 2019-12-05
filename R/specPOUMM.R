@@ -1272,7 +1272,7 @@ validateZTree <- function(z, tree) {
     if(any(is.na(z)) | any(is.infinite(z))) {
       stop("The trait vector z contains infinite or NA values. All trait-values should be finite!")
     }
-    if(!("phylo"%in%class(tree))) {
+    if(!("phylo" %in% class(tree))) {
       stop("tree must be a phylo object!")
     }
     if(length(tree$tip.label) != length(z)) {
@@ -1385,7 +1385,7 @@ validateSpecPOUMM <- function(spec) {
       }
       
       prior <- try(parPriorMCMC(parInitMCMC), silent = TRUE)
-      if(class(prior) != "numeric" | is.na(prior)) {
+      if( (!"numeric" %in% class(prior)) | is.na(prior) ) {
         print("parInitMCMC : ")
         print(parInitMCMC)
         stop(paste0("parPriorMCMC should return a finite number but returned:", 

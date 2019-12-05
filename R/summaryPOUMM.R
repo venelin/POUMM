@@ -186,7 +186,7 @@ generateStatisticFunG0 <- function(object) {
           ll <- object$loglik(par, pruneInfo = object$pruneInfo)
           attr(ll, "g0")
         }), silent = TRUE)
-      if(class(g0s) == "try-error") {
+      if(inherits(g0s, "try-error")) {
         rep(NA_real_, nrow(par))
       } else {
         g0s

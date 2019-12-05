@@ -502,7 +502,7 @@ gPOUMM <- function(z, tree, g0, alpha, theta, sigma, sigmae) {
     mu.g.poumm <- mu.g
   }
 
-  if(class(V.g.poumm)=='try-error') {
+  if(inherits(V.g.poumm, 'try-error')) {
     warning(V.g.poumm)
   } 
   list(V.g = V.g, V.g_1 = V.g_1, mu.g = mu.g, V.e = V.e, V.e_1 = V.e_1,
