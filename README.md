@@ -30,7 +30,7 @@ questions.
 # Using the R-package
 
 Here is a quick example on how to use the package on a simulated tree
-and data:
+and trait data:
 
 ``` r
 # number of tips
