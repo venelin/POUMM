@@ -132,7 +132,7 @@ Whenever presented with data consisting of a rooted phylogenetic tree with obser
 * What is the long-term equilibrium distribution of the trait values in the population?
 * To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?
 
-In the following subsections, we use our example simulation from the vignette vignette [A User Guide to the POUMM R-package](./UserGuide.html). Let us quickly
+In the following subsections, we use our example simulation from the vignette vignette [A User Guide to the POUMM R-package](./UserGuide.html). Let us 
 remind the true POUMM parameters for this simulation:
 
 

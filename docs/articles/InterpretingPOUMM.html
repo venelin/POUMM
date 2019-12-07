@@ -174,7 +174,7 @@
 <li>What is the long-term equilibrium distribution of the trait values in the population?</li>
 <li>To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</li>
 </ul>
-<p>In the following subsections, we use our example simulation from the vignette vignette <a href="./UserGuide.html">A User Guide to the POUMM R-package</a>. Let us quickly remind the true POUMM parameters for this simulation:</p>
+<p>In the following subsections, we use our example simulation from the vignette vignette <a href="./UserGuide.html">A User Guide to the POUMM R-package</a>. Let us remind the true POUMM parameters for this simulation:</p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">N &lt;-<span class="st"> </span><span class="dv">500</span></a>
 <a class="sourceLine" id="cb1-2" data-line-number="2">g0 &lt;-<span class="st"> </span><span class="dv">0</span>           </a>
 <a class="sourceLine" id="cb1-3" data-line-number="3">alpha &lt;-<span class="st"> </span><span class="fl">.5</span>        </a>
@@ -253,7 +253,7 @@ TODO
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7fdc42bb3360&gt;</code></pre>
+## &lt;environment: 0x7fafdf605ab8&gt;</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="co"># Prior for the MCMC sampling</span></a>
 <a class="sourceLine" id="cb9-2" data-line-number="2">specH2tMean<span class="op">$</span>parPriorMCMC</a></code></pre></div>
 <pre><code>## function (par) 
@@ -263,7 +263,7 @@ TODO
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7fdc42bb3360&gt;</code></pre>
+## &lt;environment: 0x7fafdf605ab8&gt;</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="co"># Bounds for the maximum likelihood search</span></a>
 <a class="sourceLine" id="cb11-2" data-line-number="2">specH2tMean<span class="op">$</span>parLower</a></code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
