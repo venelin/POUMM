@@ -5,8 +5,16 @@
 \title{Multivariate density of observed values along a tree given an OU process of 
 evolution and root-value}
 \usage{
-dVNodesGivenTreePOUMM(z, tree, alpha, theta, sigma, sigmae = 0,
-  e = rep(0, length(z)), log = TRUE)
+dVNodesGivenTreePOUMM(
+  z,
+  tree,
+  alpha,
+  theta,
+  sigma,
+  sigmae = 0,
+  e = rep(0, length(z)),
+  log = TRUE
+)
 }
 \arguments{
 \item{z}{A numeric vector of size length(tree$tip.label)+tree$Nnode 

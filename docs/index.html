@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Phylogenetic Ornstein-Uhlenbeck Mixed Model • POUMM</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
 <script src="pkgdown.js"></script><meta property="og:title" content="The Phylogenetic Ornstein-Uhlenbeck Mixed Model">
 <meta property="og:description" content="The Phylogenetic Ornstein-Uhlenbeck Mixed Model (POUMM) allows to 
     estimate the phylogenetic heritability of continuous traits, to test 
@@ -40,7 +41,7 @@
 </script>
 </head>
 <body>
-    <div class="container template-article">
+    <div class="container template-home">
       <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
   <div class="container">
     <div class="navbar-header">
@@ -52,7 +53,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.7</span>
       </span>
     </div>
 
@@ -95,13 +96,10 @@
 <!--/.navbar -->
 
       
-      </header><div class="row">
-  <div class="col-md-9 contents">
-    
 
-    
-    
-<!-- README.md is generated from README.Rmd. Please edit that file -->
+      </header><div class="row">
+  <div class="contents col-md-9">
+
 
 <div id="the-phylogenetic-ornstein-uhlenbeck-mixed-model" class="section level1">
 <div class="page-header"><h1 class="hasAnchor">
@@ -112,39 +110,39 @@
 <h1 class="hasAnchor">
 <a href="#using-the-r-package" class="anchor"></a>Using the R-package</h1>
 <p>Here is a quick example on how to use the package on a simulated tree and trait data:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1"><span class="co"># number of tips</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">N &lt;-<span class="st"> </span><span class="dv">500</span> </a>
-<a class="sourceLine" id="cb1-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb1-4" data-line-number="4"><span class="co"># phylogeny</span></a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">tr &lt;-<span class="st"> </span>ape<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/ape/topics/rtree">rtree</a></span>(N)</a>
-<a class="sourceLine" id="cb1-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb1-7" data-line-number="7"><span class="co"># for the example, simulate trait values on the tree according to a POUMM model.</span></a>
-<a class="sourceLine" id="cb1-8" data-line-number="8">z &lt;-<span class="st"> </span><span class="kw"><a href="reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(</a>
-<a class="sourceLine" id="cb1-9" data-line-number="9">  <span class="dt">tree =</span> tr,   </a>
-<a class="sourceLine" id="cb1-10" data-line-number="10">  <span class="dt">z0 =</span> <span class="dv">0</span>,      <span class="co"># fixed value at the root</span></a>
-<a class="sourceLine" id="cb1-11" data-line-number="11">  <span class="dt">alpha =</span> <span class="dv">2</span>,   <span class="co"># selection strength of the OU process</span></a>
-<a class="sourceLine" id="cb1-12" data-line-number="12">  <span class="dt">theta =</span> <span class="dv">3</span>,   <span class="co"># long term mean of the OU process</span></a>
-<a class="sourceLine" id="cb1-13" data-line-number="13">  <span class="dt">sigma =</span> <span class="dv">1</span>,   <span class="co"># unit-time standard deviation of the OU process</span></a>
-<a class="sourceLine" id="cb1-14" data-line-number="14">  <span class="dt">sigmae =</span> <span class="dv">1</span>   <span class="co"># standard deviation of the non-heritable component</span></a>
-<a class="sourceLine" id="cb1-15" data-line-number="15">)[<span class="dv">1</span><span class="op">:</span>N]         <span class="co"># only the values at the N tips will be available in reality</span></a>
-<a class="sourceLine" id="cb1-16" data-line-number="16"></a>
-<a class="sourceLine" id="cb1-17" data-line-number="17"><span class="co"># A combined ML and MCMC fit of the model with default parameter settings.</span></a>
-<a class="sourceLine" id="cb1-18" data-line-number="18">fit &lt;-<span class="st"> </span><span class="kw"><a href="reference/POUMM.html">POUMM</a></span>(z, tr)</a>
-<a class="sourceLine" id="cb1-19" data-line-number="19"></a>
-<a class="sourceLine" id="cb1-20" data-line-number="20"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-21" data-line-number="21"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-22" data-line-number="22"><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/AIC">AIC</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-23" data-line-number="23"><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/AIC">BIC</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-24" data-line-number="24"><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-25" data-line-number="25"><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/logLik">logLik</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-26" data-line-number="26"><span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/fitted.values">fitted</a></span>(fit)</a>
-<a class="sourceLine" id="cb1-27" data-line-number="27"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/residuals">resid</a></span>(fit))</a>
-<a class="sourceLine" id="cb1-28" data-line-number="28"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/abline">abline</a></span>(<span class="dt">h=</span><span class="dv">0</span>)</a>
-<a class="sourceLine" id="cb1-29" data-line-number="29"></a>
-<a class="sourceLine" id="cb1-30" data-line-number="30"><span class="co"># fit PMM to the same data and do a likelihood ratio test</span></a>
-<a class="sourceLine" id="cb1-31" data-line-number="31">fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="reference/POUMM.html">POUMM</a></span>(z, tr)</a>
-<a class="sourceLine" id="cb1-32" data-line-number="32">lmtest<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM, fit)</a></code></pre></div>
-<p>For an introduction to the model parameters and the package, read the <a href="https://venelin.github.io/POUMM/articles/UserGuide.html">User guide</a>. More advanced topics, such as parametrizations and interpretations of the model fit are covered in the other package <a href="https://venelin.github.io/POUMM/articles/index.html">vignettes</a> and in the package help-pages, e.g. <code><a href="reference/POUMM.html">?POUMM</a></code>, <code><a href="reference/specPOUMM.html">?specifyPOUMM</a></code>, <code><a href="reference/summary.POUMM.html">?summary.POUMM</a></code>, <code><a href="reference/plot.POUMM.html">?plot.POUMM</a></code>.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a><span class="co"># number of tips</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a>N &lt;-<span class="st"> </span><span class="dv">500</span> </span>
+<span id="cb1-3"><a href="#cb1-3"></a></span>
+<span id="cb1-4"><a href="#cb1-4"></a><span class="co"># phylogeny</span></span>
+<span id="cb1-5"><a href="#cb1-5"></a>tr &lt;-<span class="st"> </span>ape<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/ape/man/rtree.html">rtree</a></span>(N)</span>
+<span id="cb1-6"><a href="#cb1-6"></a></span>
+<span id="cb1-7"><a href="#cb1-7"></a><span class="co"># for the example, simulate trait values on the tree according to a POUMM model.</span></span>
+<span id="cb1-8"><a href="#cb1-8"></a>z &lt;-<span class="st"> </span><span class="kw"><a href="reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(</span>
+<span id="cb1-9"><a href="#cb1-9"></a>  <span class="dt">tree =</span> tr,   </span>
+<span id="cb1-10"><a href="#cb1-10"></a>  <span class="dt">z0 =</span> <span class="dv">0</span>,      <span class="co"># fixed value at the root</span></span>
+<span id="cb1-11"><a href="#cb1-11"></a>  <span class="dt">alpha =</span> <span class="dv">2</span>,   <span class="co"># selection strength of the OU process</span></span>
+<span id="cb1-12"><a href="#cb1-12"></a>  <span class="dt">theta =</span> <span class="dv">3</span>,   <span class="co"># long term mean of the OU process</span></span>
+<span id="cb1-13"><a href="#cb1-13"></a>  <span class="dt">sigma =</span> <span class="dv">1</span>,   <span class="co"># unit-time standard deviation of the OU process</span></span>
+<span id="cb1-14"><a href="#cb1-14"></a>  <span class="dt">sigmae =</span> <span class="dv">1</span>   <span class="co"># standard deviation of the non-heritable component</span></span>
+<span id="cb1-15"><a href="#cb1-15"></a>)[<span class="dv">1</span><span class="op">:</span>N]         <span class="co"># only the values at the N tips will be available in reality</span></span>
+<span id="cb1-16"><a href="#cb1-16"></a></span>
+<span id="cb1-17"><a href="#cb1-17"></a><span class="co"># A combined ML and MCMC fit of the model with default parameter settings.</span></span>
+<span id="cb1-18"><a href="#cb1-18"></a>fit &lt;-<span class="st"> </span><span class="kw"><a href="reference/POUMM.html">POUMM</a></span>(z, tr)</span>
+<span id="cb1-19"><a href="#cb1-19"></a></span>
+<span id="cb1-20"><a href="#cb1-20"></a><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(fit)</span>
+<span id="cb1-21"><a href="#cb1-21"></a><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(fit)</span>
+<span id="cb1-22"><a href="#cb1-22"></a><span class="kw"><a href="https://rdrr.io/r/stats/AIC.html">AIC</a></span>(fit)</span>
+<span id="cb1-23"><a href="#cb1-23"></a><span class="kw"><a href="https://rdrr.io/r/stats/AIC.html">BIC</a></span>(fit)</span>
+<span id="cb1-24"><a href="#cb1-24"></a><span class="kw"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(fit)</span>
+<span id="cb1-25"><a href="#cb1-25"></a><span class="kw"><a href="https://rdrr.io/r/stats/logLik.html">logLik</a></span>(fit)</span>
+<span id="cb1-26"><a href="#cb1-26"></a><span class="kw"><a href="https://rdrr.io/r/stats/fitted.values.html">fitted</a></span>(fit)</span>
+<span id="cb1-27"><a href="#cb1-27"></a><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(<span class="kw"><a href="https://rdrr.io/r/stats/residuals.html">resid</a></span>(fit))</span>
+<span id="cb1-28"><a href="#cb1-28"></a><span class="kw"><a href="https://rdrr.io/r/graphics/abline.html">abline</a></span>(<span class="dt">h=</span><span class="dv">0</span>)</span>
+<span id="cb1-29"><a href="#cb1-29"></a></span>
+<span id="cb1-30"><a href="#cb1-30"></a><span class="co"># fit PMM to the same data and do a likelihood ratio test</span></span>
+<span id="cb1-31"><a href="#cb1-31"></a>fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="reference/POUMM.html">POUMM</a></span>(z, tr)</span>
+<span id="cb1-32"><a href="#cb1-32"></a>lmtest<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/lmtest/man/lrtest.html">lrtest</a></span>(fitPMM, fit)</span></code></pre></div>
+<p>For an introduction to the model parameters and the package, read the <a href="https://venelin.github.io/POUMM/articles/UserGuide.html">User guide</a>. More advanced topics, such as parametrizations and interpretations of the model fit are covered in the other package <a href="https://venelin.github.io/POUMM/articles/index.html">vignettes</a> and in the package help-pages, e.g. <code><a href="reference/POUMM.html">?POUMM</a></code>, <code><a href="reference/specPOUMM.html">?specifyPOUMM</a></code>, <code><a href="reference/summary.POUMM.html">?summary.POUMM</a></code>, <code><a href="reference/plot.POUMM.html">?plot.POUMM</a></code>.</p>
 </div>
 <div id="installing-the-r-package" class="section level1">
 <h1 class="hasAnchor">
@@ -167,6 +165,7 @@
 <a href="#package-web-page" class="anchor"></a>Package web-page</h1>
 <p>Check-out the package <a href="https://venelin.github.io/POUMM/index.html">web-page</a> for the latest news and further documentation.</p>
 </div>
+
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
@@ -202,7 +201,7 @@
 </ul>
 </div>
 
-      <div class="dev-status">
+  <div class="dev-status">
 <h2>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://travis-ci.com/venelin/POUMM"><img src="https://travis-ci.com/venelin/POUMM.svg?branch=master" alt="Travis build status"></a></li>
@@ -213,7 +212,6 @@
 </ul>
 </div>
 </div>
-
 </div>
 
 
@@ -222,12 +220,14 @@
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

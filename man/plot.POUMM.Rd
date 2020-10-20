@@ -4,16 +4,27 @@
 \alias{plot.POUMM}
 \title{Plots of a POUMM-fit}
 \usage{
-\method{plot}{POUMM}(x, type = c("MCMC"), doPlot = TRUE,
-  interactive = TRUE, stat = c("alpha", "theta", "sigma", "sigmae",
-  "g0", "H2tMean"), chain = NULL, startMCMC = NA, endMCMC = NA,
-  thinMCMC = 1000, statFunctions = statistics(x), doZoomIn = FALSE,
+\method{plot}{POUMM}(
+  x,
+  type = c("MCMC"),
+  doPlot = TRUE,
+  interactive = TRUE,
+  stat = c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
+  chain = NULL,
+  startMCMC = NA,
+  endMCMC = NA,
+  thinMCMC = 1000,
+  statFunctions = statistics(x),
+  doZoomIn = FALSE,
   zoomInFilter = paste0("(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
-  "(value >= 0 & value <= 1) ) |",
-  "( !stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
-  "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
-  "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
-  prettyNames = TRUE, showUnivarDensityOnDiag = FALSE, ...)
+    "(value >= 0 & value <= 1) ) |",
+    "( !stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
+    "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+    "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
+  prettyNames = TRUE,
+  showUnivarDensityOnDiag = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{An object of class POUMM.}

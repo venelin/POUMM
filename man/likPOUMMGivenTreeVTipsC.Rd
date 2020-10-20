@@ -5,8 +5,16 @@
 \title{Fast (parallel) POUMM likelihood calculation using the SPLITT 
 library}
 \usage{
-likPOUMMGivenTreeVTipsC(integrator, alpha, theta, sigma, sigmae, g0 = NA,
-  g0Prior = NULL, log = TRUE)
+likPOUMMGivenTreeVTipsC(
+  integrator,
+  alpha,
+  theta,
+  sigma,
+  sigmae,
+  g0 = NA,
+  g0Prior = NULL,
+  log = TRUE
+)
 }
 \arguments{
 \item{integrator}{An Rcpp module object from the class POUMM_AbcPOUMM. This 

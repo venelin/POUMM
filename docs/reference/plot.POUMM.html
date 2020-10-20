@@ -8,21 +8,25 @@
 
 <title>Plots of a POUMM-fit — plot.POUMM • POUMM</title>
 
+
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -30,10 +34,11 @@
 
 
 
-<meta property="og:title" content="Plots of a POUMM-fit — plot.POUMM" />
 
+<meta property="og:title" content="Plots of a POUMM-fit — plot.POUMM" />
 <meta property="og:description" content="Plots of a POUMM-fit" />
 <meta name="twitter:card" content="summary" />
+
 
 
 
@@ -57,6 +62,7 @@
   gtag('config', 'UA-129563006-1');
 </script>
 
+
   </head>
 
   <body>
@@ -73,7 +79,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.7</span>
       </span>
     </div>
 
@@ -107,7 +113,6 @@
   <a href="../news/index.html">News</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
@@ -117,6 +122,7 @@
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
@@ -128,23 +134,32 @@
     </div>
 
     <div class="ref-description">
-    
     <p>Plots of a POUMM-fit</p>
-    
     </div>
 
     <pre class="usage"><span class='co'># S3 method for POUMM</span>
-<span class='fu'><a href='https://www.rdocumentation.org/packages/graphics/topics/plot'>plot</a></span>(<span class='no'>x</span>, <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"MCMC"</span>), <span class='kw'>doPlot</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
-  <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>stat</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/c'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"theta"</span>, <span class='st'>"sigma"</span>, <span class='st'>"sigmae"</span>,
-  <span class='st'>"g0"</span>, <span class='st'>"H2tMean"</span>), <span class='kw'>chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>startMCMC</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>endMCMC</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
-  <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>1000</span>, <span class='kw'>statFunctions</span> <span class='kw'>=</span> <span class='fu'><a href='statistics.html'>statistics</a></span>(<span class='no'>x</span>), <span class='kw'>doZoomIn</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
-  <span class='kw'>zoomInFilter</span> <span class='kw'>=</span> <span class='fu'><a href='https://www.rdocumentation.org/packages/base/topics/paste'>paste0</a></span>(<span class='st'>"(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') &amp; "</span>,
-  <span class='st'>"(value &gt;= 0 &amp; value &lt;= 1) ) |"</span>,
-  <span class='st'>"( !stat %in% c('H2e','H2tMean','H2tInf','H2tMax') &amp; "</span>,
-  <span class='st'>"(value &lt;= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &amp;"</span>,
-  <span class='st'>"value &gt;= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"</span>),
-  <span class='kw'>prettyNames</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>showUnivarDensityOnDiag</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>, <span class='no'>...</span>)</pre>
-    
+<span class='fu'><a href='https://rdrr.io/r/graphics/plot.html'>plot</a></span>(
+  <span class='no'>x</span>,
+  <span class='kw'>type</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"MCMC"</span>),
+  <span class='kw'>doPlot</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>interactive</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>stat</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/c.html'>c</a></span>(<span class='st'>"alpha"</span>, <span class='st'>"theta"</span>, <span class='st'>"sigma"</span>, <span class='st'>"sigmae"</span>, <span class='st'>"g0"</span>, <span class='st'>"H2tMean"</span>),
+  <span class='kw'>chain</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>startMCMC</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
+  <span class='kw'>endMCMC</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
+  <span class='kw'>thinMCMC</span> <span class='kw'>=</span> <span class='fl'>1000</span>,
+  <span class='kw'>statFunctions</span> <span class='kw'>=</span> <span class='fu'><a href='statistics.html'>statistics</a></span>(<span class='no'>x</span>),
+  <span class='kw'>doZoomIn</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='kw'>zoomInFilter</span> <span class='kw'>=</span> <span class='fu'><a href='https://rdrr.io/r/base/paste.html'>paste0</a></span>(<span class='st'>"(stat %in% c('H2e','H2tMean','H2tInf','H2tMax') &amp; "</span>,
+    <span class='st'>"(value &gt;= 0 &amp; value &lt;= 1) ) |"</span>,
+    <span class='st'>"( !stat %in% c('H2e','H2tMean','H2tInf','H2tMax') &amp; "</span>,
+    <span class='st'>"(value &lt;= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &amp;"</span>,
+    <span class='st'>"value &gt;= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"</span>),
+  <span class='kw'>prettyNames</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>showUnivarDensityOnDiag</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>,
+  <span class='no'>...</span>
+)</pre>
+
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
@@ -231,24 +246,23 @@ Defaults to FALSE, in which case the column names are displayed on the diagonal.
       <td><p>not used, needed for consistency with the generic plot-function.</p></td>
     </tr>
     </table>
-    
+
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>If doPlot==FALSE, a named list containing a member called data of
   class data.table and several members of class ggplot.</p>
-    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
       <li><a href="#value">Value</a></li>
-          </ul>
+    </ul>
 
   </div>
 </div>
+
 
       <footer>
       <div class="copyright">
@@ -256,13 +270,16 @@ Defaults to FALSE, in which case the column names are displayed on the diagonal.
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

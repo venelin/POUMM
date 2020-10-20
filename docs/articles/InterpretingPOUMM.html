@@ -7,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Interpreting the POUMM • POUMM</title>
 <!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- sticky kit --><script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous">
+<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="../pkgdown.css" rel="stylesheet">
 <script src="../pkgdown.js"></script><meta property="og:title" content="Interpreting the POUMM">
 <meta property="og:description" content="">
 <meta name="twitter:card" content="summary">
@@ -36,7 +37,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.7</span>
       </span>
     </div>
 
@@ -79,6 +80,7 @@
 <!--/.navbar -->
 
       
+
       </header><div class="row">
   <div class="col-md-9 contents">
     <div class="page-header toc-ignore">
@@ -150,12 +152,11 @@
 &lt;g_0, H_{\bar{t}}^2, \theta, \sigma, \sigma_e&gt; &amp; \to&lt;g_0, \alpha=\frac{y+W(y e^{-y})}{2\bar{t}}, \theta, \sigma, \sigma_e&gt;\label{eq:alphaH2sigmasigmae} \\
 &lt;g_0, \alpha, \theta, \sigma, H_{\bar{t}}^2&gt; &amp; \to&lt;g_0, \alpha, \theta, \sigma, \sigma_e=\sqrt{\frac{\sigma^2(1-e^{-2\alpha \bar{t}})}{2 \alpha}(\frac{1}{H_{\bar{t}}^2} - 1)}&gt;,\label{eq:sigmaeH2alphasigma}
 \end{align}\]</span> where <span class="math inline">\(y=\frac{\bar{t}\sigma^2}{\sigma_e^2 H_{\bar{t}}^2} - \frac{\bar{t}\sigma^2}{\sigma_e^2}\)</span> and <span class="math inline">\(W\)</span> is the Lambert-W function.</p></li>
-<li>Expectation at equilibrium of the OU-process (<span class="math inline">\(t\to\infty\)</span>): <span class="math inline">\(H_{\infty}^2:=\lim_{\bar{t}\to\infty}H_{\bar{t}}^2=\frac{\sigma^2}{\sigma^2+2\alpha\sigma_e^2}\)</span>. By taking the limit <span class="math inline">\(\bar{t}\to\infty\)</span> in equations ,  and , we obtain the corresponding parametrizations: <span class="math display">\[\begin{align}
+<li><p>Expectation at equilibrium of the OU-process (<span class="math inline">\(t\to\infty\)</span>): <span class="math inline">\(H_{\infty}^2:=\lim_{\bar{t}\to\infty}H_{\bar{t}}^2=\frac{\sigma^2}{\sigma^2+2\alpha\sigma_e^2}\)</span>. By taking the limit <span class="math inline">\(\bar{t}\to\infty\)</span> in equations ,  and , we obtain the corresponding parametrizations: <span class="math display">\[\begin{align}
 &lt;g_0, \alpha, \theta, H_{\infty}^2, \sigma_e&gt; &amp; \to&lt;g_0, \alpha, \theta, \sigma=\sqrt{\frac{2\alpha H_{\infty}^2 \sigma_e^2}{1-H_{\infty}^2}}, \sigma_e&gt;\label{eq:sigmaH2alphasigmaetInf} \\
 &lt;g_0, H_{\infty}^2, \theta, \sigma, \sigma_e&gt; &amp; \to&lt;g_0, \alpha=\frac{\sigma^2 (1-H_{\infty}^2)}{2H_{\infty}^2\sigma_e^2}, \theta, \sigma, \sigma_e&gt;\label{eq:alphaH2sigmasigmaetInf} \\
 &lt;g_0, \alpha, \theta, \sigma, H_{\infty}^2&gt; &amp; \to&lt;g_0, \alpha, \theta, \sigma, \sigma_e=\sqrt{\frac{\sigma^2}{2 \alpha}(\frac{1}{H_{\infty}^2} - 1)}&gt;,\label{eq:sigmaeH2alphasigmatInf}
-\end{align}\]</span>
-</li>
+\end{align}\]</span></p></li>
 <li><p>Empirical (time-independent) version of the heritability based on the sample phenotypic variance <span class="math inline">\(s^2(\textbf{z})\)</span> : <span class="math inline">\(H_e^2:=1-\sigma_e^2/s^2(\textbf{z})\)</span>. This definition is useful when the tree is non-ultrametric but there is sufficient evidence that the empirical distribution of the trait is stationary along the tree. In this case, <span class="math inline">\(s^2(\textbf{z})\)</span> coincides with the sum of the OU variance at equilibrium and <span class="math inline">\(\sigma_e^2\)</span>. The corresponding parametrization is: <span class="math display">\[\begin{align}
 &lt;g_0, \alpha, \theta, \sigma, H_{e}^2&gt; &amp; \to&lt;g_0, \alpha, \theta, \sigma, \sigma_e=\sqrt{s^2(\textbf{z})(1-H_e^2)}&gt;
 \label{eq:sigmaeH2e}
@@ -175,12 +176,12 @@
 <li>To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</li>
 </ul>
 <p>In the following subsections, we use our example simulation from the vignette vignette <a href="./UserGuide.html">A User Guide to the POUMM R-package</a>. Let us remind the true POUMM parameters for this simulation:</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">N &lt;-<span class="st"> </span><span class="dv">500</span></a>
-<a class="sourceLine" id="cb1-2" data-line-number="2">g0 &lt;-<span class="st"> </span><span class="dv">0</span>           </a>
-<a class="sourceLine" id="cb1-3" data-line-number="3">alpha &lt;-<span class="st"> </span><span class="fl">.5</span>        </a>
-<a class="sourceLine" id="cb1-4" data-line-number="4">theta &lt;-<span class="st"> </span><span class="dv">2</span>        </a>
-<a class="sourceLine" id="cb1-5" data-line-number="5">sigma &lt;-<span class="st"> </span><span class="fl">0.2</span>     </a>
-<a class="sourceLine" id="cb1-6" data-line-number="6">sigmae &lt;-<span class="st"> </span><span class="fl">0.2</span> </a></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>N &lt;-<span class="st"> </span><span class="dv">500</span></span>
+<span id="cb1-2"><a href="#cb1-2"></a>g0 &lt;-<span class="st"> </span><span class="dv">0</span>           </span>
+<span id="cb1-3"><a href="#cb1-3"></a>alpha &lt;-<span class="st"> </span><span class="fl">.5</span>        </span>
+<span id="cb1-4"><a href="#cb1-4"></a>theta &lt;-<span class="st"> </span><span class="dv">2</span>        </span>
+<span id="cb1-5"><a href="#cb1-5"></a>sigma &lt;-<span class="st"> </span><span class="fl">0.2</span>     </span>
+<span id="cb1-6"><a href="#cb1-6"></a>sigmae &lt;-<span class="st"> </span><span class="fl">0.2</span> </span></code></pre></div>
 <!--
 TODO
 * What is the profile of gradual loss of phenotypic resemblance between pair-tips as a function of their phylogenetic distance?
@@ -191,10 +192,10 @@ TODO
 <a href="#is-the-poumm-an-appropriate-model-for-the-data" class="anchor"></a>Is the POUMM an appropriate model for the data?</h2>
 <p>The first step to answering that question is to visualize the data and check for obvious violations of the POUMM assumptions. The POUMM method expects that the trait-values at the tips are a sample from a multivariate normal distribution. With an ultrametric species tree, where all tips are equally distant from the root, this assumption translates in having all trait-values be realizations of identically distributed normal random variables. In the case of a non-ultrametric tree, it is far more useful to look at a sequence of box-whisker or violin plots of the trait-values, gouped by their root-tip distance.</p>
 <p>Once visualizing the data has confirmed its normality, we recommend comaparing the POUMM-fit with a fit from a NULL-model such as the phylogenetic mixed model (PMM) <span class="citation">(Housworth, Martins, and Lynch 2004)</span>. Since the PMM is nested in the POUMM, i.e. in the limit <span class="math inline">\(\alpha\to0\)</span>, the POUMM model is equivalent to a PMM model with the same initial genotypic value <span class="math inline">\(g_0\)</span> and unit-time variance <span class="math inline">\(\sigma\)</span>, it is easy to fit a PMM model to the data by fixing the value of the parameter <span class="math inline">\(\alpha\)</span> to 0:</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb2-1" data-line-number="1">specPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree)</a>
-<a class="sourceLine" id="cb2-2" data-line-number="2">fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC=</span><span class="ot">FALSE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>specPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree)</span>
+<span id="cb2-2"><a href="#cb2-2"></a>fitPMM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC=</span><span class="ot">FALSE</span>)</span></code></pre></div>
 <p>Now a likelihood-ratio test between the maximum likelihood fits clearly shows that the POUMM significantly outperforms the PMM to the data:</p>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">lmtest<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM, fitPOUMM2)</a></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>lmtest<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/lmtest/man/lrtest.html">lrtest</a></span>(fitPMM, fitPOUMM2)</span></code></pre></div>
 <pre><code>## Likelihood ratio test
 ## 
 ## Model 1: fitPMM
@@ -206,13 +207,13 @@ TODO
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1</code></pre>
 <p>Since <code>lrtest</code> only uses the ML-fit, to save time, we disabled the MCMC fit by specifying <code>doMCMC = FALSE</code>. In real situations, though, it is always recommended to enable the MCMC fit, since it can improve the ML-fit if it finds a region of higher likelihood in the parameter space that has not been discovered by the ML-fit. Moreover, comparing posterior samples for the PMM and POUMM fit can, in principle, be more informative and a likelihood-ratio test.</p>
 <p>As an exersise, we can generate data under the PMM model and see if a POUMM fit on that data remains significantly better than a PMM fit:</p>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb5-1" data-line-number="1">gBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(tree, g0, <span class="dt">alpha =</span> <span class="dv">0</span>, <span class="dt">theta =</span> <span class="dv">0</span>, <span class="dt">sigma =</span> sigma)</a>
-<a class="sourceLine" id="cb5-2" data-line-number="2">zBM &lt;-<span class="st"> </span>gBM <span class="op">+</span><span class="st"> </span>e</a>
-<a class="sourceLine" id="cb5-3" data-line-number="3"></a>
-<a class="sourceLine" id="cb5-4" data-line-number="4">fitPMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb5-5" data-line-number="5">fitPOUMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)</a>
-<a class="sourceLine" id="cb5-6" data-line-number="6"></a>
-<a class="sourceLine" id="cb5-7" data-line-number="7">lmtest<span class="op">::</span><span class="kw"><a href="https://www.rdocumentation.org/packages/lmtest/topics/lrtest">lrtest</a></span>(fitPMM_on_zBM, fitPOUMM_on_zBM)</a></code></pre></div>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a>gBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/rVNodesGivenTreePOUMM.html">rVNodesGivenTreePOUMM</a></span>(tree, g0, <span class="dt">alpha =</span> <span class="dv">0</span>, <span class="dt">theta =</span> <span class="dv">0</span>, <span class="dt">sigma =</span> sigma)</span>
+<span id="cb5-2"><a href="#cb5-2"></a>zBM &lt;-<span class="st"> </span>gBM <span class="op">+</span><span class="st"> </span>e</span>
+<span id="cb5-3"><a href="#cb5-3"></a></span>
+<span id="cb5-4"><a href="#cb5-4"></a>fitPMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specPMM, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb5-5"><a href="#cb5-5"></a>fitPOUMM_on_zBM &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(zBM[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">doMCMC =</span> <span class="ot">FALSE</span>)</span>
+<span id="cb5-6"><a href="#cb5-6"></a></span>
+<span id="cb5-7"><a href="#cb5-7"></a>lmtest<span class="op">::</span><span class="kw"><a href="https://rdrr.io/pkg/lmtest/man/lrtest.html">lrtest</a></span>(fitPMM_on_zBM, fitPOUMM_on_zBM)</span></code></pre></div>
 <pre><code>## Likelihood ratio test
 ## 
 ## Model 1: fitPMM_on_zBM
@@ -231,14 +232,14 @@ TODO
 <a href="#what-is-the-long-term-equilibrium-normal-distribution-of-the-trait-values-in-the-population" class="anchor"></a>What is the long-term equilibrium normal distribution of the trait values in the population?</h2>
 <p>The long-term mean is given by the estimated parameter <code>theta</code>. The long-term variance is given by the sum <code>sigmaG2tInf+sigmae^2</code> taken from the summary table of a POUMM-fit.</p>
 </div>
-<div id="to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e-genetic-versus-non-heritable-i-e-environmental-factors" class="section level2">
+<div id="to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e--genetic-versus-non-heritable-i-e--environmental-factors" class="section level2">
 <h2 class="hasAnchor">
-<a href="#to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e-genetic-versus-non-heritable-i-e-environmental-factors" class="anchor"></a>To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</h2>
+<a href="#to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e--genetic-versus-non-heritable-i-e--environmental-factors" class="anchor"></a>To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</h2>
 <p>In other words, what is the proportion of observable phenotypic variance attributable to the phylogeny? To answer this question, the POUMM package allows to estimate the phylogenetic heritability of the trait. Assuming that the tree represents the genetic relationship between individuals in a population, <span class="math inline">\(H_\bar{t}^2\)</span> provides an estimate for the broad-sense heritability <span class="math inline">\(H^2\)</span> of the trait in the population.</p>
 <p>When the goal is to estimate <span class="math inline">\(H_{\bar{t}}^2\)</span> (<code>H2tMean</code>), it is imortant to specify an uninformed prior for it. Looking at the densities for chain 1 (red) on the previous figures, it becomes clear that the default prior favors values of <code>H2tMean</code>, which are either close to 0 or close to 1. Since by definition <span class="math inline">\(H_{\bar{t}}^2\in[0,1]\)</span>, a reasonable uninformed prior for it is the standard uniform distribution. We set this prior by using the <code>specifyPOUMM_ATH2tMeanSeG0</code> function. This specifies that the POUMM fit should be done on a parametrization <span class="math inline">\(&lt;\alpha,\theta,H_{\bar{t}}^2,\sigma_e,g_0&gt;\)</span> rather than the standard parametrization <span class="math inline">\(&lt;\alpha,\theta,\sigma,\sigma_e,g_0&gt;\)</span>. It also specifies a uniform prior for <span class="math inline">\(H_{\bar{t}}^2\)</span>. You can explore the members of the specification list to see the different settings:</p>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb7-1" data-line-number="1">specH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPOUMM_ATH2tMeanSeG0</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>)</a>
-<a class="sourceLine" id="cb7-2" data-line-number="2"><span class="co"># Mapping from the sampled parameters to the standard POUMM parameters:</span></a>
-<a class="sourceLine" id="cb7-3" data-line-number="3">specH2tMean<span class="op">$</span>parMapping</a></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>specH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/specPOUMM.html">specifyPOUMM_ATH2tMeanSeG0</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">nSamplesMCMC =</span> <span class="fl">4e5</span>)</span>
+<span id="cb7-2"><a href="#cb7-2"></a><span class="co"># Mapping from the sampled parameters to the standard POUMM parameters:</span></span>
+<span id="cb7-3"><a href="#cb7-3"></a>specH2tMean<span class="op">$</span>parMapping</span></code></pre></div>
 <pre><code>## function (par) 
 ## {
 ##     if (is.matrix(par)) {
@@ -253,9 +254,9 @@ TODO
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x7fafdf605ab8&gt;</code></pre>
-<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb9-1" data-line-number="1"><span class="co"># Prior for the MCMC sampling</span></a>
-<a class="sourceLine" id="cb9-2" data-line-number="2">specH2tMean<span class="op">$</span>parPriorMCMC</a></code></pre></div>
+## &lt;environment: 0x00000000237b8698&gt;</code></pre>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Prior for the MCMC sampling</span></span>
+<span id="cb9-2"><a href="#cb9-2"></a>specH2tMean<span class="op">$</span>parPriorMCMC</span></code></pre></div>
 <pre><code>## function (par) 
 ## {
 ##     dexp(par[1], rate = tMean/6.931, log = TRUE) + dnorm(par[2], 
@@ -263,31 +264,31 @@ TODO
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x7fafdf605ab8&gt;</code></pre>
-<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb11-1" data-line-number="1"><span class="co"># Bounds for the maximum likelihood search</span></a>
-<a class="sourceLine" id="cb11-2" data-line-number="2">specH2tMean<span class="op">$</span>parLower</a></code></pre></div>
+## &lt;environment: 0x00000000237b8698&gt;</code></pre>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Bounds for the maximum likelihood search</span></span>
+<span id="cb11-2"><a href="#cb11-2"></a>specH2tMean<span class="op">$</span>parLower</span></code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
 ##  0.0000 -2.2073  0.0000  0.0000  0.5176</code></pre>
-<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb13-1" data-line-number="1">specH2tMean<span class="op">$</span>parUpper</a></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>specH2tMean<span class="op">$</span>parUpper</span></code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
 ## 10.8379  5.9389  0.9900  0.5335  3.2139</code></pre>
 <p>Then we fit the model:</p>
-<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb15-1" data-line-number="1">fitH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specH2tMean)</a></code></pre></div>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb16-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/graphics/topics/plot">plot</a></span>(fitH2tMean, <span class="dt">stat =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>), </a>
-<a class="sourceLine" id="cb16-2" data-line-number="2">     <span class="dt">doZoomIn =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">TRUE</span>)</a></code></pre></div>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>fitH2tMean &lt;-<span class="st"> </span><span class="kw"><a href="../reference/POUMM.html">POUMM</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">spec =</span> specH2tMean)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="kw"><a href="https://rdrr.io/r/graphics/plot.html">plot</a></span>(fitH2tMean, <span class="dt">stat =</span> <span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>), </span>
+<span id="cb16-2"><a href="#cb16-2"></a>     <span class="dt">doZoomIn =</span> <span class="ot">TRUE</span>, <span class="dt">doPlot =</span> <span class="ot">TRUE</span>)</span></code></pre></div>
 <p><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-1.png" width="691.2"><img src="InterpretingPOUMM_files/figure-html/unnamed-chunk-8-2.png" width="691.2"></p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb17-1" data-line-number="1"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/summary">summary</a></span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</a></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="kw"><a href="https://rdrr.io/r/base/summary.html">summary</a></span>(fitH2tMean)[stat <span class="op">%in%</span><span class="st"> </span><span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(<span class="st">"H2tMean"</span>, <span class="st">"H2e"</span>, <span class="st">"H2tInf"</span>, <span class="st">"sigmae"</span>)]</span></code></pre></div>
 <pre><code>##       stat   N    MLE PostMean           HPD ESS G.R.
 ## 1: H2tMean 500 0.3057   0.3155 0.1788,0.4708 720    1
 ## 2:  sigmae 500 0.2013   0.2032 0.1830,0.2266 720    1
 ## 3:     H2e 500 0.4307   0.4183 0.2783,0.5296 720    1
 ## 4:  H2tInf 500 0.3073   0.3213 0.1781,0.4743 720    1</code></pre>
 <p>Now we see that the prior density for <code>H2tMean</code> is nearly uniform. It becomes clear that the process has converged to its long-term heritability since the intervals for <code>H2tMean</code> and <code>H2tInf</code> are nearly the same. Notice, though, that the estimate for the empirical heritability <code>H2e</code> is shifted towards 1 compared to <code>H2tMean</code> and <code>H2tInf</code>. This shows an important difference between <code>H2e</code> and the time-dependent formulae for phylogenetic heritability: <code>H2e</code> takes into account all values of z including those at the very beginning when the process was far away from equilibrium. Thus the estimated phenotypic variance over all trait-values at all times can be substantially bigger compared to the current trait-variance in the population:</p>
-<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb19-1" data-line-number="1"><span class="co"># Compare global empirical heritability</span></a>
-<a class="sourceLine" id="cb19-2" data-line-number="2">H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">sigmae =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>])</a>
-<a class="sourceLine" id="cb19-3" data-line-number="3"><span class="co"># versus recent empirical heritability</span></a>
-<a class="sourceLine" id="cb19-4" data-line-number="4">H2eRecent &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">sigmae =</span> <span class="kw"><a href="https://www.rdocumentation.org/packages/stats/topics/coef">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>], <span class="dt">tFrom =</span> <span class="dv">5</span>)</a>
-<a class="sourceLine" id="cb19-5" data-line-number="5"><span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/print">print</a></span>(<span class="kw"><a href="https://www.rdocumentation.org/packages/base/topics/c">c</a></span>(H2eGlobal, H2eRecent))</a></code></pre></div>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># Compare global empirical heritability</span></span>
+<span id="cb19-2"><a href="#cb19-2"></a>H2eGlobal &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], <span class="dt">sigmae =</span> <span class="kw"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>])</span>
+<span id="cb19-3"><a href="#cb19-3"></a><span class="co"># versus recent empirical heritability</span></span>
+<span id="cb19-4"><a href="#cb19-4"></a>H2eRecent &lt;-<span class="st"> </span><span class="kw"><a href="../reference/PhylogeneticH2.html">H2e</a></span>(z[<span class="dv">1</span><span class="op">:</span>N], tree, <span class="dt">sigmae =</span> <span class="kw"><a href="https://rdrr.io/r/stats/coef.html">coef</a></span>(fitH2tMean)[<span class="st">'sigmae'</span>], <span class="dt">tFrom =</span> <span class="dv">5</span>)</span>
+<span id="cb19-5"><a href="#cb19-5"></a><span class="kw"><a href="https://rdrr.io/r/base/print.html">print</a></span>(<span class="kw"><a href="https://rdrr.io/r/base/c.html">c</a></span>(H2eGlobal, H2eRecent))</span></code></pre></div>
 <pre><code>## [1] 0.4307 0.3409</code></pre>
 <p>To learn more about different ways to specify the POUMM fit, read the documentation page <code><a href="../reference/specPOUMM.html">?specifyPOUMM</a></code>. <!--
 TODO
@@ -318,7 +319,7 @@ TODO
 <p>Hodcroft, Emma, Jarrod D Hadfield, Esther Fearnhill, Andrew Phillips, David Dunn, Siobhan O’Shea, Deenan Pillay, Andrew J Leigh Brown, on behalf of the UK HIV Drug Resistance Database, and the UK CHIC Study. 2014. “The Contribution of Viral Genotype to Plasma Viral Set-Point in HIV Infection.” <em>PLoS Pathogens</em> 10 (5): e1004112.</p>
 </div>
 <div id="ref-Housworth:2004gj">
-<p>Housworth, Elizabeth A, Emı'lia P Martins, and Michael Lynch. 2004. “The phylogenetic mixed model.” <em>The American Naturalist</em> 163 (1): 84–96.</p>
+<p>Housworth, Elizabeth A, Emı́lia P Martins, and Michael Lynch. 2004. “The phylogenetic mixed model.” <em>The American Naturalist</em> 163 (1): 84–96.</p>
 </div>
 <div id="ref-Lynch:1991db">
 <p>Lynch, Michael. 1991. “Methods for the Analysis of Comparative Data in Evolutionary Biology.” <em>Evolution</em> 45 (5): 1065–80.</p>
@@ -334,6 +335,7 @@ TODO
   </div>
 
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
+
         <div id="tocnav">
       <h2 class="hasAnchor">
 <a href="#tocnav" class="anchor"></a>Contents</h2>
@@ -349,7 +351,7 @@ TODO
 <li><a href="#is-the-poumm-an-appropriate-model-for-the-data">Is the POUMM an appropriate model for the data?</a></li>
       <li><a href="#assuming-that-the-trait-undergoes-stabilizing-selection-what-are-the-long-term-optimum-value-and-the-rate-of-convergence-towards-it">Assuming that the trait undergoes stabilizing selection, what are the long-term optimum value and the rate of convergence towards it?</a></li>
       <li><a href="#what-is-the-long-term-equilibrium-normal-distribution-of-the-trait-values-in-the-population">What is the long-term equilibrium normal distribution of the trait values in the population?</a></li>
-      <li><a href="#to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e-genetic-versus-non-heritable-i-e-environmental-factors">To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</a></li>
+      <li><a href="#to-what-extent-are-the-observed-trait-values-determined-by-heritable-i-e--genetic-versus-non-heritable-i-e--environmental-factors">To what extent are the observed trait-values determined by heritable (i.e. genetic) versus non-heritable (i.e. environmental) factors?</a></li>
       </ul>
 </li>
       <li><a href="#references">References</a></li>
@@ -360,17 +362,20 @@ TODO
 </div>
 
 
+
       <footer><div class="copyright">
   <p>Developed by Venelin Mitov.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
 </div>
 
   
+
 
   </body>
 </html>

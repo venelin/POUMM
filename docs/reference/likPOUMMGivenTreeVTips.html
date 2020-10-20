@@ -10,21 +10,25 @@
 process for the genetic contributions along the tree and normally distributed
 environmental deviations. — likPOUMMGivenTreeVTips • POUMM</title>
 
+
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -32,10 +36,10 @@ environmental deviations. — likPOUMMGivenTreeVTips • POUMM</title>
 
 
 
+
 <meta property="og:title" content="Density of observed tip-values given a tree, assuming Ornstein-Uhlenbeck 
 process for the genetic contributions along the tree and normally distributed
 environmental deviations. — likPOUMMGivenTreeVTips" />
-
 <meta property="og:description" content="Calculates the (log-)probability density of trait values at the
 tip-nodes given the tree and assuming that the trait value at the tips is the
 sum of a genetic contribution, g, that evolved on the tree according to an OU
@@ -48,6 +52,7 @@ theta and unit time variance sigma^2. Considering the observed data and tree as
 a fixed parameter and the POUMM parameters as variables, this function is
 interpreted as the POUMM likelihood." />
 <meta name="twitter:card" content="summary" />
+
 
 
 
@@ -71,6 +76,7 @@ interpreted as the POUMM likelihood." />
   gtag('config', 'UA-129563006-1');
 </script>
 
+
   </head>
 
   <body>
@@ -87,7 +93,7 @@ interpreted as the POUMM likelihood." />
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.7</span>
       </span>
     </div>
 
@@ -121,7 +127,6 @@ interpreted as the POUMM likelihood." />
   <a href="../news/index.html">News</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
@@ -131,6 +136,7 @@ interpreted as the POUMM likelihood." />
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
@@ -144,7 +150,6 @@ environmental deviations.</h1>
     </div>
 
     <div class="ref-description">
-    
     <p>Calculates the (log-)probability density of trait values at the
 tip-nodes given the tree and assuming that the trait value at the tips is the
 sum of a genetic contribution, g, that evolved on the tree according to an OU
@@ -156,13 +161,25 @@ this corresponds to the limiting Brownian motion process with mean value
 theta and unit time variance sigma^2. Considering the observed data and tree as
 a fixed parameter and the POUMM parameters as variables, this function is
 interpreted as the POUMM likelihood.</p>
-    
     </div>
 
-    <pre class="usage"><span class='fu'>likPOUMMGivenTreeVTips</span>(<span class='no'>z</span>, <span class='no'>tree</span>, <span class='no'>alpha</span>, <span class='no'>theta</span>, <span class='no'>sigma</span>, <span class='kw'>sigmae</span> <span class='kw'>=</span> <span class='fl'>0</span>,
-  <span class='kw'>g0</span> <span class='kw'>=</span> <span class='fl'>NA</span>, <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>, <span class='kw'>log</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>, <span class='kw'>pruneInfo</span> <span class='kw'>=</span> <span class='fu'><a href='pruneTree.html'>pruneTree</a></span>(<span class='no'>tree</span>,
-  <span class='no'>z</span>), <span class='kw'>usempfr</span> <span class='kw'>=</span> <span class='fl'>0</span>, <span class='kw'>maxmpfr</span> <span class='kw'>=</span> <span class='fl'>2</span>, <span class='kw'>precbits</span> <span class='kw'>=</span> <span class='fl'>128</span>, <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>)</pre>
-    
+    <pre class="usage"><span class='fu'>likPOUMMGivenTreeVTips</span>(
+  <span class='no'>z</span>,
+  <span class='no'>tree</span>,
+  <span class='no'>alpha</span>,
+  <span class='no'>theta</span>,
+  <span class='no'>sigma</span>,
+  <span class='kw'>sigmae</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>g0</span> <span class='kw'>=</span> <span class='fl'>NA</span>,
+  <span class='kw'>g0Prior</span> <span class='kw'>=</span> <span class='kw'>NULL</span>,
+  <span class='kw'>log</span> <span class='kw'>=</span> <span class='fl'>TRUE</span>,
+  <span class='kw'>pruneInfo</span> <span class='kw'>=</span> <span class='fu'><a href='pruneTree.html'>pruneTree</a></span>(<span class='no'>tree</span>, <span class='no'>z</span>),
+  <span class='kw'>usempfr</span> <span class='kw'>=</span> <span class='fl'>0</span>,
+  <span class='kw'>maxmpfr</span> <span class='kw'>=</span> <span class='fl'>2</span>,
+  <span class='kw'>precbits</span> <span class='kw'>=</span> <span class='fl'>128</span>,
+  <span class='kw'>debug</span> <span class='kw'>=</span> <span class='fl'>FALSE</span>
+)</pre>
+
     <h2 class="hasAnchor" id="arguments"><a class="anchor" href="#arguments"></a>Arguments</h2>
     <table class="ref-arguments">
     <colgroup><col class="name" /><col class="desc" /></colgroup>
@@ -246,23 +263,22 @@ to completely disable Rmpfr functionality.</p></td>
 during likelihood calculation</p></td>
     </tr>
     </table>
-    
+
     <h2 class="hasAnchor" id="value"><a class="anchor" href="#value"></a>Value</h2>
 
     <p>A numeric with attributes "g0" and "g0LogPrior".</p>
-    
 
   </div>
   <div class="col-md-3 hidden-xs hidden-sm" id="sidebar">
     <h2>Contents</h2>
     <ul class="nav nav-pills nav-stacked">
       <li><a href="#arguments">Arguments</a></li>
-      
       <li><a href="#value">Value</a></li>
-          </ul>
+    </ul>
 
   </div>
 </div>
+
 
       <footer>
       <div class="copyright">
@@ -270,13 +286,16 @@ during likelihood calculation</p></td>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

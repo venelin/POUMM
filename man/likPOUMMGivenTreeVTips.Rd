@@ -7,9 +7,22 @@
 process for the genetic contributions along the tree and normally distributed
 environmental deviations.}
 \usage{
-likPOUMMGivenTreeVTips(z, tree, alpha, theta, sigma, sigmae = 0,
-  g0 = NA, g0Prior = NULL, log = TRUE, pruneInfo = pruneTree(tree,
-  z), usempfr = 0, maxmpfr = 2, precbits = 128, debug = FALSE)
+likPOUMMGivenTreeVTips(
+  z,
+  tree,
+  alpha,
+  theta,
+  sigma,
+  sigmae = 0,
+  g0 = NA,
+  g0Prior = NULL,
+  log = TRUE,
+  pruneInfo = pruneTree(tree, z),
+  usempfr = 0,
+  maxmpfr = 2,
+  precbits = 128,
+  debug = FALSE
+)
 }
 \arguments{
 \item{z}{A numeric vector of size length(tree$tip.label) representing the

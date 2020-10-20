@@ -4,9 +4,17 @@
 \alias{maxLikPOUMMGivenTreeVTips}
 \title{Find a maximum likelihood fit of the POUMM model}
 \usage{
-maxLikPOUMMGivenTreeVTips(loglik, pruneInfo, parLower, parUpper,
-  parInitML = NULL, control = list(factr = 1e+08, fnscale = -1),
-  verbose = FALSE, debug = FALSE, ...)
+maxLikPOUMMGivenTreeVTips(
+  loglik,
+  pruneInfo,
+  parLower,
+  parUpper,
+  parInitML = NULL,
+  control = list(factr = 1e+08, fnscale = -1),
+  verbose = FALSE,
+  debug = FALSE,
+  ...
+)
 }
 \arguments{
 \item{loglik}{function(par, memo, parFixedNoAlpha)}

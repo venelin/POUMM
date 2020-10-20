@@ -8,21 +8,25 @@
 
 <title>Function reference • POUMM</title>
 
+
 <!-- jquery -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <!-- Bootstrap -->
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha256-916EbMg70RQy9LHiGkXzG8hSg9EdNy97GazNG/aiY1w=" crossorigin="anonymous" />
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha256-U5ZEeKfGNOja007MMD3YBI0A3OSZOQbeG6z2f2Y0hu8=" crossorigin="anonymous"></script>
 
 <!-- Font Awesome icons -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/all.min.css" integrity="sha256-nAmazAk6vS34Xqo0BSrTb+abbtFlgsFK7NKSi6o7Y78=" crossorigin="anonymous" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.7.1/css/v4-shims.min.css" integrity="sha256-6qHlizsOWFskGlwVOKuns+D1nB6ssZrHQrNj1wGplHc=" crossorigin="anonymous" />
 
 <!-- clipboard.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" integrity="sha256-FiZwavyI2V6+EXO1U+xzLG3IKldpiTFf3153ea9zikQ=" crossorigin="anonymous"></script>
 
-<!-- sticky kit -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/sticky-kit/1.1.3/sticky-kit.min.js" integrity="sha256-c4Rlo1ZozqTPE2RLuvbusY3+SU1pQaJC0TjuhygMipw=" crossorigin="anonymous"></script>
+<!-- headroom.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/headroom.min.js" integrity="sha256-DJFC1kqIhelURkuza0AvYal5RxMtpzLjFhsnVIeuk+U=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.9.4/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script>
 
 <!-- pkgdown -->
 <link href="../pkgdown.css" rel="stylesheet">
@@ -30,7 +34,9 @@
 
 
 
+
 <meta property="og:title" content="Function reference" />
+
 
 
 
@@ -54,6 +60,7 @@
   gtag('config', 'UA-129563006-1');
 </script>
 
+
   </head>
 
   <body>
@@ -70,7 +77,7 @@
       </button>
       <span class="navbar-brand">
         <a class="navbar-link" href="../index.html">POUMM</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.6</span>
+        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">2.1.7</span>
       </span>
     </div>
 
@@ -104,7 +111,6 @@
   <a href="../news/index.html">News</a>
 </li>
       </ul>
-      
       <ul class="nav navbar-nav navbar-right">
         
       </ul>
@@ -114,6 +120,7 @@
 </div><!--/.navbar -->
 
       
+
       </header>
 
 <div class="row">
@@ -138,37 +145,6 @@
         </th>
       </tr>
       <tr>
-        
-        <td>
-          <p><code><a href="H2.html">H2()</a></code> </p>
-        </td>
-        <td><p>Phylogenetic heritability estimated at time t</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="OU.html">dOU()</a></code> <code><a href="OU.html">rOU()</a></code> <code><a href="OU.html">meanOU()</a></code> <code><a href="OU.html">varOU()</a></code> <code><a href="OU.html">sdOU()</a></code> </p>
-        </td>
-        <td><p>Distribution of an Ornstein-Uhlenbeck Process at Time \(t\), Given 
-  Initial State at Time \(0\)</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="POUMM.html">POUMM()</a></code> </p>
-        </td>
-        <td><p>The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="POUMMIsADevRelease.html">POUMMIsADevRelease()</a></code> </p>
-        </td>
-        <td><p>Check if the POUMM version correpsonds to a dev release</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="PhylogeneticH2.html">alpha()</a></code> <code><a href="PhylogeneticH2.html">sigmaOU()</a></code> <code><a href="PhylogeneticH2.html">sigmae()</a></code> <code><a href="PhylogeneticH2.html">H2e()</a></code> </p>
-        </td>
-        <td><p>Phylogenetic Heritability</p></td>
-      </tr><tr>
         
         <td>
           <p><code><a href="analyseMCMCs.html">analyseMCMCs()</a></code> </p>
@@ -244,6 +220,12 @@ to which a POUMM model has been previously fitted</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="H2.html">H2()</a></code> </p>
+        </td>
+        <td><p>Phylogenetic heritability estimated at time t</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="likPOUMMGivenTreeVTips.html">likPOUMMGivenTreeVTips()</a></code> </p>
         </td>
         <td><p>Density of observed tip-values given a tree, assuming Ornstein-Uhlenbeck 
@@ -298,6 +280,19 @@ values at the tips and a prior distribution</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="OU.html">dOU()</a></code> <code><a href="OU.html">rOU()</a></code> <code><a href="OU.html">meanOU()</a></code> <code><a href="OU.html">varOU()</a></code> <code><a href="OU.html">sdOU()</a></code> </p>
+        </td>
+        <td><p>Distribution of an Ornstein-Uhlenbeck Process at Time \(t\), Given 
+  Initial State at Time \(0\)</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="PhylogeneticH2.html">alpha()</a></code> <code><a href="PhylogeneticH2.html">sigmaOU()</a></code> <code><a href="PhylogeneticH2.html">sigmae()</a></code> <code><a href="PhylogeneticH2.html">H2e()</a></code> </p>
+        </td>
+        <td><p>Phylogenetic Heritability</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="plot.POUMM.html">plot(<i>&lt;POUMM&gt;</i>)</a></code> </p>
         </td>
         <td><p>Plots of a POUMM-fit</p></td>
@@ -310,10 +305,28 @@ values at the tips and a prior distribution</p></td>
       </tr><tr>
         
         <td>
+          <p><code><a href="POUMM.html">POUMM()</a></code> </p>
+        </td>
+        <td><p>The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="POUMMIsADevRelease.html">POUMMIsADevRelease()</a></code> </p>
+        </td>
+        <td><p>Check if the POUMM version correpsonds to a dev release</p></td>
+      </tr><tr>
+        
+        <td>
           <p><code><a href="pruneTree.html">pruneTree()</a></code> </p>
         </td>
         <td><p>Extract information for fast likelihood calculation using the
  breadth-first pruning algorithm.</p></td>
+      </tr><tr>
+        
+        <td>
+          <p><code><a href="residuals.POUMM.html">residuals(<i>&lt;POUMM&gt;</i>)</a></code> </p>
+        </td>
+        <td><p>Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.</p></td>
       </tr><tr>
         
         <td>
@@ -335,12 +348,6 @@ initial state (only for test purpose)</p></td>
         </td>
         <td><p>Random generation of values along a phylogenetic tree following a branching
 OU process</p></td>
-      </tr><tr>
-        
-        <td>
-          <p><code><a href="residuals.POUMM.html">residuals(<i>&lt;POUMM&gt;</i>)</a></code> </p>
-        </td>
-        <td><p>Extract maximum likelihood environmental contributions (residuals) at the tips of a tree, to which a POUMM model has been fitted.</p></td>
       </tr><tr>
         
         <td>
@@ -403,19 +410,23 @@ POUMM fit</p></td>
   </div>
 </div>
 
+
       <footer>
       <div class="copyright">
   <p>Developed by Venelin Mitov.</p>
 </div>
 
 <div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.3.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.4.1.</p>
 </div>
+
       </footer>
    </div>
 
   
 
+
   </body>
 </html>
+
 

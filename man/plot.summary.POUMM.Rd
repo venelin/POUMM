@@ -4,16 +4,23 @@
 \alias{plot.summary.POUMM}
 \title{Plot a summary of a POUMM fit}
 \usage{
-\method{plot}{summary.POUMM}(x, type = c("MCMC"), doPlot = TRUE,
+\method{plot}{summary.POUMM}(
+  x,
+  type = c("MCMC"),
+  doPlot = TRUE,
   stat = c("alpha", "theta", "sigma", "sigmae", "g0", "H2tMean"),
-  chain = NULL, doZoomIn = FALSE,
+  chain = NULL,
+  doZoomIn = FALSE,
   zoomInFilter = paste0("(stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
-  "(value >= 0 & value <= 1) ) |",
-  "( !stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
-  "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
-  "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
-  palette = c("#999999", "#0072B2", "#CC79A7", "#E69F00", "#D55E00",
-  "#56B4E9", "#009E73", "#F0E442"), prettyNames = TRUE, ...)
+    "(value >= 0 & value <= 1) ) |",
+    "( !stat \%in\% c('H2e','H2tMean','H2tInf','H2tMax') & ",
+    "(value <= median(HPDUpper) + 4 * (median(HPDUpper) - median(HPDLower)) &",
+    "value >= median(HPDLower) - 4 * (median(HPDUpper) - median(HPDLower))))"),
+  palette = c("#999999", "#0072B2", "#CC79A7", "#E69F00", "#D55E00", "#56B4E9",
+    "#009E73", "#F0E442"),
+  prettyNames = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{An object of class POUMM.}

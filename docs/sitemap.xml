@@ -4,21 +4,6 @@
     <loc>http://venelin.github.io/POUMM/index.html</loc>
   </url>
   <url>
-    <loc>http://venelin.github.io/POUMM/reference/H2.html</loc>
-  </url>
-  <url>
-    <loc>http://venelin.github.io/POUMM/reference/OU.html</loc>
-  </url>
-  <url>
-    <loc>http://venelin.github.io/POUMM/reference/POUMM.html</loc>
-  </url>
-  <url>
-    <loc>http://venelin.github.io/POUMM/reference/POUMMIsADevRelease.html</loc>
-  </url>
-  <url>
-    <loc>http://venelin.github.io/POUMM/reference/PhylogeneticH2.html</loc>
-  </url>
-  <url>
     <loc>http://venelin.github.io/POUMM/reference/analyseMCMCs.html</loc>
   </url>
   <url>
@@ -52,6 +37,9 @@
     <loc>http://venelin.github.io/POUMM/reference/gPOUMM.html</loc>
   </url>
   <url>
+    <loc>http://venelin.github.io/POUMM/reference/H2.html</loc>
+  </url>
+  <url>
     <loc>http://venelin.github.io/POUMM/reference/likPOUMMGivenTreeVTips.html</loc>
   </url>
   <url>
@@ -76,13 +64,28 @@
     <loc>http://venelin.github.io/POUMM/reference/nodeTimes.html</loc>
   </url>
   <url>
+    <loc>http://venelin.github.io/POUMM/reference/OU.html</loc>
+  </url>
+  <url>
+    <loc>http://venelin.github.io/POUMM/reference/PhylogeneticH2.html</loc>
+  </url>
+  <url>
     <loc>http://venelin.github.io/POUMM/reference/plot.POUMM.html</loc>
   </url>
   <url>
     <loc>http://venelin.github.io/POUMM/reference/plot.summary.POUMM.html</loc>
   </url>
   <url>
+    <loc>http://venelin.github.io/POUMM/reference/POUMM.html</loc>
+  </url>
+  <url>
+    <loc>http://venelin.github.io/POUMM/reference/POUMMIsADevRelease.html</loc>
+  </url>
+  <url>
     <loc>http://venelin.github.io/POUMM/reference/pruneTree.html</loc>
+  </url>
+  <url>
+    <loc>http://venelin.github.io/POUMM/reference/residuals.POUMM.html</loc>
   </url>
   <url>
     <loc>http://venelin.github.io/POUMM/reference/rTrajectoryOU.html</loc>
@@ -92,9 +95,6 @@
   </url>
   <url>
     <loc>http://venelin.github.io/POUMM/reference/rVNodesGivenTreePOUMM.html</loc>
-  </url>
-  <url>
-    <loc>http://venelin.github.io/POUMM/reference/residuals.POUMM.html</loc>
   </url>
   <url>
     <loc>http://venelin.github.io/POUMM/reference/simulatePOUMMLikelihoodMainLoop.html</loc>

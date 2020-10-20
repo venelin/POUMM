@@ -4,8 +4,16 @@
 \alias{covPOUMM}
 \title{Expected covariance of two tips at given root-tip time and phylogenetic distance}
 \usage{
-covPOUMM(alpha, sigma, sigmae, t, tau, tanc = t - tau/2, corr = FALSE,
-  as.matrix = FALSE)
+covPOUMM(
+  alpha,
+  sigma,
+  sigmae,
+  t,
+  tau,
+  tanc = t - tau/2,
+  corr = FALSE,
+  as.matrix = FALSE
+)
 }
 \arguments{
 \item{alpha, sigma, sigmae}{POUMM parameters}

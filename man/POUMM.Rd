@@ -4,10 +4,22 @@
 \alias{POUMM}
 \title{The Phylogenetic (Ornstein-Uhlenbeck) Mixed Model}
 \usage{
-POUMM(z, tree, se = 0, zName = "z", treeName = "tree",
-  parDigits = 6, usempfr = 0, useCpp = TRUE, ..., spec = NULL,
-  doMCMC = TRUE, likPOUMM_lowLevelFun = likPOUMMGivenTreeVTipsC,
-  verbose = FALSE, debug = FALSE)
+POUMM(
+  z,
+  tree,
+  se = 0,
+  zName = "z",
+  treeName = "tree",
+  parDigits = 6,
+  usempfr = 0,
+  useCpp = TRUE,
+  ...,
+  spec = NULL,
+  doMCMC = TRUE,
+  likPOUMM_lowLevelFun = likPOUMMGivenTreeVTipsC,
+  verbose = FALSE,
+  debug = FALSE
+)
 }
 \arguments{
 \item{z}{Either a numeric vector containing the phenotypic values at the tips 

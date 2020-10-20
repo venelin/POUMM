@@ -1,9 +1,12 @@
 ---
 title: "NEWS about the POUMM R-package"
 author: "Venelin Mitov"
-date: "05 December, 2019"
+date: "20 October, 2020"
 output: html_document
 ---
+
+# POUMM 2.1.7 
+* Updated dependency version of data.table (>=1.13.2). This is to always the fix https://github.com/Rdatatable/data.table/issues/4746.
 
 # POUMM 2.1.6
 * Fixed an S3-class related problem on r-devel.

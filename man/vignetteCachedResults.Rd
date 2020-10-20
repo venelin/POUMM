@@ -4,12 +4,14 @@
 \name{vignetteCachedResults}
 \alias{vignetteCachedResults}
 \title{Cached objects for the POUMM vignettes and examples}
-\format{This is a list containing the following named elements:
+\format{
+This is a list containing the following named elements:
 \describe{
   \item{g, z, e }{ numeric vectors of simulated genotypic values, phenotypic values and measurement errors. }
   \item{tree }{ a simulated phylogenetic tree. }
   \item{fitPOUMM, fitPOUMM2, fitH2tMean }{ POUMM fit objects to tree and z. }
-}}
+}
+}
 \usage{
 vignetteCachedResults
 }

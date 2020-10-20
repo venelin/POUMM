@@ -5,8 +5,15 @@
 \title{Variance covariance matrix of the values at the tips of a tree under an OU 
 process}
 \usage{
-covVTipsGivenTreePOUMM(tree, alpha = 0, sigma = 1, sigmae = 0,
-  tanc = NULL, tauij = NULL, corr = FALSE)
+covVTipsGivenTreePOUMM(
+  tree,
+  alpha = 0,
+  sigma = 1,
+  sigmae = 0,
+  tanc = NULL,
+  tauij = NULL,
+  corr = FALSE
+)
 }
 \arguments{
 \item{tree}{A phylo object.}

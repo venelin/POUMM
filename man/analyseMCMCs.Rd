@@ -5,8 +5,18 @@
 \title{Extract data from an MCMC chain
 This is an internal function.}
 \usage{
-analyseMCMCs(chains, stat = NULL, statName = "logpost", start, end,
-  thinMCMC, as.dt = FALSE, k = NA, N = NA, ...)
+analyseMCMCs(
+  chains,
+  stat = NULL,
+  statName = "logpost",
+  start,
+  end,
+  thinMCMC,
+  as.dt = FALSE,
+  k = NA,
+  N = NA,
+  ...
+)
 }
 \arguments{
 \item{chains, stat, statName, start, end, thinMCMC, as.dt, k, N, ...}{internal use.}

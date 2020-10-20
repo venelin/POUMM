@@ -6,10 +6,25 @@
 \title{MCMC-sampling from a posterior distribution of a P(OU)MM model given tree, 
 values at the tips and a prior distribution}
 \usage{
-mcmcPOUMMGivenPriorTreeVTips(loglik, fitML = NULL, parMapping,
-  parInitMCMC, parPriorMCMC, parScaleMCMC, nSamplesMCMC, nAdaptMCMC,
-  thinMCMC, accRateMCMC, gammaMCMC, nChainsMCMC, samplePriorMCMC,
-  pruneInfo, ..., verbose = FALSE, parallelMCMC = FALSE)
+mcmcPOUMMGivenPriorTreeVTips(
+  loglik,
+  fitML = NULL,
+  parMapping,
+  parInitMCMC,
+  parPriorMCMC,
+  parScaleMCMC,
+  nSamplesMCMC,
+  nAdaptMCMC,
+  thinMCMC,
+  accRateMCMC,
+  gammaMCMC,
+  nChainsMCMC,
+  samplePriorMCMC,
+  pruneInfo,
+  ...,
+  verbose = FALSE,
+  parallelMCMC = FALSE
+)
 }
 \arguments{
 \item{loglik}{a log-likelihood function.}
