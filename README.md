@@ -72,7 +72,7 @@ For an introduction to the model parameters and the package, read the
 More advanced topics, such as parametrizations and interpretations of
 the model fit are covered in the other package
 [vignettes](https://venelin.github.io/POUMM/articles/index.html) and in
-the package help-pages, e.g. `?POUMM`, `?specifyPOUMM`,
+the package help-pages, e.g. `?POUMM`, `?specifyPOUMM`,
 `?summary.POUMM`, `?plot.POUMM`.
 
 # Installing the R-package
@@ -85,7 +85,7 @@ started](https://venelin.github.io/POUMM/articles/UserGuide.html).
 # Package source-code
 
 The package source-code is available on
-[github](https://github.com/venelin/POUMM.git).
+[github](https://github.com/venelin/POUMM).
 
 # Licence and copyright
 

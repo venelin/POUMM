@@ -65,7 +65,7 @@ For an introduction to the model parameters and the package, read the [User guid
 Read the section [Installing the POUMM R-package](https://venelin.github.io/POUMM/articles/UserGuide.html#Installing) in [Get started](https://venelin.github.io/POUMM/articles/UserGuide.html).
 
 # Package source-code
-The package source-code is available on [github](https://github.com/venelin/POUMM.git).
+The package source-code is available on [github](https://github.com/venelin/POUMM).
 
 # Licence and copyright
 
