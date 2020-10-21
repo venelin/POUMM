@@ -254,7 +254,7 @@ TODO
 ##     }
 ##     par
 ## }
-## &lt;environment: 0x00000000237b8698&gt;</code></pre>
+## &lt;environment: 0x00000000237ffe40&gt;</code></pre>
 <div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Prior for the MCMC sampling</span></span>
 <span id="cb9-2"><a href="#cb9-2"></a>specH2tMean<span class="op">$</span>parPriorMCMC</span></code></pre></div>
 <pre><code>## function (par) 
@@ -264,7 +264,7 @@ TODO
 ##         log = TRUE) + dexp(par[4], rate = 2/zSD, log = TRUE) + 
 ##         dnorm(par[5], zMean, 2 * zSD, log = TRUE)
 ## }
-## &lt;environment: 0x00000000237b8698&gt;</code></pre>
+## &lt;environment: 0x00000000237ffe40&gt;</code></pre>
 <div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Bounds for the maximum likelihood search</span></span>
 <span id="cb11-2"><a href="#cb11-2"></a>specH2tMean<span class="op">$</span>parLower</span></code></pre></div>
 <pre><code>##   alpha   theta H2tMean  sigmae      g0 
