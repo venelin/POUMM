@@ -89,7 +89,7 @@ The package source-code is available on
 
 # Licence and copyright
 
-Copyright 2015-2019 Venelin Mitov
+Copyright 2015-2020 Venelin Mitov
 
 Source code to POUMM is made available under the terms of the GNU
 General Public License as published by the Free Software Foundation,
