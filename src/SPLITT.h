@@ -1726,8 +1726,9 @@ public:
     uint i_parent = ref_tree_.FindIdOfParent(i);
     num_non_visited_children_[i_parent - ref_tree_.num_tips()]--;
     if(num_non_visited_children_[i_parent - ref_tree_.num_tips()] == 0) {
+      // The parent has no more unvisited children, so it is added to the queue
       *it_queue_end = i_parent;
-      *it_queue_end++;
+      ++it_queue_end;
       has_a_new_node_.notify_one();
     }
   }

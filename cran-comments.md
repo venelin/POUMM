@@ -1,1 +1,0 @@
-Updated version of data.table dependency to 1.13.2. This is a fix for https://github.com/Rdatatable/data.table/issues/4746.

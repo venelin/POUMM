@@ -497,38 +497,38 @@ Specification and validation of POUMM/PMM settings.
 }
 \section{Functions}{
 \itemize{
-\item \code{specifyPOUMM}: Specify parameters for fitting a POUMM model. 
+\item \code{specifyPOUMM()}: Specify parameters for fitting a POUMM model. 
 Parameter vector is c(alpha, theta, sigma, sigmae). Default model settings.
 
-\item \code{specifyPOUMM_ATS}: Fitting a POU model with fixed sigmae.
+\item \code{specifyPOUMM_ATS()}: Fitting a POU model with fixed sigmae.
 Parameter vector is c(alpha, theta, sigma).
 
-\item \code{specifyPOUMM_ATSG0}: Fitting a POU model with fixed sigmae.
+\item \code{specifyPOUMM_ATSG0()}: Fitting a POU model with fixed sigmae.
 Parameter vector is c(alpha, theta, sigma, g0).
 
-\item \code{specifyPOUMM_ATSSeG0}: Fitting a POUMM model with sampling of g0.
+\item \code{specifyPOUMM_ATSSeG0()}: Fitting a POUMM model with sampling of g0.
 Parameter vector is c(alpha, theta, sigma, sigmae, g0).
 
-\item \code{specifyPMM}: Specify parameter for fitting a PMM model. 
+\item \code{specifyPMM()}: Specify parameter for fitting a PMM model. 
 Parameter vector is c(sigma, sigmae)
 
-\item \code{specifyPMM_SSeG0}: Specify parameter for fitting a PMM model with
+\item \code{specifyPMM_SSeG0()}: Specify parameter for fitting a PMM model with
 sampling of g0. Parameter vector is c(sigma, sigmae, g0).
 
-\item \code{specifyPOUMM_ATH2tMeanSe}: Fitting a POUMM model with a uniform prior for
+\item \code{specifyPOUMM_ATH2tMeanSe()}: Fitting a POUMM model with a uniform prior for
 the phylogenetic heritability at mean root-tip distance. Parameter vector is
 c(alpha, theta, H2tMean, sigmae).
 
-\item \code{specifyPOUMM_ATH2tMeanSeG0}: Fitting a POUMM model with a uniform prior for
+\item \code{specifyPOUMM_ATH2tMeanSeG0()}: Fitting a POUMM model with a uniform prior for
 the phylogenetic heritability at mean root-tip with sampling of g0.
 Parameter vector is c(alpha, theta, H2tMean, sigmae, g0).
 
-\item \code{specifyPMM_H2tMeanSe}: Fitting a PMM model with a uniform prior for
+\item \code{specifyPMM_H2tMeanSe()}: Fitting a PMM model with a uniform prior for
 the phylogenetic heritability at mean root-tip distance. Parameter vector is
 c(H2tMean, sigmae).
 
-\item \code{specifyPMM_H2tMeanSeG0}: Fitting a PMM model with a uniform prior for
+\item \code{specifyPMM_H2tMeanSeG0()}: Fitting a PMM model with a uniform prior for
 the phylogenetic heritability at mean root-tip distance with sampling of G0.
 Parameter vector is c(H2tMean, sigmae, g0).
-}}
 
+}}

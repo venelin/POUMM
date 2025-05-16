@@ -5,6 +5,11 @@ date: "20 October, 2020"
 output: html_document
 ---
 
+# POUMM 2.1.8
+* Updated documentation of function summary.POUMM to address a CRAN check note.
+* Updated CITATION to address a CRAN check note.
+* Modified src/SCPLITT.h to address a CRAN gcc warning. 
+
 # POUMM 2.1.7 
 * Updated dependency version of data.table (>=1.13.2). This is to always the fix https://github.com/Rdatatable/data.table/issues/4746.
 

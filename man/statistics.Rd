@@ -22,7 +22,7 @@ This is a generic method.
 }
 \section{Methods (by class)}{
 \itemize{
-\item \code{POUMM}: Relevant statistics from the sampled parameters of a
+\item \code{statistics(POUMM)}: Relevant statistics from the sampled parameters of a
 POUMM fit
-}}
 
+}}

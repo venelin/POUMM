@@ -12,11 +12,7 @@ rTrajectoryOUDef(z0, t, alpha, theta, sigma, steps = 1)
 
 \item{t}{Numeric value or vector of size steps, denoting the time-step(s).}
 
-\item{alpha}{Numeric values, parameters of the OU process.}
-
-\item{theta}{Numeric values, parameters of the OU process.}
-
-\item{sigma}{Numeric values, parameters of the OU process.}
+\item{alpha, theta, sigma}{Numeric values, parameters of the OU process.}
 
 \item{steps}{Integer, number of steps.}
 }

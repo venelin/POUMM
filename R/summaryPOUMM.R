@@ -24,9 +24,9 @@
 #' to be used for the analysis (excluding the initial warm-up phase)
 #' @param thinMCMC thinning interval of the MCMC chain to avoid strong 
 #' autocorrelation between sampled elements;
-#' @param stats a named list of functions of the form function(par) { number },
+#' @param stats a named list of functions of the form \code{function(par) { number }},
 #' which are called for each sample of each mcmc chain in object. Defaults to 
-#' a call of statistics(object) returning a list of statistics functions relevant for 
+#' a call of \code{statistics(object)} returning a list of statistics functions relevant for 
 #' the object. See also statistics.
 #' @param mode a character indicating the desired format of the returned summary 
 #' as follows:

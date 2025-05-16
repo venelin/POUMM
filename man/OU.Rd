@@ -71,17 +71,17 @@ Similar to dnorm and rnorm, the functions described in this
 }
 \section{Functions}{
 \itemize{
-\item \code{dOU}: probability density
+\item \code{dOU()}: probability density
 
-\item \code{rOU}: random generator
+\item \code{rOU()}: random generator
 
-\item \code{meanOU}: mean value
+\item \code{meanOU()}: mean value
 
-\item \code{varOU}: variance
+\item \code{varOU()}: variance
 
-\item \code{sdOU}: standard deviation
+\item \code{sdOU()}: standard deviation
+
 }}
-
 \examples{
 z0 <- 8
 t <- 10

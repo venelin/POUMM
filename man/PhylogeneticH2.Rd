@@ -53,18 +53,18 @@ The function sigmae uses the formula H2 = varOU(t, alpha, sigma) /
 }
 \section{Functions}{
 \itemize{
-\item \code{alpha}: Calculate alpha given time t, H2, sigma and sigmae
+\item \code{alpha()}: Calculate alpha given time t, H2, sigma and sigmae
 
-\item \code{sigmaOU}: Calculate sigma given time t, H2 at time t, alpha
+\item \code{sigmaOU()}: Calculate sigma given time t, H2 at time t, alpha
 and sigmae
 
-\item \code{sigmae}: Calculate sigmae given alpha, sigma, and H2 at
+\item \code{sigmae()}: Calculate sigmae given alpha, sigma, and H2 at
 time t
 
-\item \code{H2e}: "Empirical" phylogenetic heritability estimated
+\item \code{H2e()}: "Empirical" phylogenetic heritability estimated
 from the empirical variance of the observed phenotypes and sigmae
-}}
 
+}}
 \note{
 This function is called sigmaOU and not simply sigma to avoid a conflict 
 with a function sigma in the base R-package.
